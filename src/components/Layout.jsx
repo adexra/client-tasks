@@ -140,18 +140,18 @@ export default function Layout() {
           <div className="flex items-center gap-4 flex-1">
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 -ml-2 text-ink-charcoal hover:bg-neutral-100 rounded-md transition-colors"
+              className="lg:hidden p-2 -ml-2 text-ink-charcoal hover:bg-neutral-100 rounded-md transition-colors shrink-0"
             >
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
 
-            <div className="flex items-center gap-4 md:gap-8 flex-1">
-              <div className="hidden sm:flex items-center gap-4">
-                <Search className="h-4 w-4 text-neutral-400" />
+            <div className="flex items-center gap-2 sm:gap-4 md:gap-8 flex-1 min-w-0">
+              <div className="hidden sm:flex items-center gap-4 flex-1">
+                <Search className="h-4 w-4 text-neutral-400 shrink-0" />
                 <input 
                   type="text" 
                   placeholder="Search projects..." 
-                  className="bg-transparent border-none text-sm font-medium text-ink-primary placeholder:text-neutral-400 focus:ring-0 w-full max-w-[120px] sm:max-w-xs transition-all"
+                  className="bg-transparent border-none text-sm font-medium text-ink-primary placeholder:text-neutral-400 focus:ring-0 w-full max-w-xs transition-all"
                 />
               </div>
               <FocusTimer onLog={(data) => {
@@ -166,9 +166,9 @@ export default function Layout() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 sm:gap-10">
+          <div className="flex items-center gap-3 sm:gap-6 md:gap-10">
             <div className="flex items-center gap-4 md:gap-6">
-              <div className="hidden xs:block text-right">
+              <div className="hidden md:block text-right">
                 <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">Income</p>
                 <div 
                   className="flex items-center gap-2 group cursor-pointer select-none" 
@@ -186,7 +186,7 @@ export default function Layout() {
                 </div>
               </div>
 
-              <div className="text-right">
+              <div className="hidden sm:block text-right">
                 <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">Expenses</p>
                 <p className="text-sm font-serif text-rose-500 tabular-nums">
                   {displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ '}
@@ -194,9 +194,9 @@ export default function Layout() {
                 </p>
               </div>
 
-              <div className="hidden md:block h-4 w-[1px] bg-border-light" />
+              <div className="hidden xl:block h-4 w-[1px] bg-border-light" />
               
-              <div className="hidden sm:block text-right">
+              <div className="hidden lg:block text-right">
                 <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1">Net Margin</p>
                 <p className={cn(
                   "text-sm font-serif tabular-nums",
@@ -207,7 +207,7 @@ export default function Layout() {
                 </p>
               </div>
 
-              <div className="hidden lg:block h-4 w-[1px] bg-border-light" />
+              <div className="hidden md:block h-4 w-[1px] bg-border-light" />
 
               <div className="text-right">
                 <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">Bank</p>
@@ -223,7 +223,7 @@ export default function Layout() {
 
             <div className="hidden md:block h-8 w-[1px] bg-border-light" />
 
-            <div className="hidden xs:flex items-center gap-3 py-1">
+            <div className="hidden sm:flex items-center gap-3 py-1">
               <div className="text-right">
                 <p className="text-[10px] text-neutral-400 font-medium leading-none mb-1">Operator</p>
                 <p className="text-xs font-semibold text-ink-primary tracking-tight">System Operator</p>

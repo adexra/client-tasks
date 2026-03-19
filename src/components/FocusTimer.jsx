@@ -47,8 +47,8 @@ export default function FocusTimer({ onLog }) {
   const seconds = timeLeft % 60;
 
   return (
-    <div className="flex items-center gap-6 bg-white/50 backdrop-blur-sm border border-border-light rounded-full px-5 py-2 group transition-all hover:bg-white hover:shadow-sm">
-      <div className="flex items-center gap-3 border-r border-border-light pr-4">
+    <div className="flex items-center gap-2 sm:gap-6 bg-white/50 backdrop-blur-sm border border-border-light rounded-full px-3 sm:px-5 py-2 group transition-all hover:bg-white hover:shadow-sm min-w-0">
+      <div className="flex items-center gap-2 sm:gap-3 border-r border-border-light pr-2 sm:pr-4 shrink-0">
         <div className="relative flex items-center justify-center">
             <span className={cn(
               "text-sm font-mono font-bold tracking-tight w-12 text-center",
@@ -75,7 +75,7 @@ export default function FocusTimer({ onLog }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 min-w-[200px]">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-[100px] sm:min-w-[200px] flex-1">
         {isCompleted ? (
           <div className="flex items-center gap-2 text-success-green animate-in fade-in slide-in-from-left-2">
             <CheckCircle2 className="h-3.5 w-3.5" />
