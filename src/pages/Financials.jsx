@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
+  Activity,
   Plus, 
   TrendingUp, 
   TrendingDown, 
@@ -13,14 +14,22 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useToast } from '../context/ToastContext';
+import { useFinancials } from '../context/FinancialContext';
 
 export default function Financials() {
+  const { 
+    expenses, 
+    payments, 
+    loading: financialsLoading, 
+    displayCurrency, 
+    toBRL, 
+    fromBRL, 
+    totals,
+    refreshData 
+  } = useFinancials();
+  
   const [income, setIncome] = useState([]);
-  const [expenses, setExpenses] = useState([]);
-  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [fxRates, setFxRates] = useState({ USD: 6.12, EUR: 6.64 });
-  const [displayCurrency, setDisplayCurrency] = useState(() => localStorage.getItem('displayCurrency') || 'BRL');
   const toast = useToast();
 
   const [formData, setFormData] = useState({
@@ -30,31 +39,18 @@ export default function Financials() {
     is_repeatable: false
   });
 
-
   const loadData = async () => {
     setLoading(true);
-    const [incRes, expRes, payRes] = await Promise.all([
-      supabase.from('clients').select('id, name, revenue, currency').eq('status', 'active'),
-      supabase.from('expenses').select('*').order('created_at', { ascending: false }),
-      supabase.from('client_payments').select('*')
-    ]);
-    
-    if (!incRes.error) setIncome(incRes.data || []);
-    if (!expRes.error) setExpenses(expRes.data || []);
-    if (!payRes.error) setPayments(payRes.data || []);
+    const { data, error } = await supabase.from('clients').select('id, name, revenue, currency').eq('status', 'active');
+    if (!error) setIncome(data || []);
     setLoading(false);
   };
 
   useEffect(() => {
     loadData();
-    
     const handleUpdate = () => loadData();
     window.addEventListener('project-updated', handleUpdate);
-    window.addEventListener('financial-updated', handleUpdate);
-    return () => {
-      window.removeEventListener('project-updated', handleUpdate);
-      window.removeEventListener('financial-updated', handleUpdate);
-    };
+    return () => window.removeEventListener('project-updated', handleUpdate);
   }, []);
 
   const handleAddExpense = async (e) => {
@@ -71,7 +67,7 @@ export default function Financials() {
     if (!error) {
       toast.success('Expense recorded');
       setFormData({ amount: '', currency: 'BRL', description: '', is_repeatable: false });
-      loadData();
+      refreshData(); // Refresh the context
       window.dispatchEvent(new Event('financial-updated'));
     } else {
       toast.error('Record failed');
@@ -82,32 +78,14 @@ export default function Financials() {
     const { error } = await supabase.from('expenses').delete().eq('id', id);
     if (!error) {
       toast.success('Expense removed');
-      loadData();
+      refreshData(); // Refresh the context
       window.dispatchEvent(new Event('financial-updated'));
     }
   };
 
-  const toBRL = (amount, curr) => {
-    if (curr === 'BRL') return amount;
-    if (curr === 'EUR') return amount * fxRates.EUR;
-    return amount * fxRates.USD;
-  };
-
-  const convert = (amountBRL) => {
-    if (displayCurrency === 'USD') return amountBRL / fxRates.USD;
-    if (displayCurrency === 'EUR') return amountBRL / fxRates.EUR;
-    return amountBRL;
-  };
-
-  const totalBilledBRL = useMemo(() => payments.reduce((sum, item) => sum + toBRL(parseFloat(item.amount) || 0, item.currency), 0), [payments, fxRates]);
-  const totalPaidBRL = useMemo(() => payments.filter(p => p.is_paid).reduce((sum, item) => sum + toBRL(parseFloat(item.amount) || 0, item.currency), 0), [payments, fxRates]);
-  const totalExpensesBRL = useMemo(() => expenses.reduce((sum, item) => sum + toBRL(parseFloat(item.amount) || 0, item.currency), 0), [expenses, fxRates]);
-  const liquidMoneyBRL = useMemo(() => totalPaidBRL - totalExpensesBRL, [totalPaidBRL, totalExpensesBRL]);
-  const netProfitBRL = useMemo(() => totalBilledBRL - totalExpensesBRL, [totalBilledBRL, totalExpensesBRL]);
-
-  const format = (val) => {
+  const format = (valBRL) => {
     const symbol = displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ ';
-    return symbol + convert(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return symbol + fromBRL(valBRL, displayCurrency).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   return (
@@ -130,19 +108,19 @@ export default function Financials() {
 
       {/* Financial Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="surface-card p-10 space-y-6 border-b-2 border-b-cyan-500/20">
+        <div className="surface-card p-10 space-y-6 border-b-2 border-b-sky-100">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Liquid Cash</span>
-            <div className="h-10 w-10 rounded-xl bg-cyan-50 flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-cyan-500" />
+            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Bank Balance</span>
+            <div className="h-10 w-10 rounded-xl bg-neutral-50 flex items-center justify-center border border-neutral-100">
+              <TrendingUp className="h-5 w-5 text-sky-600" />
             </div>
           </div>
           <p className={cn(
             "text-4xl font-serif tabular-nums",
-            liquidMoneyBRL >= 0 ? "text-cyan-600" : "text-rose-600"
-          )}>{format(liquidMoneyBRL)}</p>
+            totals.bankBRL >= 0 ? "text-sky-600" : "text-rose-600"
+          )}>{format(totals.bankBRL)}</p>
           <div className="h-[1px] w-full bg-neutral-50" />
-          <p className="text-[10px] text-neutral-300 uppercase tracking-widest font-bold">Available Funds</p>
+          <p className="text-[10px] text-neutral-300 uppercase tracking-widest font-bold">Cash in Hand</p>
         </div>
 
         <div className="surface-card p-10 space-y-6 border-b-2 border-b-emerald-500/20">
@@ -152,7 +130,7 @@ export default function Financials() {
               <TrendingUp className="h-5 w-5 text-emerald-500" />
             </div>
           </div>
-          <p className="text-4xl font-serif text-emerald-600 tabular-nums">{format(totalBilledBRL)}</p>
+          <p className="text-4xl font-serif text-emerald-600 tabular-nums">{format(totals.incomeBRL)}</p>
           <div className="h-[1px] w-full bg-neutral-50" />
           <p className="text-[10px] text-neutral-300 uppercase tracking-widest font-bold">Lifetime Revenue</p>
         </div>
@@ -164,7 +142,7 @@ export default function Financials() {
               <TrendingDown className="h-5 w-5 text-rose-500" />
             </div>
           </div>
-          <p className="text-4xl font-serif text-rose-500 tabular-nums">{format(totalExpensesBRL)}</p>
+          <p className="text-4xl font-serif text-rose-500 tabular-nums">{format(totals.expensesBRL)}</p>
           <div className="h-[1px] w-full bg-neutral-50" />
           <p className="text-[10px] text-neutral-300 uppercase tracking-widest font-bold">Operational Drift</p>
         </div>
@@ -178,8 +156,8 @@ export default function Financials() {
           </div>
           <p className={cn(
             "text-4xl font-serif tabular-nums",
-            netProfitBRL >= 0 ? "text-[var(--ink-primary)]" : "text-rose-600"
-          )}>{format(netProfitBRL)}</p>
+            totals.marginBRL >= 0 ? "text-[var(--ink-primary)]" : "text-rose-600"
+          )}>{format(totals.marginBRL)}</p>
           <div className="h-[1px] w-full bg-neutral-50" />
           <p className="text-[10px] text-neutral-300 uppercase tracking-widest font-bold">Book Earnings</p>
         </div>

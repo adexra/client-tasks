@@ -79,6 +79,26 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
         currency: formData.currency,
         is_paid: true
       }]);
+    } else if (!error && editClient) {
+      // If editing, check if they changed the revenue value
+      if (parseFloat(formData.revenue) !== parseFloat(editClient.revenue || 0)) {
+        const { data: existing } = await supabase.from('client_payments')
+          .select('id').eq('client_id', editClient.id).eq('description', 'Initial Project Fee');
+
+        if (existing && existing.length > 0) {
+           await supabase.from('client_payments')
+             .update({ amount: parseFloat(formData.revenue) || 0, currency: formData.currency })
+             .eq('id', existing[0].id);
+        } else if (parseFloat(formData.revenue) > 0) {
+           await supabase.from('client_payments').insert([{
+             client_id: editClient.id,
+             amount: parseFloat(formData.revenue),
+             description: 'Initial Project Fee',
+             currency: formData.currency,
+             is_paid: true
+           }]);
+        }
+      }
     }
 
     if (error) {
@@ -86,7 +106,9 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       toast.error('Sync failure');
     } else {
       toast.success(editClient ? 'Project updated' : 'Project created');
-      onClientAdded();
+      if (onClientAdded) onClientAdded();
+      window.dispatchEvent(new Event('project-updated'));
+      window.dispatchEvent(new Event('financial-updated'));
       onClose();
     }
     setSubmitting(false);

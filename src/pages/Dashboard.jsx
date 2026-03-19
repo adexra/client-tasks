@@ -21,31 +21,24 @@ import TagBadge from '../components/TagBadge';
 import AddClientModal from '../components/AddClientModal';
 import DeadlinesWidget from '../components/DeadlinesWidget';
 import { useToast } from '../context/ToastContext';
+import { useFinancials } from '../context/FinancialContext';
 
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', BRL: 'R$' };
 
 export default function Dashboard() {
+  const { payments, displayCurrency: currency, changeCurrency, toBRL, fromBRL, loading: financialsLoading } = useFinancials();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currency, setCurrency] = useState('USD');
-  const [fxRates, setFxRates] = useState({ USD: 6.12, EUR: 6.64 });
   const [showArchived, setShowArchived] = useState(false);
-  const [payments, setPayments] = useState([]);
   const toast = useToast();
 
   async function loadClients() {
     setLoading(true);
-    const [clientsRes, paymentsRes] = await Promise.all([
-      supabase.from('clients').select('*').order('created_at', { ascending: false }),
-      supabase.from('client_payments').select('*')
-    ]);
-    
-    if (!clientsRes.error) setClients(clientsRes.data || []);
-    if (!paymentsRes.error) setPayments(paymentsRes.data || []);
+    const { data, error } = await supabase.from('clients').select('*').order('created_at', { ascending: false });
+    if (!error) setClients(data || []);
     setLoading(false);
   }
-
 
   useEffect(() => { 
     loadClients(); 
@@ -53,29 +46,16 @@ export default function Dashboard() {
 
   const filteredClients = clients.filter(c => showArchived ? c.status === 'archived' : c.status === 'active');
   
-  const convertToBRL = (amount, from) => {
-    if (from === 'BRL') return amount;
-    if (from === 'EUR') return amount * fxRates.EUR;
-    return amount * fxRates.USD;
-  };
-
-  const convertFromBRL = (amountBRL, to) => {
-    if (to === 'BRL') return amountBRL;
-    if (to === 'EUR') return amountBRL / fxRates.EUR;
-    return amountBRL / fxRates.USD;
-  };
-
-  const totalBalance = useMemo(() => {
-    return payments.reduce((sum, p) => {
+  const displayedTotal = useMemo(() => {
+    const totalBRL = payments.reduce((sum, p) => {
       const client = clients.find(c => c.id === p.client_id);
       if (client && client.status === (showArchived ? 'archived' : 'active')) {
-        return sum + convertToBRL(parseFloat(p.amount) || 0, p.currency);
+        return sum + toBRL(parseFloat(p.amount) || 0, p.currency);
       }
       return sum;
     }, 0);
-  }, [payments, clients, showArchived, fxRates]);
-
-  const displayedTotal = useMemo(() => convertFromBRL(totalBalance, currency), [totalBalance, currency, fxRates]);
+    return fromBRL(totalBRL, currency);
+  }, [payments, clients, showArchived, toBRL, fromBRL, currency]);
 
   return (
     <div className="space-y-20 animate-in fade-in duration-700">
@@ -108,7 +88,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <StatsCard 
           label="Total Revenue" 
-          value={`${CURRENCY_SYMBOLS[currency]} ${displayedTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`} 
+          value={`${CURRENCY_SYMBOLS[currency]} ${displayedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
           subtext="Current Portfolio"
         />
         <StatsCard 
@@ -131,7 +111,7 @@ export default function Dashboard() {
                  {['USD', 'EUR', 'BRL'].map(c => (
                    <button
                      key={c}
-                     onClick={() => setCurrency(c)}
+                     onClick={() => changeCurrency(c)}
                      className={cn(
                        "px-5 py-1.5 rounded-md text-[10px] font-bold tracking-widest uppercase transition-all duration-200",
                        currency === c 
@@ -167,8 +147,6 @@ export default function Dashboard() {
                 client={client} 
                 payments={payments.filter(p => p.client_id === client.id)}
                 currency={currency} 
-                convertToBRL={convertToBRL}
-                convertFromBRL={convertFromBRL}
               />
             ))}
             {!loading && filteredClients.length === 0 && (
@@ -193,16 +171,17 @@ function StatsCard({ label, value, subtext }) {
         <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{label}</p>
         <p className="text-[9px] font-medium text-neutral-300 uppercase tracking-[0.1em]">{subtext}</p>
       </div>
-      <h3 className="text-5xl font-serif text-ink-primary tracking-tight tabular-nums leading-none whitespace-nowrap">
+      <h3 className="text-xl sm:text-2xl lg:text-3xl font-serif text-ink-primary tracking-tight tabular-nums leading-tight break-words">
         {value}
       </h3>
     </div>
   );
 }
 
-function ClientEditorialCard({ client, payments, currency, convertToBRL, convertFromBRL }) {
-  const totalBilled = payments.reduce((sum, p) => sum + convertToBRL(parseFloat(p.amount) || 0, p.currency), 0);
-  const displayRevenue = convertFromBRL(totalBilled, currency);
+function ClientEditorialCard({ client, payments, currency }) {
+  const { toBRL, fromBRL } = useFinancials();
+  const totalBilled = payments.reduce((sum, p) => sum + toBRL(parseFloat(p.amount) || 0, p.currency), 0);
+  const displayRevenue = fromBRL(totalBilled, currency);
 
   return (
     <Link to={`/client/${client.id}`} className="group block">
@@ -239,10 +218,23 @@ function ClientEditorialCard({ client, payments, currency, convertToBRL, convert
 
         <div className="pt-10 flex items-end justify-between">
            <div className="space-y-1">
-              <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest">Revenue</span>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest">Revenue</span>
+                <span className={cn(
+                  "text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded",
+                  payments.length === 0 ? "bg-neutral-50 text-neutral-400" :
+                  payments.every(p => p.is_paid) ? "bg-emerald-50 text-emerald-600" :
+                  payments.some(p => p.is_paid) ? "bg-amber-50 text-amber-600" :
+                  "bg-rose-50 text-rose-600"
+                )}>
+                  {payments.length === 0 ? 'No Billing' : 
+                   payments.every(p => p.is_paid) ? 'Paid' : 
+                   payments.some(p => p.is_paid) ? 'Paid + Pending' : 'Unpaid'}
+                </span>
+              </div>
               <div className="text-xl font-serif text-success-green flex items-center gap-2 whitespace-nowrap">
                 <span className="text-[10px] font-medium text-neutral-400 not-serif">{CURRENCY_SYMBOLS[currency]}</span>
-                {displayRevenue?.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                {displayRevenue?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
            </div>
            

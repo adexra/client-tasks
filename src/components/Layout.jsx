@@ -17,6 +17,7 @@ import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import FocusTimer from './FocusTimer';
 import TaskModal from './TaskModal';
+import { useFinancials } from '../context/FinancialContext';
 
 const NAV_ITEMS = [
   { to: '/', icon: BarChart3, label: 'Dashboard' },
@@ -26,105 +27,25 @@ const NAV_ITEMS = [
 ];
 
 export default function Layout() {
-  const [rawTotalBRL, setRawTotalBRL] = useState(0);
-  const [rawExpensesBRL, setRawExpensesBRL] = useState(0);
-  const [fxRates, setFxRates] = useState({ USD: 6.12, EUR: 6.64 });
-  const [displayCurrency, setDisplayCurrency] = useState(() => localStorage.getItem('displayCurrency') || 'BRL');
+  const { totals, displayCurrency, changeCurrency, fromBRL } = useFinancials();
   const [clients, setClients] = useState([]);
-  
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [sessionTask, setSessionTask] = useState(null);
-  const fetchRef = useRef(false);
 
   const fetchClients = async () => {
     const { data } = await supabase.from('clients').select('id, name').eq('status', 'active');
     setClients(data || []);
   };
 
-  const fetchFX = async () => {
-    fetchRef.current = true;
-    try {
-      const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const data = await res.json();
-      if (data && data.rates) {
-        setFxRates({
-          USD: data.rates.BRL || 6.12,
-          EUR: (data.rates.BRL / data.rates.EUR) || 6.64
-        });
-      }
-    } catch (e) {
-      console.warn("FX fetch failed, using fallback.");
-    } finally {
-      fetchRef.current = false;
-    }
-  };
-
-  const calculateTotal = async () => {
-    // 1. Fetch Income (Payments)
-    const { data: paymentsData } = await supabase.from('client_payments').select('amount, currency');
-    if (paymentsData) {
-      const totalInBRL = paymentsData.reduce((sum, p) => {
-        let value = parseFloat(p.amount) || 0;
-        if (p.currency === 'BRL') return sum + value;
-        if (p.currency === 'EUR') value = value * fxRates.EUR;
-        else value = value * fxRates.USD;
-        return sum + value;
-      }, 0);
-      setRawTotalBRL(totalInBRL);
-    }
-
-    // 2. Fetch Expenses
-    const { data: expensesData } = await supabase.from('expenses').select('amount, currency');
-    if (expensesData) {
-      const totalExpBRL = expensesData.reduce((sum, e) => {
-        let value = parseFloat(e.amount) || 0;
-        if (e.currency === 'BRL') return sum + value;
-        if (e.currency === 'EUR') value = value * fxRates.EUR;
-        else value = value * fxRates.USD;
-        return sum + value;
-      }, 0);
-      setRawExpensesBRL(totalExpBRL);
-    }
-  };
-
-  const changeCurrency = (curr) => {
-    setDisplayCurrency(curr);
-    localStorage.setItem('displayCurrency', curr);
-  };
-
   useEffect(() => {
-    fetchFX().then(calculateTotal);
     fetchClients();
-    
-    const handleUpdate = () => {
-      calculateTotal();
-      fetchClients();
-    };
+    const handleUpdate = () => fetchClients();
     window.addEventListener('project-updated', handleUpdate);
-    window.addEventListener('financial-updated', handleUpdate);
-    
-    const interval = setInterval(() => {
-      fetchFX().then(calculateTotal);
-    }, 60000);
+    return () => window.removeEventListener('project-updated', handleUpdate);
+  }, []);
 
-    return () => {
-      window.removeEventListener('project-updated', handleUpdate);
-      window.removeEventListener('financial-updated', handleUpdate);
-      clearInterval(interval);
-    };
-  }, []); // Removed fxRates from deps to prevent infinite loop
-
-  const displayedTotal = useMemo(() => {
-    if (displayCurrency === 'USD') return rawTotalBRL / fxRates.USD;
-    if (displayCurrency === 'EUR') return rawTotalBRL / fxRates.EUR;
-    return rawTotalBRL;
-  }, [rawTotalBRL, displayCurrency, fxRates]);
-
-  const displayedExpenses = useMemo(() => {
-    if (displayCurrency === 'USD') return rawExpensesBRL / fxRates.USD;
-    if (displayCurrency === 'EUR') return rawExpensesBRL / fxRates.EUR;
-    return rawExpensesBRL;
-  }, [rawExpensesBRL, displayCurrency, fxRates]);
+  const displayedTotal = useMemo(() => fromBRL(totals.incomeBRL, displayCurrency), [totals.incomeBRL, displayCurrency, fromBRL]);
+  const displayedExpenses = useMemo(() => fromBRL(totals.expensesBRL, displayCurrency), [totals.expensesBRL, displayCurrency, fromBRL]);
 
   return (
     <div className="flex min-h-screen bg-bg-paper text-ink-primary font-sans antialiased">
@@ -198,15 +119,15 @@ export default function Layout() {
       </aside>
 
       {/* Main Workspace */}
-      <main className="flex-1 ml-72 transition-all duration-500 min-h-screen">
-        <header className="sticky top-0 z-30 h-20 bg-bg-paper/80 backdrop-blur-md border-b border-border-light flex items-center justify-between px-12">
-          <div className="flex items-center gap-8 flex-1">
+      <main className="flex-1 lg:ml-72 transition-all duration-500 min-h-screen">
+        <header className="sticky top-0 z-30 min-h-[5rem] py-4 bg-bg-paper/80 backdrop-blur-md border-b border-border-light flex flex-wrap items-center justify-between px-6 md:px-12 gap-y-4">
+          <div className="flex items-center gap-4 md:gap-8 flex-1 min-w-[300px]">
             <div className="flex items-center gap-4">
               <Search className="h-4 w-4 text-neutral-400" />
               <input 
                 type="text" 
                 placeholder="Search projects..." 
-                className="bg-transparent border-none text-sm font-medium text-ink-primary placeholder:text-neutral-400 focus:ring-0 w-full max-w-xs transition-all"
+                className="bg-transparent border-none text-sm font-medium text-ink-primary placeholder:text-neutral-400 focus:ring-0 w-full max-w-[120px] sm:max-w-xs transition-all"
               />
             </div>
             <FocusTimer onLog={(data) => {
@@ -220,7 +141,7 @@ export default function Layout() {
             }} />
           </div>
 
-          <div className="flex items-center gap-10">
+          <div className="flex items-center gap-4 sm:gap-10 ml-auto">
             <div className="flex items-center gap-6">
               <div className="text-right">
                 <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">Income</p>
@@ -232,9 +153,9 @@ export default function Layout() {
                     changeCurrency(next);
                   }}
                 >
-                  <p className="text-sm font-serif text-success-green tabular-nums whitespace-nowrap">
+                  <p className="text-sm font-serif text-success-green tabular-nums">
                     {displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ '}
-                    {displayedTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    {displayedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                   <RefreshCcw className="h-2.5 w-2.5 text-neutral-300 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
@@ -242,9 +163,9 @@ export default function Layout() {
 
               <div className="text-right">
                 <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">Expenses</p>
-                <p className="text-sm font-serif text-rose-500 tabular-nums whitespace-nowrap">
+                <p className="text-sm font-serif text-rose-500 tabular-nums">
                   {displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ '}
-                  {displayedExpenses.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  {displayedExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
               
@@ -253,11 +174,24 @@ export default function Layout() {
               <div className="text-right">
                 <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1">Net Margin</p>
                 <p className={cn(
-                  "text-[10px] font-mono",
-                  displayedTotal - displayedExpenses >= 0 ? "text-emerald-500" : "text-rose-500"
+                  "text-sm font-serif tabular-nums",
+                  totals.marginBRL >= 0 ? "text-emerald-500" : "text-rose-500"
                 )}>
                   {displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ '}
-                  {(displayedTotal - displayedExpenses).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  {fromBRL(totals.marginBRL, displayCurrency).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+
+              <div className="h-4 w-[1px] bg-border-light" />
+
+              <div className="text-right">
+                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1">Bank Balance</p>
+                <p className={cn(
+                  "text-sm font-serif tabular-nums",
+                  totals.bankBRL >= 0 ? "text-[var(--ink-primary)]" : "text-rose-600 font-bold"
+                )}>
+                  {displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ '}
+                  {fromBRL(totals.bankBRL, displayCurrency).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             </div>

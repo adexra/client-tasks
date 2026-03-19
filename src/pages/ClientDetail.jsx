@@ -273,7 +273,7 @@ export default function ClientDetail() {
                  <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest">Current Bill</span>
                  <div className="flex items-baseline gap-2 text-4xl font-serif text-[var(--ink-primary)]">
                     <span className="text-xs font-medium text-neutral-400 not-serif">{CURRENCY_SYMBOLS[client.currency || 'BRL']}</span>
-                    {currentBill.toLocaleString(undefined, { minimumFractionDigits: 0 })}
+                    {currentBill.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                  </div>
               </div>
               
@@ -281,7 +281,7 @@ export default function ClientDetail() {
                  <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest">Lifetime Yield</span>
                  <div className="flex items-baseline gap-2 text-xl font-serif text-[var(--success-green)]">
                     <span className="text-[10px] font-medium text-neutral-400 not-serif">{CURRENCY_SYMBOLS[client.currency || 'BRL']}</span>
-                    {lifetimeBill.toLocaleString(undefined, { minimumFractionDigits: 0 })}
+                    {lifetimeBill.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                  </div>
               </div>
            </div>
@@ -401,7 +401,7 @@ export default function ClientDetail() {
                   <div className="pt-8 flex items-end justify-between">
                      <div className="flex items-baseline gap-1">
                         <span className="text-[10px] font-medium text-neutral-400">{CURRENCY_SYMBOLS[p.currency || 'BRL']}</span>
-                        <span className="text-2xl font-serif text-[var(--ink-primary)]">{parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+                        <span className="text-2xl font-serif text-[var(--ink-primary)]">{parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>
                      </div>
                      
                      <div className="flex items-center gap-3">
