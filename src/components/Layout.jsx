@@ -33,6 +33,7 @@ export default function Layout() {
   const [clients, setClients] = useState([]);
   
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [sessionTask, setSessionTask] = useState(null);
   const fetchRef = useRef(false);
 
   const fetchClients = async () => {
@@ -41,7 +42,6 @@ export default function Layout() {
   };
 
   const fetchFX = async () => {
-    if (fetchRef.current) return;
     fetchRef.current = true;
     try {
       const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
