@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-paper: #F7F6F3;
+  --color-surface-white: #FFFFFF;
+  --color-ink-primary: #1A1A1A;
+  --color-ink-secondary: #475569;
+  --color-ink-muted: #64748B;
+  --color-ink-placeholder: #64748B;
+  --color-accent-sand: #E8E4DC;
+  --color-ink-charcoal: #111111;
+  --color-success-green: #15803D;
+  --color-border-light: #E2E8F0;
+
+  --font-serif: "DM Serif Display", serif;
+  --font-sans: "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-paper text-ink-primary antialiased;
+    font-family: var(--font-sans);
+    font-weight: 400;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    @apply tracking-tight;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  input::placeholder, textarea::placeholder {
+    @apply text-ink-placeholder italic;
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply bg-surface-white border border-border-light rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-200;
+  }
+
+  .surface-card-hover {
+    @apply hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:bg-accent-sand/20;
+  }
+
+  .btn-minimal {
+    @apply px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border border-transparent;
+  }
+
+  .btn-primary {
+    @apply bg-ink-charcoal text-white hover:bg-ink-primary;
+  }
+
+  .btn-secondary {
+    @apply bg-accent-sand text-ink-primary hover:bg-neutral-200;
+  }
+
+  .stat-label {
+    @apply text-[10px] font-bold uppercase tracking-[0.15em] text-ink-muted;
+  }
+
+  .stat-value {
+    @apply text-3xl font-serif text-ink-primary;
+  }
+}
+
+/* Custom Scrollbar - Minimal */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-200 rounded-full hover:bg-neutral-300 transition-colors;
+}
+
+/* Editorial Page Transitions */
+.page-fade-enter {
+  opacity: 0;
+}
+.page-fade-enter-active {
+  opacity: 1;
+  transition: opacity 200ms ease-in;
+}
+
+/* Remove all previous dystopian styles */
+.animate-glow, [class*="glow-text"], [class*="ease-premium"], .noise-overlay {
+  animation: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  background-image: none !important;
+}
