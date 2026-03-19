@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
 import { 
   BarChart3, 
@@ -33,7 +33,7 @@ export default function Layout() {
   const [clients, setClients] = useState([]);
   
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [sessionTask, setSessionTask] = useState(null);
+  const fetchRef = useRef(false);
 
   const fetchClients = async () => {
     const { data } = await supabase.from('clients').select('id, name').eq('status', 'active');
@@ -41,6 +41,8 @@ export default function Layout() {
   };
 
   const fetchFX = async () => {
+    if (fetchRef.current) return;
+    fetchRef.current = true;
     try {
       const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
       const data = await res.json();
@@ -52,6 +54,8 @@ export default function Layout() {
       }
     } catch (e) {
       console.warn("FX fetch failed, using fallback.");
+    } finally {
+      fetchRef.current = false;
     }
   };
 
@@ -110,17 +114,17 @@ export default function Layout() {
     };
   }, []); // Removed fxRates from deps to prevent infinite loop
 
-  const displayedTotal = (() => {
+  const displayedTotal = useMemo(() => {
     if (displayCurrency === 'USD') return rawTotalBRL / fxRates.USD;
     if (displayCurrency === 'EUR') return rawTotalBRL / fxRates.EUR;
     return rawTotalBRL;
-  })();
+  }, [rawTotalBRL, displayCurrency, fxRates]);
 
-  const displayedExpenses = (() => {
+  const displayedExpenses = useMemo(() => {
     if (displayCurrency === 'USD') return rawExpensesBRL / fxRates.USD;
     if (displayCurrency === 'EUR') return rawExpensesBRL / fxRates.EUR;
     return rawExpensesBRL;
-  })();
+  }, [rawExpensesBRL, displayCurrency, fxRates]);
 
   return (
     <div className="flex min-h-screen bg-bg-paper text-ink-primary font-sans antialiased">

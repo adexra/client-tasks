@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
   Plus, 
@@ -46,24 +46,9 @@ export default function Dashboard() {
     setLoading(false);
   }
 
-  const fetchFX = async () => {
-    try {
-      const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const data = await res.json();
-      if (data && data.rates) {
-        setFxRates({
-          USD: data.rates.BRL || 6.12,
-          EUR: (data.rates.BRL / data.rates.EUR) || 6.64
-        });
-      }
-    } catch (e) {
-      console.warn("FX fetch failed, using fallback.");
-    }
-  };
 
   useEffect(() => { 
     loadClients(); 
-    fetchFX();
   }, []);
 
   const filteredClients = clients.filter(c => showArchived ? c.status === 'archived' : c.status === 'active');
@@ -80,15 +65,17 @@ export default function Dashboard() {
     return amountBRL / fxRates.USD;
   };
 
-  const totalBalance = payments.reduce((sum, p) => {
-    const client = clients.find(c => c.id === p.client_id);
-    if (client && client.status === (showArchived ? 'archived' : 'active')) {
-      return sum + convertToBRL(parseFloat(p.amount) || 0, p.currency);
-    }
-    return sum;
-  }, 0);
+  const totalBalance = useMemo(() => {
+    return payments.reduce((sum, p) => {
+      const client = clients.find(c => c.id === p.client_id);
+      if (client && client.status === (showArchived ? 'archived' : 'active')) {
+        return sum + convertToBRL(parseFloat(p.amount) || 0, p.currency);
+      }
+      return sum;
+    }, 0);
+  }, [payments, clients, showArchived, fxRates]);
 
-  const displayedTotal = convertFromBRL(totalBalance, currency);
+  const displayedTotal = useMemo(() => convertFromBRL(totalBalance, currency), [totalBalance, currency, fxRates]);
 
   return (
     <div className="space-y-20 animate-in fade-in duration-700">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
   Plus, 
@@ -30,20 +30,6 @@ export default function Financials() {
     is_repeatable: false
   });
 
-  const fetchFX = async () => {
-    try {
-      const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const data = await res.json();
-      if (data && data.rates) {
-        setFxRates({
-          USD: data.rates.BRL || 6.12,
-          EUR: (data.rates.BRL / data.rates.EUR) || 6.64
-        });
-      }
-    } catch (e) {
-      console.warn("FX fetch failed, using fallback.");
-    }
-  };
 
   const loadData = async () => {
     setLoading(true);
@@ -60,7 +46,6 @@ export default function Financials() {
   };
 
   useEffect(() => {
-    fetchFX();
     loadData();
     
     const handleUpdate = () => loadData();
@@ -114,11 +99,11 @@ export default function Financials() {
     return amountBRL;
   };
 
-  const totalBilledBRL = payments.reduce((sum, item) => sum + toBRL(parseFloat(item.amount) || 0, item.currency), 0);
-  const totalPaidBRL = payments.filter(p => p.is_paid).reduce((sum, item) => sum + toBRL(parseFloat(item.amount) || 0, item.currency), 0);
-  const totalExpensesBRL = expenses.reduce((sum, item) => sum + toBRL(parseFloat(item.amount) || 0, item.currency), 0);
-  const liquidMoneyBRL = totalPaidBRL - totalExpensesBRL;
-  const netProfitBRL = totalBilledBRL - totalExpensesBRL;
+  const totalBilledBRL = useMemo(() => payments.reduce((sum, item) => sum + toBRL(parseFloat(item.amount) || 0, item.currency), 0), [payments, fxRates]);
+  const totalPaidBRL = useMemo(() => payments.filter(p => p.is_paid).reduce((sum, item) => sum + toBRL(parseFloat(item.amount) || 0, item.currency), 0), [payments, fxRates]);
+  const totalExpensesBRL = useMemo(() => expenses.reduce((sum, item) => sum + toBRL(parseFloat(item.amount) || 0, item.currency), 0), [expenses, fxRates]);
+  const liquidMoneyBRL = useMemo(() => totalPaidBRL - totalExpensesBRL, [totalPaidBRL, totalExpensesBRL]);
+  const netProfitBRL = useMemo(() => totalBilledBRL - totalExpensesBRL, [totalBilledBRL, totalExpensesBRL]);
 
   const format = (val) => {
     const symbol = displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ ';
