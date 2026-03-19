@@ -56,13 +56,13 @@ export default function Layout() {
   };
 
   const calculateTotal = async () => {
-    // 1. Fetch Income (Clients)
-    const { data: clientsData } = await supabase.from('clients').select('revenue, currency').eq('status', 'active');
-    if (clientsData) {
-      const totalInBRL = clientsData.reduce((sum, c) => {
-        let value = parseFloat(c.revenue) || 0;
-        if (c.currency === 'BRL') return sum + value;
-        if (c.currency === 'EUR') value = value * fxRates.EUR;
+    // 1. Fetch Income (Payments)
+    const { data: paymentsData } = await supabase.from('client_payments').select('amount, currency');
+    if (paymentsData) {
+      const totalInBRL = paymentsData.reduce((sum, p) => {
+        let value = parseFloat(p.amount) || 0;
+        if (p.currency === 'BRL') return sum + value;
+        if (p.currency === 'EUR') value = value * fxRates.EUR;
         else value = value * fxRates.USD;
         return sum + value;
       }, 0);
@@ -108,7 +108,7 @@ export default function Layout() {
       window.removeEventListener('financial-updated', handleUpdate);
       clearInterval(interval);
     };
-  }, [fxRates]); // Removed displayCurrency from deps as it's handled in render
+  }, []); // Removed fxRates from deps to prevent infinite loop
 
   const displayedTotal = (() => {
     if (displayCurrency === 'USD') return rawTotalBRL / fxRates.USD;
