@@ -10,7 +10,7 @@ export default function Account() {
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Operator Profile</span>
             <div className="h-[1px] w-8 bg-neutral-200" />
          </div>
-         <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight">
+         <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight break-words">
            Control Center.
          </h1>
          <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
