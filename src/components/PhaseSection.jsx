@@ -5,10 +5,10 @@ import { useToast } from '../context/ToastContext';
 import { cn } from '../lib/utils';
 
 const PHASE_META = {
-  onboarding: { label: 'Onboarding', color: 'text-neutral-500',  bg: 'bg-neutral-50',  border: 'border-neutral-200'  },
-  delivery:   { label: 'Delivery',   color: 'text-neutral-500',  bg: 'bg-neutral-50',  border: 'border-neutral-200' },
-  qa:         { label: 'Quality Assurance', color: 'text-neutral-500', bg: 'bg-neutral-50',  border: 'border-neutral-200' },
-  update:     { label: 'Updates',     color: 'text-neutral-500', bg: 'bg-neutral-50',  border: 'border-neutral-200' },
+  onboarding: { label: 'Integração', color: 'text-neutral-500',  bg: 'bg-neutral-50',  border: 'border-neutral-200'  },
+  delivery:   { label: 'Entrega',   color: 'text-neutral-500',  bg: 'bg-neutral-50',  border: 'border-neutral-200' },
+  qa:         { label: 'Garantia de Qualidade', color: 'text-neutral-500', bg: 'bg-neutral-50',  border: 'border-neutral-200' },
+  update:     { label: 'Atualizações',     color: 'text-neutral-500', bg: 'bg-neutral-50',  border: 'border-neutral-200' },
 };
 
 export default function PhaseSection({ phase, onUpdate }) {
@@ -32,7 +32,7 @@ export default function PhaseSection({ phase, onUpdate }) {
       .update({ completed: !phase.completed })
       .eq('id', phase.id);
     if (!error) onUpdate();
-    else toast.error('Update failure.');
+    else toast.error('Falha na atualização.');
   }
 
   async function saveField(field) {
@@ -42,8 +42,8 @@ export default function PhaseSection({ phase, onUpdate }) {
       .update({ field_value: field.field_value })
       .eq('id', field.id);
     setSavingId(null);
-    if (error) toast.error('Sync failure.');
-    else toast.success('Progress saved.');
+    if (error) toast.error('Falha na sincronização.');
+    else toast.success('Progresso salvo.');
   }
 
   function updateField(id, val) {
@@ -87,13 +87,13 @@ export default function PhaseSection({ phase, onUpdate }) {
             "text-lg font-serif transition-colors",
             phase.completed ? "text-neutral-400 italic line-through" : "text-[var(--ink-primary)]"
           )}>
-            {phase.phase_name.charAt(0).toUpperCase() + phase.phase_name.slice(1)} Module
+            Módulo de {phase.phase_name === 'onboarding' ? 'Integração' : phase.phase_name === 'delivery' ? 'Entrega' : phase.phase_name === 'qa' ? 'QA' : 'Atualizações'}
           </h4>
         </div>
 
         <div className="flex items-center gap-4">
            {phase.completed && (
-             <span className="text-[9px] text-[var(--success-green)] font-bold uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded">Validated</span>
+             <span className="text-[9px] text-[var(--success-green)] font-bold uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded">Validado</span>
            )}
            <div className="h-8 w-[1px] bg-neutral-100" />
            {isOpen
@@ -107,7 +107,7 @@ export default function PhaseSection({ phase, onUpdate }) {
       {isOpen && (
         <div className="border-t border-neutral-100 px-10 py-10 space-y-10 bg-neutral-50/30 animate-in slide-in-from-top-1 duration-300">
           {fields.length === 0 && (
-            <p className="text-xs text-neutral-400 italic text-center py-4">No directive fields initialized for this module.</p>
+            <p className="text-xs text-neutral-400 italic text-center py-4">Nenhum campo de diretriz inicializado para este módulo.</p>
           )}
           {fields.map(field => (
             <FieldRenderer
@@ -130,7 +130,7 @@ export default function PhaseSection({ phase, onUpdate }) {
 }
 
 function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
-  const isTaskList = field.field_key === 'Execution Roadmap' || field.field_key === 'Action Items';
+  const isTaskList = field.field_key === 'Execution Roadmap' || field.field_key === 'Action Items' || field.field_key === 'Roteiro de Execução' || field.field_key === 'Itens de Ação';
 
   if (isTaskList) {
     let items = [];
@@ -144,17 +144,17 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
       <div className="space-y-6">
         <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
           <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-            {field.field_key}
+            {field.field_key === 'Execution Roadmap' ? 'Roteiro de Execução' : field.field_key === 'Action Items' ? 'Itens de Ação' : field.field_key}
           </label>
           <button type="button" onClick={addItem} className="text-[9px] font-bold uppercase text-[var(--ink-charcoal)] hover:underline underline-offset-4 decoration-neutral-300">
-            + Add Task
+            + Adicionar Tarefa
           </button>
         </div>
         <div className="space-y-3">
           {items.map(item => (
             <div
               key={item.id}
-              className="group/row flex items-center gap-4 bg-white border border-neutral-100 rounded-xl px-5 py-4 transition-all hover:border-neutral-200 shadow-sm"
+              className="group/row flex items-center gap-4 bg-white border border-neutral-100 rounded-xl px-4 py-3.5 transition-all hover:border-neutral-200 shadow-sm"
             >
               <button 
                 type="button"
@@ -171,7 +171,7 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
                 value={item.text}
                 onChange={e => updateItem(item.id, { text: e.target.value })}
                 onBlur={() => onTaskListChange(items)}
-                placeholder="What needs to be done?"
+                placeholder="O que precisa ser feito?"
                 className={cn(
                   "flex-1 bg-transparent border-none p-0 text-sm font-medium focus:ring-0 placeholder:text-neutral-200 transition-all",
                   item.done ? "line-through text-neutral-300" : "text-[var(--ink-primary)]"
@@ -184,7 +184,7 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
           ))}
           {items.length === 0 && (
             <div className="py-12 border border-dashed border-neutral-100 rounded-2xl flex items-center justify-center">
-               <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest italic">Awaiting task definition.</span>
+               <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest italic">Aguardando definição de tarefas.</span>
             </div>
           )}
         </div>
@@ -195,7 +195,7 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
   const InputLayout = ({ children, label, saving }) => (
     <div className="space-y-3 group">
       <div className="flex items-center justify-between ml-1">
-        <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-[0.1em]">{label}</label>
+        <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-[0.1em]">{label === 'Timeline' ? 'Cronograma' : label}</label>
         {saving && <Loader2 className="h-3.5 w-3.5 text-neutral-300 animate-spin" />}
       </div>
       {children}
@@ -250,7 +250,7 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
           value={field.field_value || ''}
           onChange={e => onChange(e.target.value)}
           onBlur={onBlur}
-          placeholder="Declare Timeline..."
+          placeholder="Declarar Cronograma..."
           className="w-full bg-white border border-neutral-200 rounded-xl px-6 py-4 text-sm font-medium text-[var(--ink-primary)] placeholder:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-neutral-200 transition-all italic"
         />
       </InputLayout>
@@ -264,7 +264,7 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
         onChange={e => onChange(e.target.value)}
         onBlur={onBlur}
         rows={3}
-        placeholder="Enter details..."
+        placeholder="Insira os detalhes..."
         className="w-full bg-white border border-neutral-200 rounded-xl px-6 py-4 text-sm font-medium text-[var(--ink-secondary)] placeholder:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-neutral-200 transition-all resize-none italic leading-relaxed"
       />
     </InputLayout>

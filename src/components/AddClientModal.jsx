@@ -8,7 +8,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
   const toast = useToast();
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
-    what_sold: '', next_action: '', definition_of_done: '', not_included: ''
+    what_sold: '', next_action: '', definition_of_done: '', not_included: '', contact_link: ''
   });
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState([]);
@@ -27,13 +27,14 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
         what_sold: editClient.what_sold || '',
         next_action: editClient.next_action || '',
         definition_of_done: editClient.definition_of_done || '',
-        not_included: editClient.not_included || ''
+        not_included: editClient.not_included || '',
+        contact_link: editClient.contact_link || ''
       });
       setTags(editClient.tags || []);
     } else {
       setFormData({ 
         name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
-        what_sold: '', next_action: '', definition_of_done: '', not_included: ''
+        what_sold: '', next_action: '', definition_of_done: '', not_included: '', contact_link: ''
       });
       setTags([]);
     }
@@ -51,7 +52,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
 
   async function handleSubmit(e) {
     if (e) e.preventDefault();
-    if (!formData.name) return toast.error('Client name is required');
+    if (!formData.name) return toast.error('Nome do cliente é obrigatório');
     
     setSubmitting(true);
     const dataToSave = { 
@@ -75,7 +76,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       await supabase.from('client_payments').insert([{
         client_id: newClient.id,
         amount: parseFloat(formData.revenue),
-        description: 'Initial Project Fee',
+        description: 'Taxa Inicial do Projeto',
         currency: formData.currency,
         is_paid: true
       }]);
@@ -83,7 +84,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       // If editing, check if they changed the revenue value
       if (parseFloat(formData.revenue) !== parseFloat(editClient.revenue || 0)) {
         const { data: existing } = await supabase.from('client_payments')
-          .select('id').eq('client_id', editClient.id).eq('description', 'Initial Project Fee');
+          .select('id').eq('client_id', editClient.id).eq('description', 'Taxa Inicial do Projeto');
 
         if (existing && existing.length > 0) {
            await supabase.from('client_payments')
@@ -103,9 +104,9 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
 
     if (error) {
       console.error(error);
-      toast.error('Sync failure');
+      toast.error('Falha na sincronização');
     } else {
-      toast.success(editClient ? 'Project updated' : 'Project created');
+      toast.success(editClient ? 'Projeto atualizado' : 'Projeto criado');
       if (onClientAdded) onClientAdded();
       window.dispatchEvent(new Event('project-updated'));
       window.dispatchEvent(new Event('financial-updated'));
@@ -124,8 +125,8 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
         {/* Modal Header */}
         <div className="p-10 border-b border-neutral-100 flex items-center justify-between">
            <div className="space-y-1">
-              <h2 className="text-3xl font-serif text-[var(--ink-primary)]">{editClient ? 'Edit Project' : 'New Project'}</h2>
-              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Project Configuration</p>
+              <h2 className="text-3xl font-serif text-[var(--ink-primary)]">{editClient ? 'Editar Projeto' : 'Novo Projeto'}</h2>
+              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Configuração do Projeto</p>
            </div>
            <button onClick={onClose} className="p-2 hover:bg-neutral-50 rounded-full transition-colors text-neutral-300 hover:text-neutral-500">
              <X className="h-6 w-6" />
@@ -136,20 +137,21 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
           {/* Identity Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-6">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Project Identity</label>
+              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Identidade do Projeto</label>
               <div className="space-y-4">
-                 <MinimalInput label="Project Name" value={formData.name} onChange={v => setFormData({...formData, name: v})} placeholder="Client Name" />
-                 <MinimalInput label="Contact Email" value={formData.email} onChange={v => setFormData({...formData, email: v})} placeholder="contact@entity.com" />
-                 <MinimalInput label="Website URL" value={formData.url} onChange={v => setFormData({...formData, url: v})} placeholder="https://entity.com" />
+                 <MinimalInput label="Nome do Projeto" value={formData.name} onChange={v => setFormData({...formData, name: v})} placeholder="Nome do Cliente" />
+                 <MinimalInput label="E-mail de Contato" value={formData.email} onChange={v => setFormData({...formData, email: v})} placeholder="contato@entidade.com" />
+                 <MinimalInput label="Link de Contato" value={formData.contact_link} onChange={v => setFormData({...formData, contact_link: v})} placeholder="WhatsApp, Calendly, etc." />
+                 <MinimalInput label="URL do Website" value={formData.url} onChange={v => setFormData({...formData, url: v})} placeholder="https://entidade.com" />
               </div>
             </div>
 
             <div className="space-y-6">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Project Financials</label>
+              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Financeiro do Projeto</label>
               <div className="space-y-6">
                  <div className="grid grid-cols-3 gap-4">
                     <div className="col-span-1">
-                       <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-2 ml-1">Currency</label>
+                       <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-2 ml-1">Moeda</label>
                        <select 
                          value={formData.currency} 
                          onChange={e => setFormData({...formData, currency: e.target.value})}
@@ -161,18 +163,18 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                        </select>
                     </div>
                      <div className="col-span-2">
-                        <MinimalInput label="Initial Bill / Fee" value={formData.revenue} onChange={v => setFormData({...formData, revenue: v})} placeholder="0.00" type="number" />
+                        <MinimalInput label="Taxa / Faturamento Inicial" value={formData.revenue} onChange={v => setFormData({...formData, revenue: v})} placeholder="0.00" type="number" />
                      </div>
                  </div>
                  
                  <div>
-                    <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-3 ml-1">Current Phase</label>
+                    <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-3 ml-1">Fase Atual</label>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                        {[
-                         {id: 'onboarding', label: 'Onboarding'}, 
-                         {id: 'delivery', label: 'Delivery'}, 
+                         {id: 'onboarding', label: 'Integração'}, 
+                         {id: 'delivery', label: 'Entrega'}, 
                          {id: 'qa', label: 'QA'}, 
-                         {id: 'update', label: 'Updates'}
+                         {id: 'update', label: 'Atualizações'}
                        ].map(p => (
                          <button
                            key={p.id}
@@ -198,23 +200,23 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
           <div className="space-y-10 pt-10 border-t border-neutral-100">
              <div className="flex items-center gap-3">
                 <Target className="h-4 w-4 text-[var(--accent-sand)]" />
-                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Project Scope & Next Action</label>
+                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Escopo do Projeto e Próxima Ação</label>
              </div>
              
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <MinimalTextarea label="Project Description" value={formData.what_sold} onChange={v => setFormData({...formData, what_sold: v})} placeholder="Define core objectives..." />
-                <MinimalTextarea label="Immediate Next Action" value={formData.next_action} onChange={v => setFormData({...formData, next_action: v})} placeholder="Next immediate move..." />
+                <MinimalTextarea label="Descrição do Projeto" value={formData.what_sold} onChange={v => setFormData({...formData, what_sold: v})} placeholder="Defina os objetivos principais..." />
+                <MinimalTextarea label="Próxima Ação Imediata" value={formData.next_action} onChange={v => setFormData({...formData, next_action: v})} placeholder="Próximo passo imediato..." />
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <MinimalTextarea label="Definition of Done" value={formData.definition_of_done} onChange={v => setFormData({...formData, definition_of_done: v})} placeholder="Benchmarks for completion..." />
-                <MinimalTextarea label="Out of Scope" value={formData.not_included} onChange={v => setFormData({...formData, not_included: v})} placeholder="Explicit boundaries..." />
+                <MinimalTextarea label="Definição de Concluído" value={formData.definition_of_done} onChange={v => setFormData({...formData, definition_of_done: v})} placeholder="Critérios para conclusão..." />
+                <MinimalTextarea label="Fora do Escopo" value={formData.not_included} onChange={v => setFormData({...formData, not_included: v})} placeholder="Limites explícitos..." />
              </div>
           </div>
 
           {/* Classification Tags */}
           <div className="space-y-6 pt-10 border-t border-neutral-100">
-             <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Project Tags</label>
+             <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Tags do Projeto</label>
              <div className="bg-white border border-neutral-100 rounded-2xl p-6 space-y-4">
                 <div className="flex flex-wrap gap-2">
                    {tags.map(t => (
@@ -227,7 +229,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                      value={tagInput}
                      onChange={e => setTagInput(e.target.value)}
                      onKeyDown={addTag}
-                     placeholder="+ Add tag..."
+                     placeholder="+ Adicionar tag..."
                      className="bg-transparent border-none p-0 text-[10px] font-bold text-neutral-300 placeholder:text-neutral-100 focus:ring-0 uppercase tracking-widest mt-0.5"
                    />
                 </div>
@@ -236,13 +238,13 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
 
           {/* Submit Actions */}
           <div className="flex justify-end items-center gap-8 pt-10">
-             <button type="button" onClick={onClose} className="text-[10px] font-bold text-neutral-300 hover:text-neutral-500 uppercase tracking-widest transition-colors">Cancel</button>
+             <button type="button" onClick={onClose} className="text-[10px] font-bold text-neutral-300 hover:text-neutral-500 uppercase tracking-widest transition-colors">Cancelar</button>
              <button
                type="submit"
                disabled={submitting}
                className="btn-minimal btn-primary px-12 py-5 h-auto text-[10px]"
              >
-               {submitting ? 'Saving...' : (editClient ? 'Update Project' : 'Create Project')}
+               {submitting ? 'Salvando...' : (editClient ? 'Atualizar Projeto' : 'Criar Projeto')}
              </button>
           </div>
         </form>

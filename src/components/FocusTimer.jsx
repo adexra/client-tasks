@@ -21,7 +21,7 @@ export default function FocusTimer({ onLog }) {
   const handleStopAndLog = () => {
     setIsActive(false);
     onLog({
-      title: intent || 'Session Objective',
+      title: intent || 'Foco em Execução',
       minutes: Math.ceil((15 * 60 - timeLeft) / 60)
     });
     reset();
@@ -36,7 +36,7 @@ export default function FocusTimer({ onLog }) {
     } else if (timeLeft === 0 && isActive) {
       setIsActive(false);
       setIsCompleted(true);
-      toast.success("Focus session completed.");
+      toast.success("Sessão de foco concluída.");
       handleStopAndLog();
       clearInterval(interval);
     }
@@ -68,7 +68,7 @@ export default function FocusTimer({ onLog }) {
           <button 
             onClick={handleStopAndLog}
             className="p-1 hover:text-rose-500 text-ink-muted opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
-            title="Stop and Log Directive"
+            title="Parar e Registrar Diretiva"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -79,14 +79,14 @@ export default function FocusTimer({ onLog }) {
         {isCompleted ? (
           <div className="flex items-center gap-2 text-success-green animate-in fade-in slide-in-from-left-2">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Session Concluded</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Sessão Concluída</span>
           </div>
         ) : (
           <div className="flex items-center gap-2 flex-1">
             <Target className="h-3 w-3 text-ink-muted shrink-0" />
             <input 
               type="text"
-              placeholder="Primary session objective..."
+              placeholder="Objetivo principal da sessão..."
               value={intent}
               onChange={(e) => setIntent(e.target.value)}
               className="bg-transparent border-none p-0 text-[11px] font-medium placeholder:text-ink-placeholder focus:ring-0 w-full"

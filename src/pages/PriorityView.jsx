@@ -18,17 +18,17 @@ import { useToast } from '../context/ToastContext';
 import TaskModal from '../components/TaskModal';
 
 const BUCKETS = {
-  active_project: { id: 'active_project', label: 'Active Projects', icon: Rocket },
-  this_week:      { id: 'this_week',      label: 'Weekly Execution', icon: CalendarDays },
+  active_project: { id: 'active_project', label: 'Projetos Ativos', icon: Rocket },
+  this_week:      { id: 'this_week',      label: 'Execução Semanal', icon: CalendarDays },
   backlog:       { id: 'backlog',       label: 'Backlog', icon: Inbox },
-  done:          { id: 'done',          label: 'Completed', icon: CheckCircle2 },
+  done:          { id: 'done',          label: 'Concluído', icon: CheckCircle2 },
 };
 
 const PRIORITY_META = {
-  high:     { label: 'Critical',  color: 'text-rose-500',   bg: 'bg-rose-50',  weight: 3 },
-  medium:   { label: 'High',      color: 'text-amber-500',  bg: 'bg-amber-50', weight: 2 },
-  low:      { label: 'Support',   color: 'text-neutral-400', bg: 'bg-neutral-50', weight: 1 },
-  very_low: { label: 'Internal',  color: 'text-neutral-300', bg: 'bg-neutral-50', weight: 0 },
+  high:     { label: 'Crítico',  color: 'text-rose-500',   bg: 'bg-rose-50',  weight: 3 },
+  medium:   { label: 'Alto',      color: 'text-amber-500',  bg: 'bg-amber-50', weight: 2 },
+  low:      { label: 'Suporte',   color: 'text-neutral-400', bg: 'bg-neutral-50', weight: 1 },
+  very_low: { label: 'Interno',  color: 'text-neutral-300', bg: 'bg-neutral-50', weight: 0 },
 };
 
 export default function PriorityView() {
@@ -65,7 +65,7 @@ export default function PriorityView() {
   async function updateTaskBucket(taskId, bucket) {
     const { error } = await supabase.from('tasks').update({ bucket }).eq('id', taskId);
     if (!error) load();
-    else toast.error('Update failure.');
+    else toast.error('Falha na atualização.');
   }
 
   async function toggleDone(task) {
@@ -87,7 +87,7 @@ export default function PriorityView() {
     if (!error) {
       setCompletionModal({ open: false, task: null });
       load();
-      toast.success('Task finalized');
+      toast.success('Tarefa finalizada');
     }
   }
 
@@ -103,15 +103,15 @@ export default function PriorityView() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
         <div className="space-y-6">
            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Execution Board</span>
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Quadro de Execução</span>
               <div className="h-[1px] w-8 bg-neutral-200" />
            </div>
            <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight break-words">
-             Projects.
+             Projetos.
            </h1>
            <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
-             Driving execution. Eliminating noise. 
-             Focusing on high-impact tasks.
+             Impulsionando a execução. Eliminando o ruído. 
+             Focando em tarefas de alto impacto.
            </p>
         </div>
         
@@ -121,7 +121,7 @@ export default function PriorityView() {
              isTodayOverloaded ? "border-rose-100 bg-rose-50 text-rose-500" : "border-neutral-100 text-neutral-400"
            )}>
              <Target className="h-4 w-4" />
-             <span className="hidden xs:inline">Task Load:</span> {todayTasks.length} / 5
+             <span className="hidden xs:inline">Carga de Tarefas:</span> {todayTasks.length} / 5
            </div>
            
            <button 
@@ -129,7 +129,7 @@ export default function PriorityView() {
              className="btn-minimal btn-primary flex items-center gap-2.5 h-10 sm:h-12 px-6 sm:px-8"
            >
              <Plus className="h-4 w-4" /> 
-             <span className="text-sm font-medium">New Task</span>
+             <span className="text-sm font-medium">Nova Tarefa</span>
            </button>
         </div>
       </div>
@@ -141,7 +141,7 @@ export default function PriorityView() {
               {clients.map(client => (
                 <ClientMinimalCard key={client.id} client={client} />
               ))}
-              {clients.length === 0 && <p className="text-xs text-neutral-300 italic text-center py-20 uppercase tracking-widest">No active projects.</p>}
+              {clients.length === 0 && <p className="text-xs text-neutral-300 italic text-center py-20 uppercase tracking-widest">Nenhum projeto ativo.</p>}
            </div>
         </Column>
 
@@ -150,8 +150,8 @@ export default function PriorityView() {
           <div className="space-y-12">
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                 <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.1em]">Today's Tasks</p>
-                 {isTodayOverloaded && <span className="text-[8px] font-bold text-rose-500 uppercase">Attention Required</span>}
+                 <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.1em]">Tarefas de Hoje</p>
+                 {isTodayOverloaded && <span className="text-[8px] font-bold text-rose-500 uppercase">Atenção Necessária</span>}
               </div>
               <div className="space-y-4">
                 {todayTasks.map(task => (
@@ -159,7 +159,7 @@ export default function PriorityView() {
                 ))}
                 {todayTasks.length === 0 && (
                   <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex flex-col items-center justify-center text-neutral-200">
-                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] italic">No tasks for today.</p>
+                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] italic">Nenhuma tarefa para hoje.</p>
                   </div>
                 )}
               </div>
@@ -167,7 +167,7 @@ export default function PriorityView() {
             
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                 <p className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.1em]">Weekly Tasks</p>
+                 <p className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.1em]">Tarefas Semanais</p>
               </div>
               <div className="space-y-4">
                 {tasks.filter(t => t.bucket === 'this_week' && !t.done).map(task => (
@@ -185,7 +185,7 @@ export default function PriorityView() {
               <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} />
             ))}
             {backlogTasks.length === 0 && (
-               <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">Backlog Clear</div>
+               <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">Backlog Limpo</div>
             )}
           </div>
         </Column>
@@ -197,7 +197,7 @@ export default function PriorityView() {
               <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} />
             ))}
             {doneTasks.length === 0 && (
-               <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">No finalizations.</div>
+               <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">Nenhuma finalização.</div>
             )}
           </div>
         </Column>
@@ -314,7 +314,7 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone }) {
                 onClick={(e) => { e.stopPropagation(); onMove(task.id, b); }} 
                 className="text-[8px] font-bold text-neutral-400 hover:text-neutral-600 uppercase tracking-widest px-1.5 py-0.5 border border-neutral-100 rounded bg-white shadow-sm"
               >
-                {b === 'this_week' ? 'Week' : b === 'backlog' ? 'Archive' : 'Today'}
+                {b === 'this_week' ? 'Semana' : b === 'backlog' ? 'Arquivo' : 'Hoje'}
               </button>
             ))}
           </div>
@@ -357,20 +357,20 @@ function TaskCompletionModal({ isOpen, onClose, onComplete, task }) {
            <div className="h-16 w-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <CheckCircle2 className="h-8 w-8 text-emerald-500" />
            </div>
-           <h3 className="text-3xl font-serif text-[var(--ink-primary)]">Well Done!</h3>
-           <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Initialization Complete</p>
+           <h3 className="text-3xl font-serif text-[var(--ink-primary)]">Bom Trabalho!</h3>
+           <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Tarefa Concluída</p>
         </div>
 
         <div className="space-y-8">
            <div className="space-y-3">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">How long did it actually take?</label>
+              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Quanto tempo levou realmente?</label>
               <div className="relative">
                 <input 
                   type="number"
                   autoFocus
                   value={minutes}
                   onChange={e => setMinutes(e.target.value)}
-                  placeholder="Minutes"
+                  placeholder="Minutos"
                   className="w-full bg-neutral-50/50 border border-neutral-100 rounded-xl px-6 py-4 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-neutral-200 transition-all"
                 />
                 <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-bold text-neutral-300 uppercase">min</span>
@@ -380,7 +380,7 @@ function TaskCompletionModal({ isOpen, onClose, onComplete, task }) {
            <div className="p-6 bg-amber-50/30 border border-amber-100 rounded-xl flex items-start gap-4">
               <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
               <p className="text-[11px] font-medium text-amber-900 leading-relaxed italic">
-                Remember to run a <span className="font-bold underline decoration-amber-200 decoration-2 font-not-italic">Delivery QA Checklist</span> before final release.
+                Lembre-se de rodar o <span className="font-bold underline decoration-amber-200 decoration-2 font-not-italic">Checklist de QA de Entrega</span> antes da liberação final.
               </p>
            </div>
         </div>
@@ -390,11 +390,11 @@ function TaskCompletionModal({ isOpen, onClose, onComplete, task }) {
              onClick={() => onComplete(task.id, minutes)}
              className="w-full btn-minimal h-14 bg-ink-charcoal text-white hover:bg-black flex items-center justify-center gap-3 transition-all cursor-pointer"
            >
-              <span className="text-xs font-bold uppercase tracking-widest">Finalize Task</span>
+              <span className="text-xs font-bold uppercase tracking-widest">Finalizar Tarefa</span>
               <TrendingUp className="h-4 w-4" />
            </button>
            <button onClick={onClose} className="w-full py-4 text-[10px] font-bold uppercase tracking-widest text-neutral-300 hover:text-black transition-all">
-              Cancel
+              Cancelar
            </button>
         </div>
       </div>

@@ -11,17 +11,17 @@ function categorize(rawValue) {
   if (isNaN(parsed.getTime())) return 'later';
   const now = new Date();
   const diffDays = Math.ceil((parsed - now) / 86400000);
-  if (diffDays < 0) return 'overdue';
-  if (diffDays <= 7) return 'this-week';
-  if (diffDays <= 31) return 'this-month';
-  return 'later';
+  if (diffDays < 0) return 'vencido';
+  if (diffDays <= 7) return 'esta-semana';
+  if (diffDays <= 31) return 'este-mes';
+  return 'depois';
 }
 
 const BUCKET_META = {
-  overdue:    { label: 'Critical / Overdue', color: 'text-rose-500',   dot: 'bg-rose-500' },
-  'this-week':  { label: 'Weekly Deadlines',   color: 'text-neutral-500',  dot: 'bg-[var(--accent-sand)]' },
-  'this-month': { label: 'Upcoming',         color: 'text-neutral-500',  dot: 'bg-neutral-200' },
-  later:      { label: 'Future Tasks',     color: 'text-neutral-300',  dot: 'bg-neutral-100' },
+  vencido:    { label: 'Crítico / Vencido', color: 'text-rose-500',   dot: 'bg-rose-500' },
+  'esta-semana':  { label: 'Prazos da Semana',   color: 'text-neutral-500',  dot: 'bg-[var(--accent-sand)]' },
+  'este-mes': { label: 'Próximos',         color: 'text-neutral-500',  dot: 'bg-neutral-200' },
+  depois:      { label: 'Tarefas Futuras',     color: 'text-neutral-300',  dot: 'bg-neutral-100' },
 };
 
 export default function DeadlinesWidget() {
@@ -68,7 +68,7 @@ export default function DeadlinesWidget() {
     load();
   }, []);
 
-  const orderedKeys = ['overdue', 'this-week', 'this-month', 'later'].filter(k => buckets[k]?.length);
+  const orderedKeys = ['vencido', 'esta-semana', 'este-mes', 'depois'].filter(k => buckets[k]?.length);
 
   if (loading || orderedKeys.length === 0) return null;
 
@@ -76,7 +76,7 @@ export default function DeadlinesWidget() {
     <div className="surface-card p-10 h-full flex flex-col space-y-8">
       <div className="flex items-center justify-between">
         <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] flex items-center gap-2">
-          <CalendarClock className="h-3.5 w-3.5" /> Project Deadlines
+          <CalendarClock className="h-3.5 w-3.5" /> Prazos de Projetos
         </label>
         <div className="h-1.5 w-1.5 rounded-full bg-neutral-100" />
       </div>
@@ -100,7 +100,7 @@ export default function DeadlinesWidget() {
                         <span className="text-xs font-serif text-[var(--ink-primary)] truncate">{e.clientName}</span>
                         <span className="text-[9px] font-bold text-neutral-300 shrink-0 uppercase tracking-tighter tabular-nums">{e.value}</span>
                       </div>
-                      <p className="text-[8px] font-bold text-neutral-300 uppercase tracking-widest">{e.phaseName} phase</p>
+                      <p className="text-[8px] font-bold text-neutral-300 uppercase tracking-widest">Fase de {e.phaseName === 'onboarding' ? 'Integração' : e.phaseName === 'delivery' ? 'Entrega' : e.phaseName === 'qa' ? 'QA' : 'Atualizações'}</p>
                     </div>
                   </Link>
                 ))}
