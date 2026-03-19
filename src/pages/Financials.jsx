@@ -96,7 +96,7 @@ export default function Financials() {
               <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Financial Intelligence</span>
               <div className="h-[1px] w-8 bg-neutral-200" />
            </div>
-           <h1 className="text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight">
+           <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight">
              Financials.
            </h1>
            <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
@@ -107,8 +107,8 @@ export default function Financials() {
       </div>
 
       {/* Financial Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="surface-card p-10 space-y-6 border-b-2 border-b-sky-100">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="surface-card p-6 md:p-10 space-y-6 border-b-2 border-b-sky-100">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Bank Balance</span>
             <div className="h-10 w-10 rounded-xl bg-neutral-50 flex items-center justify-center border border-neutral-100">
@@ -123,31 +123,31 @@ export default function Financials() {
           <p className="text-[10px] text-neutral-300 uppercase tracking-widest font-bold">Cash in Hand</p>
         </div>
 
-        <div className="surface-card p-10 space-y-6 border-b-2 border-b-emerald-500/20">
+        <div className="surface-card p-6 md:p-10 space-y-6 border-b-2 border-b-emerald-500/20">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Total Billed</span>
             <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center">
               <TrendingUp className="h-5 w-5 text-emerald-500" />
             </div>
           </div>
-          <p className="text-4xl font-serif text-emerald-600 tabular-nums">{format(totals.incomeBRL)}</p>
+          <p className="text-3xl md:text-4xl font-serif text-emerald-600 tabular-nums">{format(totals.incomeBRL)}</p>
           <div className="h-[1px] w-full bg-neutral-50" />
           <p className="text-[10px] text-neutral-300 uppercase tracking-widest font-bold">Lifetime Revenue</p>
         </div>
 
-        <div className="surface-card p-10 space-y-6 border-b-2 border-b-rose-500/20">
+        <div className="surface-card p-6 md:p-10 space-y-6 border-b-2 border-b-rose-500/20">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Total Expenses</span>
             <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center">
               <TrendingDown className="h-5 w-5 text-rose-500" />
             </div>
           </div>
-          <p className="text-4xl font-serif text-rose-500 tabular-nums">{format(totals.expensesBRL)}</p>
+          <p className="text-3xl md:text-4xl font-serif text-rose-500 tabular-nums">{format(totals.expensesBRL)}</p>
           <div className="h-[1px] w-full bg-neutral-50" />
           <p className="text-[10px] text-neutral-300 uppercase tracking-widest font-bold">Operational Drift</p>
         </div>
 
-        <div className="surface-card p-10 space-y-6 border-b-2 border-b-[var(--accent-sand)]/50">
+        <div className="surface-card p-6 md:p-10 space-y-6 border-b-2 border-b-[var(--accent-sand)]/50">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Net Margin</span>
             <div className="h-10 w-10 rounded-xl bg-neutral-50 flex items-center justify-center border border-neutral-100">
@@ -155,7 +155,7 @@ export default function Financials() {
             </div>
           </div>
           <p className={cn(
-            "text-4xl font-serif tabular-nums",
+            "text-3xl md:text-4xl font-serif tabular-nums",
             totals.marginBRL >= 0 ? "text-[var(--ink-primary)]" : "text-rose-600"
           )}>{format(totals.marginBRL)}</p>
           <div className="h-[1px] w-full bg-neutral-50" />
@@ -167,7 +167,7 @@ export default function Financials() {
         {/* Left: Income & Form */}
         <div className="lg:col-span-4 space-y-16">
           {/* Add Expense Form */}
-          <div className="surface-card p-10 space-y-8 bg-neutral-50/20">
+          <div className="surface-card p-6 md:p-10 space-y-8 bg-neutral-50/20">
             <div className="space-y-2">
               <h3 className="text-xl font-serif text-[var(--ink-primary)]">Log Expense</h3>
               <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Record new operational cost</p>
@@ -259,8 +259,8 @@ export default function Financials() {
               <p className="text-[9px] font-bold text-neutral-300 uppercase tracking-[0.2em]">{expenses.length} Records</p>
            </div>
 
-           <div className="surface-card overflow-hidden">
-              <table className="w-full text-left border-collapse">
+           <div className="surface-card overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                   <tr className="bg-neutral-50/50 border-b border-neutral-100">
                     <th className="px-8 py-5 text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Item / Purpose</th>

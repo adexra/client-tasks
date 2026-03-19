@@ -106,7 +106,7 @@ export default function PriorityView() {
               <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Execution Board</span>
               <div className="h-[1px] w-8 bg-neutral-200" />
            </div>
-           <h1 className="text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight">
+           <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight">
              Projects.
            </h1>
            <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
@@ -115,18 +115,18 @@ export default function PriorityView() {
            </p>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
            <div className={cn(
-             "px-6 py-3 rounded-xl border text-[10px] font-bold tracking-[0.1em] uppercase flex items-center gap-3 transition-colors",
+             "px-4 sm:px-6 py-2 sm:py-3 rounded-xl border text-[9px] sm:text-[10px] font-bold tracking-[0.1em] uppercase flex items-center gap-2 sm:gap-3 transition-colors",
              isTodayOverloaded ? "border-rose-100 bg-rose-50 text-rose-500" : "border-neutral-100 text-neutral-400"
            )}>
              <Target className="h-4 w-4" />
-             Task Load: {todayTasks.length} / 5
+             <span className="hidden xs:inline">Task Load:</span> {todayTasks.length} / 5
            </div>
            
            <button 
              onClick={() => setModal({ open: true, task: null })}
-             className="btn-minimal btn-primary flex items-center gap-2.5 h-12 px-8"
+             className="btn-minimal btn-primary flex items-center gap-2.5 h-10 sm:h-12 px-6 sm:px-8"
            >
              <Plus className="h-4 w-4" /> 
              <span className="text-sm font-medium">New Task</span>
@@ -238,7 +238,7 @@ function Column({ label, icon: Icon, children }) {
 function ClientMinimalCard({ client }) {
   return (
     <Link to={`/client/${client.id}`} className="block group">
-      <div className="surface-card surface-card-hover p-8 space-y-4 transition-all">
+      <div className="surface-card surface-card-hover p-6 md:p-8 space-y-4 transition-all">
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-serif text-[var(--ink-primary)] group-hover:text-black transition-colors truncate">{client.name}</h3>
           <ChevronRight className="h-4 w-4 text-neutral-200 group-hover:text-neutral-400 transition-transform group-hover:translate-x-1" />

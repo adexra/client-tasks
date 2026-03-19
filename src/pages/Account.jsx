@@ -10,7 +10,7 @@ export default function Account() {
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Operator Profile</span>
             <div className="h-[1px] w-8 bg-neutral-200" />
          </div>
-         <h1 className="text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight">
+         <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight">
            Control Center.
          </h1>
          <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
@@ -22,18 +22,18 @@ export default function Account() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
         <div className="lg:col-span-2 space-y-12">
            {/* Profile Section */}
-           <div className="surface-card p-12">
-              <div className="flex items-center gap-8 mb-12">
-                 <div className="h-24 w-24 rounded-2xl bg-neutral-50 border border-neutral-100 flex items-center justify-center">
+           <div className="surface-card p-6 md:p-12">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-8 mb-12">
+                 <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl bg-neutral-50 border border-neutral-100 flex items-center justify-center shrink-0">
                     <User className="h-10 w-10 text-neutral-300" />
                  </div>
                   <div className="space-y-1">
-                     <h2 className="text-3xl font-serif text-[var(--ink-primary)]">Lead Operator</h2>
-                     <p className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.2em]">operator@adexra.internal</p>
+                     <h2 className="text-2xl sm:text-3xl font-serif text-[var(--ink-primary)]">Lead Operator</h2>
+                     <p className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.2em] break-all">operator@adexra.internal</p>
                   </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
                 <EditorialInput label="Full Identity" value="Adexra Lead Operator" />
                  <EditorialInput label="Agency Role" value="System & Execution Architecture" />
                 <EditorialInput label="Contact Matrix" value="hq@adexra.com" />
@@ -42,7 +42,7 @@ export default function Account() {
            </div>
 
            {/* Security / System Access */}
-           <div className="surface-card p-12">
+           <div className="surface-card p-6 md:p-12">
               <div className="flex items-center justify-between mb-10 pb-6 border-b border-neutral-50">
                  <div className="flex items-center gap-4">
                    <Shield className="h-5 w-5 text-neutral-200" />

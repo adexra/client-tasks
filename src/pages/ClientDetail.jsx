@@ -204,19 +204,20 @@ export default function ClientDetail() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pb-10 border-b border-[var(--border-light)]">
         <Link to="/" className="group flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 hover:text-[var(--ink-primary)] transition-all">
           <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
-          <span>Back to board</span>
+          <span className="hidden sm:inline">Back to board</span>
+          <span className="sm:hidden text-[8px]">Back</span>
         </Link>
         
-        <div className="flex items-center gap-3">
-          <button onClick={() => setIsEditModalOpen(true)} className="btn-minimal bg-white border-[var(--border-light)] text-[var(--ink-primary)] hover:bg-neutral-50 flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={() => setIsEditModalOpen(true)} className="btn-minimal bg-white border-[var(--border-light)] text-[var(--ink-primary)] hover:bg-neutral-50 flex items-center gap-2 p-3 sm:px-4">
             <Pencil className="h-3.5 w-3.5" /> 
-            <span className="text-[10px] uppercase font-bold tracking-widest">Edit Record</span>
+            <span className="text-[10px] uppercase font-bold tracking-widest hidden sm:inline">Edit Record</span>
           </button>
-          <button onClick={() => updateStatus(client.status === 'active' ? 'archived' : 'active')} className="btn-minimal bg-white border-[var(--border-light)] text-[var(--ink-primary)] hover:bg-neutral-50 flex items-center gap-2">
+          <button onClick={() => updateStatus(client.status === 'active' ? 'archived' : 'active')} className="btn-minimal bg-white border-[var(--border-light)] text-[var(--ink-primary)] hover:bg-neutral-50 flex items-center gap-2 p-3 sm:px-4">
             {client.status === 'active' ? <Archive className="h-3.5 w-3.5" /> : <ArchiveRestore className="h-3.5 w-3.5" />}
-            <span className="text-[10px] uppercase font-bold tracking-widest">{client.status === 'active' ? 'Archive' : 'Reactivate'}</span>
+            <span className="text-[10px] uppercase font-bold tracking-widest hidden sm:inline">{client.status === 'active' ? 'Archive' : 'Reactivate'}</span>
           </button>
-          <div className="h-4 w-[1px] bg-[var(--border-light)] mx-2" />
+          <div className="hidden sm:block h-4 w-[1px] bg-[var(--border-light)] mx-2" />
           <button onClick={deleteClient} className="p-2.5 text-neutral-300 hover:text-rose-500 transition-colors">
             <Trash2 className="h-4 w-4" />
           </button>
@@ -231,7 +232,7 @@ export default function ClientDetail() {
                    <div className={cn("h-1.5 w-1.5 rounded-full", client.status === 'active' ? "bg-[var(--success-green)]" : "bg-neutral-300")} />
                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Active Project</span>
                 </div>
-                <h1 className="text-7xl font-serif text-[var(--ink-primary)] leading-[1.1] tracking-tight">
+                <h1 className="text-4xl sm:text-5xl md:text-7xl font-serif text-[var(--ink-primary)] leading-[1.1] tracking-tight break-words">
                   {client.name}.
                 </h1>
                 <div className="flex flex-wrap gap-8 pt-2">
@@ -246,12 +247,12 @@ export default function ClientDetail() {
                 </div>
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                 <div className="space-y-4">
                    <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] flex items-center gap-2">
                       <Target className="h-3.5 w-3.5" /> Project Scope
                    </label>
-                   <div className="surface-card p-8 min-h-[140px] flex items-center italic text-[var(--ink-secondary)] leading-relaxed">
+                   <div className="surface-card p-6 md:p-8 min-h-[140px] flex items-center italic text-[var(--ink-secondary)] leading-relaxed">
                       {client.what_sold || "No scope defined."}
                    </div>
                 </div>
@@ -259,7 +260,7 @@ export default function ClientDetail() {
                    <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] flex items-center gap-2">
                       <Activity className="h-3.5 w-3.5" /> Next Action
                    </label>
-                   <div className="surface-card bg-emerald-50/30 border-emerald-100 p-8 min-h-[140px] flex items-center italic text-[var(--ink-charcoal)] leading-relaxed font-bold">
+                   <div className="surface-card bg-emerald-50/30 border-emerald-100 p-6 md:p-8 min-h-[140px] flex items-center italic text-[var(--ink-charcoal)] leading-relaxed font-bold">
                       {getNextAction()}
                    </div>
                 </div>
@@ -267,7 +268,7 @@ export default function ClientDetail() {
           </div>
         </div>
 
-        <div className="lg:col-span-1 border-l border-[var(--border-light)] pl-12 space-y-12">
+        <div className="lg:col-span-1 border-t lg:border-t-0 lg:border-l border-[var(--border-light)] pt-12 lg:pt-0 lg:pl-12 space-y-12">
            <div className="space-y-6">
               <div className="space-y-2">
                  <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest">Current Bill</span>

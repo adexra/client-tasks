@@ -66,7 +66,7 @@ export default function Dashboard() {
               <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Project Board</span>
               <div className="h-[1px] w-8 bg-neutral-200" />
            </div>
-           <h1 className="text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight">
+           <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight">
              Execution Portfolio.
            </h1>
            <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
@@ -103,8 +103,8 @@ export default function Dashboard() {
 
       {/* Operational Interface */}
       <div className="space-y-12">
-        <div className="flex items-center justify-between border-b border-[var(--border-light)] pb-8">
-           <div className="flex items-center gap-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-light)] pb-8 gap-6">
+           <div className="flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-10">
               <h2 className="text-xl font-serif text-[var(--ink-primary)]">Registry board.</h2>
               
               <div className="flex bg-[var(--accent-sand)]/40 p-1 rounded-lg">
@@ -166,7 +166,7 @@ export default function Dashboard() {
 
 function StatsCard({ label, value, subtext }) {
   return (
-    <div className="surface-card p-10 space-y-6">
+    <div className="surface-card p-6 md:p-10 space-y-6">
       <div className="space-y-1">
         <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{label}</p>
         <p className="text-[9px] font-medium text-neutral-300 uppercase tracking-[0.1em]">{subtext}</p>
@@ -185,7 +185,7 @@ function ClientEditorialCard({ client, payments, currency }) {
 
   return (
     <Link to={`/client/${client.id}`} className="group block">
-      <div className="surface-card surface-card-hover p-10 h-full flex flex-col justify-between">
+      <div className="surface-card surface-card-hover p-6 md:p-10 h-full flex flex-col justify-between">
         <div className="space-y-8">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
