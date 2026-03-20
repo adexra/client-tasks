@@ -15,23 +15,24 @@ import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import TagBadge from '../components/TagBadge';
 import { useToast } from '../context/ToastContext';
-import TaskModal from '../components/TaskModal';
-
-const BUCKETS = {
-  active_project: { id: 'active_project', label: 'Projetos Ativos', icon: Rocket },
-  this_week:      { id: 'this_week',      label: 'Execução Semanal', icon: CalendarDays },
-  backlog:       { id: 'backlog',       label: 'Backlog', icon: Inbox },
-  done:          { id: 'done',          label: 'Concluído', icon: CheckCircle2 },
-};
-
-const PRIORITY_META = {
-  high:     { label: 'Crítico',  color: 'text-rose-500',   bg: 'bg-rose-50',  weight: 3 },
-  medium:   { label: 'Alto',      color: 'text-amber-500',  bg: 'bg-amber-50', weight: 2 },
-  low:      { label: 'Suporte',   color: 'text-neutral-400', bg: 'bg-neutral-50', weight: 1 },
-  very_low: { label: 'Interno',  color: 'text-neutral-300', bg: 'bg-neutral-50', weight: 0 },
-};
+import { useLanguage } from '../context/LanguageContext';
 
 export default function PriorityView() {
+  const { t, language } = useLanguage();
+  
+  const BUCKETS = {
+    active_project: { id: 'active_project', label: t('execution.active_projects'), icon: Rocket },
+    this_week:      { id: 'this_week',      label: t('execution.weekly_execution'), icon: CalendarDays },
+    backlog:       { id: 'backlog',       label: t('execution.backlog'), icon: Inbox },
+    done:          { id: 'done',          label: t('execution.completed'), icon: CheckCircle2 },
+  };
+
+  const PRIORITY_META = {
+    high:     { label: t('execution.critical'),  color: 'text-rose-500',   bg: 'bg-rose-50',  weight: 3 },
+    medium:   { label: t('execution.high'),      color: 'text-amber-500',  bg: 'bg-amber-50', weight: 2 },
+    low:      { label: t('execution.support'),   color: 'text-neutral-400', bg: 'bg-neutral-50', weight: 1 },
+    very_low: { label: t('execution.internal'),  color: 'text-neutral-300', bg: 'bg-neutral-50', weight: 0 },
+  };
   const [clients, setClients] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,12 +66,11 @@ export default function PriorityView() {
   async function updateTaskBucket(taskId, bucket) {
     const { error } = await supabase.from('tasks').update({ bucket }).eq('id', taskId);
     if (!error) load();
-    else toast.error('Falha na atualização.');
+    else toast.error(t('common.error'));
   }
 
   async function toggleDone(task) {
     if (!task.done) {
-      // Opening completion modal instead of immediate toggle
       setCompletionModal({ open: true, task });
       return;
     }
@@ -87,7 +87,7 @@ export default function PriorityView() {
     if (!error) {
       setCompletionModal({ open: false, task: null });
       load();
-      toast.success('Tarefa finalizada');
+      toast.success(t('execution.task_finished'));
     }
   }
 
@@ -103,15 +103,14 @@ export default function PriorityView() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
         <div className="space-y-6">
            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Quadro de Execução</span>
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('execution.tag')}</span>
               <div className="h-[1px] w-8 bg-neutral-200" />
            </div>
            <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight break-words">
-             Projetos.
+             {t('execution.title')}
            </h1>
            <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
-             Impulsionando a execução. Eliminando o ruído. 
-             Focando em tarefas de alto impacto.
+             {t('execution.subtitle')}
            </p>
         </div>
         
@@ -121,7 +120,7 @@ export default function PriorityView() {
              isTodayOverloaded ? "border-rose-100 bg-rose-50 text-rose-500" : "border-neutral-100 text-neutral-400"
            )}>
              <Target className="h-4 w-4" />
-             <span className="hidden xs:inline">Carga de Tarefas:</span> {todayTasks.length} / 5
+             <span className="hidden xs:inline">{t('execution.task_load')}:</span> {todayTasks.length} / 5
            </div>
            
            <button 
@@ -129,7 +128,7 @@ export default function PriorityView() {
              className="btn-minimal btn-primary flex items-center gap-2.5 h-10 sm:h-12 px-6 sm:px-8"
            >
              <Plus className="h-4 w-4" /> 
-             <span className="text-sm font-medium">Nova Tarefa</span>
+             <span className="text-sm font-medium">{t('execution.new_task')}</span>
            </button>
         </div>
       </div>
@@ -141,7 +140,7 @@ export default function PriorityView() {
               {clients.map(client => (
                 <ClientMinimalCard key={client.id} client={client} />
               ))}
-              {clients.length === 0 && <p className="text-xs text-neutral-300 italic text-center py-20 uppercase tracking-widest">Nenhum projeto ativo.</p>}
+              {clients.length === 0 && <p className="text-xs text-neutral-300 italic text-center py-20 uppercase tracking-widest">{t('execution.no_active_projects')}</p>}
            </div>
         </Column>
 
@@ -150,16 +149,16 @@ export default function PriorityView() {
           <div className="space-y-12">
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                 <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.1em]">Tarefas de Hoje</p>
-                 {isTodayOverloaded && <span className="text-[8px] font-bold text-rose-500 uppercase">Atenção Necessária</span>}
+                 <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.1em]">{t('execution.today_tasks')}</p>
+                 {isTodayOverloaded && <span className="text-[8px] font-bold text-rose-500 uppercase">{t('execution.attention_needed')}</span>}
               </div>
               <div className="space-y-4">
                 {todayTasks.map(task => (
-                  <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} />
+                  <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
                 ))}
                 {todayTasks.length === 0 && (
                   <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex flex-col items-center justify-center text-neutral-200">
-                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] italic">Nenhuma tarefa para hoje.</p>
+                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] italic">{t('execution.no_today_tasks')}</p>
                   </div>
                 )}
               </div>
@@ -167,11 +166,11 @@ export default function PriorityView() {
             
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                 <p className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.1em]">Tarefas Semanais</p>
+                 <p className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.1em]">{t('execution.weekly_tasks')}</p>
               </div>
               <div className="space-y-4">
                 {tasks.filter(t => t.bucket === 'this_week' && !t.done).map(task => (
-                  <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} />
+                  <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
                 ))}
               </div>
             </div>
@@ -182,10 +181,10 @@ export default function PriorityView() {
         <Column label={BUCKETS.backlog.label} icon={BUCKETS.backlog.icon}>
           <div className="space-y-4">
             {backlogTasks.map(task => (
-              <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} />
+              <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
             ))}
             {backlogTasks.length === 0 && (
-               <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">Backlog Limpo</div>
+               <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">{t('execution.backlog_clear')}</div>
             )}
           </div>
         </Column>
@@ -194,10 +193,10 @@ export default function PriorityView() {
         <Column label={BUCKETS.done.label} icon={BUCKETS.done.icon}>
           <div className="space-y-4">
             {doneTasks.map(task => (
-              <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} />
+              <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
             ))}
             {doneTasks.length === 0 && (
-               <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">Nenhuma finalização.</div>
+               <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">{t('execution.no_completions')}</div>
             )}
           </div>
         </Column>
@@ -216,6 +215,7 @@ export default function PriorityView() {
         onClose={() => setCompletionModal({ open: false, task: null })}
         onComplete={completeTask}
         task={completionModal.task}
+        t={t}
       />
     </div>
   );
@@ -269,10 +269,9 @@ const CLIENT_ACCENTS = [
   'border-slate-300'
 ];
 
-function TaskEditorialCard({ task, onMove, onEdit, onToggleDone }) {
+function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, PRIORITY_META }) {
   const p = PRIORITY_META[task.priority] || PRIORITY_META.low;
   
-  // Deterministic accent color based on client_id string
   const getAccent = (id) => {
     if (!id) return 'border-neutral-100';
     const sum = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -314,7 +313,7 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone }) {
                 onClick={(e) => { e.stopPropagation(); onMove(task.id, b); }} 
                 className="text-[8px] font-bold text-neutral-400 hover:text-neutral-600 uppercase tracking-widest px-1.5 py-0.5 border border-neutral-100 rounded bg-white shadow-sm"
               >
-                {b === 'this_week' ? 'Semana' : b === 'backlog' ? 'Arquivo' : 'Hoje'}
+                {b === 'this_week' ? t('execution.week_bucket') : b === 'backlog' ? t('execution.archive_bucket') : t('execution.today_bucket')}
               </button>
             ))}
           </div>
@@ -345,7 +344,7 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone }) {
   );
 }
 
-function TaskCompletionModal({ isOpen, onClose, onComplete, task }) {
+function TaskCompletionModal({ isOpen, onClose, onComplete, task, t }) {
   const [minutes, setMinutes] = useState('');
 
   if (!isOpen) return null;
@@ -357,20 +356,20 @@ function TaskCompletionModal({ isOpen, onClose, onComplete, task }) {
            <div className="h-16 w-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <CheckCircle2 className="h-8 w-8 text-emerald-500" />
            </div>
-           <h3 className="text-3xl font-serif text-[var(--ink-primary)]">Bom Trabalho!</h3>
-           <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Tarefa Concluída</p>
+           <h3 className="text-3xl font-serif text-[var(--ink-primary)]">{t('execution.good_job')}</h3>
+           <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">{t('execution.task_finished')}</p>
         </div>
 
         <div className="space-y-8">
            <div className="space-y-3">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Quanto tempo levou realmente?</label>
+              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('execution.actual_time_question')}</label>
               <div className="relative">
                 <input 
                   type="number"
                   autoFocus
                   value={minutes}
                   onChange={e => setMinutes(e.target.value)}
-                  placeholder="Minutos"
+                  placeholder={t('execution.minutes_placeholder')}
                   className="w-full bg-neutral-50/50 border border-neutral-100 rounded-xl px-6 py-4 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-neutral-200 transition-all"
                 />
                 <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-bold text-neutral-300 uppercase">min</span>
@@ -380,7 +379,7 @@ function TaskCompletionModal({ isOpen, onClose, onComplete, task }) {
            <div className="p-6 bg-amber-50/30 border border-amber-100 rounded-xl flex items-start gap-4">
               <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
               <p className="text-[11px] font-medium text-amber-900 leading-relaxed italic">
-                Lembre-se de rodar o <span className="font-bold underline decoration-amber-200 decoration-2 font-not-italic">Checklist de QA de Entrega</span> antes da liberação final.
+                {t('execution.qa_reminder')}
               </p>
            </div>
         </div>
@@ -390,11 +389,11 @@ function TaskCompletionModal({ isOpen, onClose, onComplete, task }) {
              onClick={() => onComplete(task.id, minutes)}
              className="w-full btn-minimal h-14 bg-ink-charcoal text-white hover:bg-black flex items-center justify-center gap-3 transition-all cursor-pointer"
            >
-              <span className="text-xs font-bold uppercase tracking-widest">Finalizar Tarefa</span>
+              <span className="text-xs font-bold uppercase tracking-widest">{t('execution.finish_task')}</span>
               <TrendingUp className="h-4 w-4" />
            </button>
            <button onClick={onClose} className="w-full py-4 text-[10px] font-bold uppercase tracking-widest text-neutral-300 hover:text-black transition-all">
-              Cancelar
+              {t('common.cancel')}
            </button>
         </div>
       </div>

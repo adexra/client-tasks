@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { CalendarClock, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
+import { useLanguage } from '../context/LanguageContext';
 
 function categorize(rawValue) {
   if (!rawValue || !rawValue.trim()) return null;
@@ -17,16 +18,17 @@ function categorize(rawValue) {
   return 'depois';
 }
 
-const BUCKET_META = {
-  vencido:    { label: 'Crítico / Vencido', color: 'text-rose-500',   dot: 'bg-rose-500' },
-  'esta-semana':  { label: 'Prazos da Semana',   color: 'text-neutral-500',  dot: 'bg-[var(--accent-sand)]' },
-  'este-mes': { label: 'Próximos',         color: 'text-neutral-500',  dot: 'bg-neutral-200' },
-  depois:      { label: 'Tarefas Futuras',     color: 'text-neutral-300',  dot: 'bg-neutral-100' },
-};
-
 export default function DeadlinesWidget() {
+  const { t } = useLanguage();
   const [buckets, setBuckets] = useState({});
   const [loading, setLoading] = useState(true);
+
+  const BUCKET_META = {
+    vencido:    { label: t('deadlines.vencido'), color: 'text-rose-500',   dot: 'bg-rose-500' },
+    'esta-semana':  { label: t('deadlines.esta_semana'),   color: 'text-neutral-500',  dot: 'bg-[var(--accent-sand)]' },
+    'este-mes': { label: t('deadlines.este_mes'),         color: 'text-neutral-500',  dot: 'bg-neutral-200' },
+    depois:      { label: t('deadlines.depois'),     color: 'text-neutral-300',  dot: 'bg-neutral-100' },
+  };
 
   useEffect(() => {
     async function load() {
@@ -76,7 +78,7 @@ export default function DeadlinesWidget() {
     <div className="surface-card p-10 h-full flex flex-col space-y-8">
       <div className="flex items-center justify-between">
         <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] flex items-center gap-2">
-          <CalendarClock className="h-3.5 w-3.5" /> Prazos de Projetos
+          <CalendarClock className="h-3.5 w-3.5" /> {t('deadlines.tag')}
         </label>
         <div className="h-1.5 w-1.5 rounded-full bg-neutral-100" />
       </div>
@@ -100,7 +102,13 @@ export default function DeadlinesWidget() {
                         <span className="text-xs font-serif text-[var(--ink-primary)] truncate">{e.clientName}</span>
                         <span className="text-[9px] font-bold text-neutral-300 shrink-0 uppercase tracking-tighter tabular-nums">{e.value}</span>
                       </div>
-                      <p className="text-[8px] font-bold text-neutral-300 uppercase tracking-widest">Fase de {e.phaseName === 'onboarding' ? 'Integração' : e.phaseName === 'delivery' ? 'Entrega' : e.phaseName === 'qa' ? 'QA' : 'Atualizações'}</p>
+                      <p className="text-[8px] font-bold text-neutral-300 uppercase tracking-widest">
+                        {t('deadlines.phase_prefix')}
+                        {e.phaseName === 'onboarding' ? t('project_modal.phases.onboarding') : 
+                         e.phaseName === 'delivery' ? t('project_modal.phases.delivery') : 
+                         e.phaseName === 'qa' ? t('project_modal.phases.qa') : 
+                         t('project_modal.phases.update')}
+                      </p>
                     </div>
                   </Link>
                 ))}

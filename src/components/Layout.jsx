@@ -20,16 +20,18 @@ import { supabase } from '../lib/supabase';
 import FocusTimer from './FocusTimer';
 import TaskModal from './TaskModal';
 import { useFinancials } from '../context/FinancialContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const NAV_ITEMS = [
-  { to: '/', icon: BarChart3, label: 'Dashboard', labelPt: 'Painel' },
-  { to: '/clients', icon: Users, label: 'Portfolio', labelPt: 'Portfólio' },
-  { to: '/priority', icon: Target, label: 'Execution Board', labelPt: 'Execução' },
-  { to: '/financials', icon: Wallet, label: 'Financials', labelPt: 'Financeiro' },
+  { to: '/', icon: BarChart3, key: 'nav.dashboard' },
+  { to: '/clients', icon: Users, key: 'nav.portfolio' },
+  { to: '/priority', icon: Target, key: 'nav.execution' },
+  { to: '/financials', icon: Wallet, key: 'nav.financials' },
 ];
 
 export default function Layout() {
   const { totals, displayCurrency, changeCurrency, fromBRL } = useFinancials();
+  const { t, language } = useLanguage();
   const [clients, setClients] = useState([]);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [sessionTask, setSessionTask] = useState(null);
@@ -68,13 +70,13 @@ export default function Layout() {
         <div className="p-10 pt-12">
           <Link to="/" className="group block">
             <h1 className="text-3xl font-serif text-white tracking-tighter mb-1 font-normal italic">Adexra.</h1>
-            <p className="text-[8px] font-bold text-neutral-300 uppercase tracking-widest">Plataforma de Execução</p>
+            <p className="text-[8px] font-bold text-neutral-300 uppercase tracking-widest">{language === 'pt' ? 'Plataforma de Execução' : 'Execution Platform'}</p>
           </Link>
         </div>
 
         <nav className="flex-1 px-4 mt-8 space-y-12">
           <section>
-            <p className="px-6 mb-6 text-[9px] font-bold text-neutral-600 uppercase tracking-[0.3em]">Gestão</p>
+            <p className="px-6 mb-6 text-[9px] font-bold text-neutral-600 uppercase tracking-[0.3em]">{language === 'pt' ? 'Gestão' : 'Management'}</p>
             <div className="space-y-1">
               {NAV_ITEMS.map((item) => (
                 <NavLink
@@ -92,7 +94,7 @@ export default function Layout() {
                     <>
                       <div className="flex items-center gap-3">
                         <item.icon className="h-4 w-4" />
-                        <span className="text-xs font-medium tracking-tight">{item.labelPt}</span>
+                        <span className="text-xs font-medium tracking-tight">{t(item.key)}</span>
                       </div>
                       <ChevronRight className={cn("h-3 w-3 transition-transform opacity-0 group-hover:opacity-40", isActive && "opacity-20")} />
                     </>
@@ -104,7 +106,7 @@ export default function Layout() {
 
           <section>
             <label className="px-6 mb-6 text-[9px] font-bold text-neutral-600 uppercase tracking-[0.3em] flex items-center gap-2">
-              <CalendarClock className="h-3.5 w-3.5" /> Prazos e Metas
+              <CalendarClock className="h-3.5 w-3.5" /> {language === 'pt' ? 'Prazos e Metas' : 'Deadlines & Goals'}
             </label>
             <div className="space-y-1">
               <NavLink
@@ -119,7 +121,7 @@ export default function Layout() {
               >
                 <div className="flex items-center gap-3">
                   <Settings className="h-4 w-4" />
-                  <span className="text-xs font-medium tracking-tight">Configurações</span>
+                  <span className="text-xs font-medium tracking-tight">{t('nav.settings')}</span>
                 </div>
                 <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40" />
               </NavLink>
@@ -150,7 +152,7 @@ export default function Layout() {
                 <Search className="h-4 w-4 text-neutral-400 shrink-0" />
                 <input 
                   type="text" 
-                  placeholder="Pesquisar projetos..." 
+                  placeholder={language === 'pt' ? 'Pesquisar projetos...' : 'Search projects...'}
                   className="bg-transparent border-none text-sm font-medium text-ink-primary placeholder:text-neutral-400 focus:ring-0 w-full max-w-xs transition-all"
                 />
               </div>
@@ -169,7 +171,7 @@ export default function Layout() {
           <div className="flex items-center gap-3 sm:gap-6 md:gap-10">
             <div className="flex items-center gap-4 md:gap-6">
               <div className="hidden md:block text-right">
-                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">Receita</p>
+                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">{t('financials.income')}</p>
                 <div 
                   className="flex items-center gap-2 group cursor-pointer select-none" 
                   onClick={() => {
@@ -187,7 +189,7 @@ export default function Layout() {
               </div>
 
               <div className="hidden sm:block text-right">
-                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">Despesas</p>
+                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">{t('financials.expenses')}</p>
                 <p className="text-sm font-serif text-rose-500 tabular-nums">
                   {displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ '}
                   {displayedExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -197,7 +199,7 @@ export default function Layout() {
               <div className="hidden xl:block h-4 w-[1px] bg-border-light" />
               
               <div className="hidden lg:block text-right">
-                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1">Margem Líquida</p>
+                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1">{t('financials.net_margin')}</p>
                 <p className={cn(
                   "text-sm font-serif tabular-nums",
                   totals.marginBRL >= 0 ? "text-emerald-500" : "text-rose-500"
@@ -210,7 +212,7 @@ export default function Layout() {
               <div className="hidden md:block h-4 w-[1px] bg-border-light" />
 
               <div className="text-right">
-                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">Banco</p>
+                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">{t('nav.bank')}</p>
                 <p className={cn(
                   "text-sm font-serif tabular-nums",
                   totals.bankBRL >= 0 ? "text-[var(--ink-primary)]" : "text-rose-600 font-bold"
@@ -225,7 +227,7 @@ export default function Layout() {
 
             <div className="hidden sm:flex items-center gap-3 py-1">
               <div className="text-right">
-                <p className="text-[10px] text-neutral-400 font-medium leading-none mb-1">Operador</p>
+                <p className="text-[10px] text-neutral-400 font-medium leading-none mb-1">{t('nav.operator')}</p>
                 <p className="text-xs font-semibold text-ink-primary tracking-tight">Operador do Sistema</p>
               </div>
               <div className="h-9 w-9 rounded-lg bg-accent-sand flex items-center justify-center border border-border-light text-ink-charcoal">
@@ -251,7 +253,7 @@ export default function Layout() {
               )}
             >
               <item.icon className="h-5 w-5" />
-              <span className="text-[9px] font-bold uppercase tracking-wider">{item.labelPt}</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider">{t(item.key)}</span>
             </NavLink>
           ))}
           <NavLink
@@ -262,7 +264,7 @@ export default function Layout() {
             )}
           >
             <Settings className="h-5 w-5" />
-            <span className="text-[9px] font-bold uppercase tracking-wider">Ajustes</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider">{t('nav.settings')}</span>
           </NavLink>
         </div>
 

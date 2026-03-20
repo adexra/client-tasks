@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { Play, Pause, X, Target, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useToast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function FocusTimer({ onLog }) {
+  const { t } = useLanguage();
   const [timeLeft, setTimeLeft] = useState(15 * 60);
   const [isActive, setIsActive] = useState(false);
   const [intent, setIntent] = useState('');
@@ -21,7 +23,7 @@ export default function FocusTimer({ onLog }) {
   const handleStopAndLog = () => {
     setIsActive(false);
     onLog({
-      title: intent || 'Foco em Execução',
+      title: intent || t('timer.objective'),
       minutes: Math.ceil((15 * 60 - timeLeft) / 60)
     });
     reset();
@@ -36,12 +38,12 @@ export default function FocusTimer({ onLog }) {
     } else if (timeLeft === 0 && isActive) {
       setIsActive(false);
       setIsCompleted(true);
-      toast.success("Sessão de foco concluída.");
+      toast.success(t('timer.completed'));
       handleStopAndLog();
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isActive, timeLeft, toast]);
+  }, [isActive, timeLeft, toast, t]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -68,7 +70,7 @@ export default function FocusTimer({ onLog }) {
           <button 
             onClick={handleStopAndLog}
             className="p-1 hover:text-rose-500 text-ink-muted opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
-            title="Parar e Registrar Diretiva"
+            title={t('timer.stop_title')}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -79,14 +81,14 @@ export default function FocusTimer({ onLog }) {
         {isCompleted ? (
           <div className="flex items-center gap-2 text-success-green animate-in fade-in slide-in-from-left-2">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Sessão Concluída</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">{t('timer.completed')}</span>
           </div>
         ) : (
           <div className="flex items-center gap-2 flex-1">
             <Target className="h-3 w-3 text-ink-muted shrink-0" />
             <input 
               type="text"
-              placeholder="Objetivo principal da sessão..."
+              placeholder={t('timer.placeholder')}
               value={intent}
               onChange={(e) => setIntent(e.target.value)}
               className="bg-transparent border-none p-0 text-[11px] font-medium placeholder:text-ink-placeholder focus:ring-0 w-full"

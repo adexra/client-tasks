@@ -22,11 +22,13 @@ import AddClientModal from '../components/AddClientModal';
 import DeadlinesWidget from '../components/DeadlinesWidget';
 import { useToast } from '../context/ToastContext';
 import { useFinancials } from '../context/FinancialContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', BRL: 'R$' };
 
 export default function Dashboard() {
   const { payments, displayCurrency: currency, changeCurrency, toBRL, fromBRL, loading: financialsLoading } = useFinancials();
+  const { t, language } = useLanguage();
   const [clients, setClients] = useState([]);
   const [todayTasks, setTodayTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,15 +78,14 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
         <div className="space-y-6">
            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Painel de Controle</span>
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('dashboard.tag')}</span>
               <div className="h-[1px] w-8 bg-neutral-200" />
            </div>
            <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight break-words">
-             Portfólio de Execução.
+             {t('dashboard.title')}
            </h1>
            <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
-             Gestão de precisão para projetos de nível premium. 
-             Acompanhamento de velocidade e marcos.
+             {t('dashboard.subtitle')}
            </p>
         </div>
         
@@ -93,30 +94,30 @@ export default function Dashboard() {
           className="btn-minimal btn-primary flex items-center gap-2.5 h-12 px-8"
         >
           <Plus className="h-4 w-4" /> 
-          <span className="text-sm font-medium">Novo Projeto</span>
+          <span className="text-sm font-medium">{t('portfolio.new_project')}</span>
         </button>
       </div>
 
       {/* Primary Intelligence Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <StatsCard 
-          label="Faturamento Total" 
+          label={t('dashboard.total_revenue')} 
           value={`${CURRENCY_SYMBOLS[currency]} ${displayedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-          subtext="Portfólio Atual"
+          subtext={t('dashboard.current_portfolio')}
         />
         <StatsCard 
-          label="Projetos Ativos" 
+          label={t('dashboard.active_projects')} 
           value={clients.filter(c => c.status === 'active').length} 
-          subtext="Carga de Execução"
+          subtext={t('dashboard.execution_load')}
         />
         <div className="md:col-span-2">
           {todayTasks.length > 0 ? (
             <div className="surface-card p-6 md:p-8 flex flex-col justify-between h-full bg-neutral-900 text-white border-none shadow-2xl">
                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Prioridades de Hoje</span>
-                     <Link to="/execution" className="text-[9px] font-bold text-neutral-500 hover:text-white uppercase tracking-widest flex items-center gap-1.5 transition-colors">
-                        Ver Todos <ArrowRight className="h-3 w-3" />
+                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('dashboard.today_priorities')}</span>
+                     <Link to="/priority" className="text-[9px] font-bold text-neutral-500 hover:text-white uppercase tracking-widest flex items-center gap-1.5 transition-colors">
+                        {t('dashboard.view_all')} <ArrowRight className="h-3 w-3" />
                      </Link>
                   </div>
                   <div className="space-y-4">
@@ -145,7 +146,7 @@ export default function Dashboard() {
       <div className="space-y-12">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-light)] pb-8 gap-6">
            <div className="flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-10">
-              <h2 className="text-xl font-serif text-[var(--ink-primary)]">Quadro de registros.</h2>
+              <h2 className="text-xl font-serif text-[var(--ink-primary)]">{t('dashboard.registry_board')}</h2>
               
               <div className="flex bg-[var(--accent-sand)]/40 p-1 rounded-lg">
                  {['USD', 'EUR', 'BRL'].map(c => (
@@ -170,14 +171,18 @@ export default function Dashboard() {
              className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 hover:text-neutral-600 uppercase tracking-widest transition-colors"
            >
              <Archive className="h-3.5 w-3.5" />
-             {showArchived ? 'Projetos ativos' : 'Registros arquivados'}
+             {showArchived 
+                ? t('dashboard.active_projects_toggle')
+                : t('dashboard.archived_records_toggle')}
            </button>
         </div>
 
         {loading ? (
           <div className="py-40 flex flex-col items-center justify-center gap-4 opacity-50">
             <div className="h-4 w-4 border-2 border-[var(--ink-charcoal)] border-t-transparent rounded-full animate-spin" />
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400">Carregando Projetos...</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400">
+              {t('dashboard.loading_projects')}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -191,8 +196,12 @@ export default function Dashboard() {
             ))}
             {!loading && filteredClients.length === 0 && (
               <div className="col-span-full py-40 border-2 border-dashed border-neutral-100 rounded-2xl flex flex-col items-center justify-center text-center">
-                 <h3 className="text-xl font-serif text-neutral-300">Nenhum projeto ativo encontrado.</h3>
-                 <p className="text-[10px] font-bold text-neutral-300 mt-2 uppercase tracking-[0.2em]">Inicie um novo projeto ou ajuste os filtros.</p>
+                 <h3 className="text-xl font-serif text-neutral-300">
+                    {t('dashboard.no_projects')}
+                 </h3>
+                 <p className="text-[10px] font-bold text-neutral-300 mt-2 uppercase tracking-[0.2em]">
+                    {t('dashboard.start_new')}
+                 </p>
               </div>
             )}
           </div>
@@ -220,6 +229,7 @@ function StatsCard({ label, value, subtext }) {
 
 function ClientEditorialCard({ client, payments, currency }) {
   const { toBRL, fromBRL } = useFinancials();
+  const { t, language } = useLanguage();
   const totalBilled = payments.reduce((sum, p) => sum + toBRL(parseFloat(p.amount) || 0, p.currency), 0);
   const displayRevenue = fromBRL(totalBilled, currency);
 
@@ -231,7 +241,7 @@ function ClientEditorialCard({ client, payments, currency }) {
             <div className="flex items-center gap-2">
               <div className={cn("h-1.5 w-1.5 rounded-full", client.status === 'active' ? "bg-[var(--success-green)]" : "bg-neutral-300")} />
               <span className={cn("text-[9px] font-bold uppercase tracking-widest", client.status === 'active' ? "text-[var(--success-green)]" : "text-neutral-400")}>
-                {client.status === 'active' ? 'Ativo' : 'Arquivado'}
+                {client.status === 'active' ? t('portfolio.filter_active') : t('portfolio.filter_archived')}
               </span>
             </div>
             <span className="text-[9px] font-mono text-neutral-300 uppercase">ID / {client.id.split('-')[0]}</span>
@@ -250,11 +260,11 @@ function ClientEditorialCard({ client, payments, currency }) {
                   className="inline-block text-[10px] font-bold text-[var(--accent-sand)] hover:underline uppercase tracking-widest mt-1"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Contact Me
+                  {t('portfolio.contact_me')}
                 </a>
               )}
               <p className="text-xs font-medium text-neutral-400 tracking-tight flex items-center gap-2">
-                 {client.email || 'Nenhum contato registrado'}
+                 {client.email || t('dashboard.no_contact')}
               </p>
             </div>
           </div>
@@ -272,7 +282,7 @@ function ClientEditorialCard({ client, payments, currency }) {
         <div className="pt-10 flex items-end justify-between">
            <div className="space-y-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest">Faturamento</span>
+                <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest">{t('dashboard.billed')}</span>
                 <span className={cn(
                   "text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded",
                   payments.length === 0 ? "bg-neutral-50 text-neutral-400" :
@@ -280,9 +290,9 @@ function ClientEditorialCard({ client, payments, currency }) {
                   payments.some(p => p.is_paid) ? "bg-amber-50 text-amber-600" :
                   "bg-rose-50 text-rose-600"
                 )}>
-                  {payments.length === 0 ? 'Sem Cobrança' : 
-                   payments.every(p => p.is_paid) ? 'Pago' : 
-                   payments.some(p => p.is_paid) ? 'Pago + Pendente' : 'Não Pago'}
+                  {payments.length === 0 ? t('dashboard.no_billing') : 
+                   payments.every(p => p.is_paid) ? t('financials.paid') : 
+                   payments.some(p => p.is_paid) ? t('dashboard.paid_pending') : t('financials.not_paid')}
                 </span>
               </div>
               <div className="text-xl font-serif text-success-green flex items-center gap-2 whitespace-nowrap">
@@ -292,7 +302,9 @@ function ClientEditorialCard({ client, payments, currency }) {
            </div>
            
            <div className="flex flex-col items-end gap-2">
-              <p className="text-[8px] text-neutral-200/50 font-medium whitespace-nowrap">Criado em {new Date(client.created_at).toLocaleDateString()}</p>
+              <p className="text-[8px] text-neutral-200/50 font-medium whitespace-nowrap">
+                {t('portfolio.created_at')} {new Date(client.created_at).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}
+              </p>
               <div className="flex flex-wrap gap-1.5 justify-end">
                  {client.tags?.slice(0, 2).map(t => (
                    <span key={t} className="px-2 py-0.5 bg-neutral-50 border border-neutral-100 text-neutral-400 rounded-md text-[8px] font-bold uppercase tracking-wider">{t}</span>

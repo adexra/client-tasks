@@ -3,8 +3,10 @@ import { X, Search, Plus, UserPlus, Target, Mail, Globe, Phone, DollarSign } fro
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { cn } from '../lib/utils';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function AddClientModal({ isOpen, onClose, onClientAdded, editClient = null }) {
+  const { t } = useLanguage();
   const toast = useToast();
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
@@ -52,7 +54,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
 
   async function handleSubmit(e) {
     if (e) e.preventDefault();
-    if (!formData.name) return toast.error('Nome do cliente é obrigatório');
+    if (!formData.name) return toast.error(t('project_modal.name_required'));
     
     setSubmitting(true);
     const dataToSave = { 
@@ -76,15 +78,14 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       await supabase.from('client_payments').insert([{
         client_id: newClient.id,
         amount: parseFloat(formData.revenue),
-        description: 'Taxa Inicial do Projeto',
+        description: 'Initial Project Fee',
         currency: formData.currency,
         is_paid: true
       }]);
     } else if (!error && editClient) {
-      // If editing, check if they changed the revenue value
       if (parseFloat(formData.revenue) !== parseFloat(editClient.revenue || 0)) {
         const { data: existing } = await supabase.from('client_payments')
-          .select('id').eq('client_id', editClient.id).eq('description', 'Taxa Inicial do Projeto');
+          .select('id').eq('client_id', editClient.id).eq('description', 'Initial Project Fee');
 
         if (existing && existing.length > 0) {
            await supabase.from('client_payments')
@@ -104,9 +105,9 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
 
     if (error) {
       console.error(error);
-      toast.error('Falha na sincronização');
+      toast.error(t('project_modal.sync_failed'));
     } else {
-      toast.success(editClient ? 'Projeto atualizado' : 'Projeto criado');
+      toast.success(editClient ? t('project_modal.updated') : t('project_modal.created'));
       if (onClientAdded) onClientAdded();
       window.dispatchEvent(new Event('project-updated'));
       window.dispatchEvent(new Event('financial-updated'));
@@ -125,8 +126,10 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
         {/* Modal Header */}
         <div className="p-10 border-b border-neutral-100 flex items-center justify-between">
            <div className="space-y-1">
-              <h2 className="text-3xl font-serif text-[var(--ink-primary)]">{editClient ? 'Editar Projeto' : 'Novo Projeto'}</h2>
-              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Configuração do Projeto</p>
+              <h2 className="text-3xl font-serif text-[var(--ink-primary)]">
+                {editClient ? t('project_modal.edit_title') : t('project_modal.new_title')}
+              </h2>
+              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('project_modal.tagline')}</p>
            </div>
            <button onClick={onClose} className="p-2 hover:bg-neutral-50 rounded-full transition-colors text-neutral-300 hover:text-neutral-500">
              <X className="h-6 w-6" />
@@ -137,21 +140,21 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
           {/* Identity Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-6">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Identidade do Projeto</label>
+              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">{t('project_modal.identity_section')}</label>
               <div className="space-y-4">
-                 <MinimalInput label="Nome do Projeto" value={formData.name} onChange={v => setFormData({...formData, name: v})} placeholder="Nome do Cliente" />
-                 <MinimalInput label="E-mail de Contato" value={formData.email} onChange={v => setFormData({...formData, email: v})} placeholder="contato@entidade.com" />
-                 <MinimalInput label="Link de Contato" value={formData.contact_link} onChange={v => setFormData({...formData, contact_link: v})} placeholder="WhatsApp, Calendly, etc." />
-                 <MinimalInput label="URL do Website" value={formData.url} onChange={v => setFormData({...formData, url: v})} placeholder="https://entidade.com" />
+                 <MinimalInput label={t('project_modal.name_label')} value={formData.name} onChange={v => setFormData({...formData, name: v})} placeholder={t('project_modal.name_placeholder')} />
+                 <MinimalInput label={t('project_modal.email_label')} value={formData.email} onChange={v => setFormData({...formData, email: v})} placeholder={t('project_modal.email_placeholder')} />
+                 <MinimalInput label={t('project_modal.contact_link_label')} value={formData.contact_link} onChange={v => setFormData({...formData, contact_link: v})} placeholder={t('project_modal.contact_link_placeholder')} />
+                 <MinimalInput label={t('project_modal.website_label')} value={formData.url} onChange={v => setFormData({...formData, url: v})} placeholder={t('project_modal.website_placeholder')} />
               </div>
             </div>
 
             <div className="space-y-6">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Financeiro do Projeto</label>
+              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">{t('project_modal.financial_section')}</label>
               <div className="space-y-6">
                  <div className="grid grid-cols-3 gap-4">
                     <div className="col-span-1">
-                       <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-2 ml-1">Moeda</label>
+                       <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-2 ml-1">{t('project_modal.currency_label')}</label>
                        <select 
                          value={formData.currency} 
                          onChange={e => setFormData({...formData, currency: e.target.value})}
@@ -163,18 +166,18 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                        </select>
                     </div>
                      <div className="col-span-2">
-                        <MinimalInput label="Taxa / Faturamento Inicial" value={formData.revenue} onChange={v => setFormData({...formData, revenue: v})} placeholder="0.00" type="number" />
+                        <MinimalInput label={t('project_modal.revenue_label')} value={formData.revenue} onChange={v => setFormData({...formData, revenue: v})} placeholder="0.00" type="number" />
                      </div>
                  </div>
                  
                  <div>
-                    <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-3 ml-1">Fase Atual</label>
+                    <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-3 ml-1">{t('project_modal.phase_label')}</label>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                        {[
-                         {id: 'onboarding', label: 'Integração'}, 
-                         {id: 'delivery', label: 'Entrega'}, 
-                         {id: 'qa', label: 'QA'}, 
-                         {id: 'update', label: 'Atualizações'}
+                         {id: 'onboarding', label: t('project_modal.phases.onboarding')}, 
+                         {id: 'delivery', label: t('project_modal.phases.delivery')}, 
+                         {id: 'qa', label: t('project_modal.phases.qa')}, 
+                         {id: 'update', label: t('project_modal.phases.update')}
                        ].map(p => (
                          <button
                            key={p.id}
@@ -183,7 +186,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                            className={cn(
                              "px-3 py-2.5 rounded-xl border text-[9px] font-bold uppercase tracking-tight transition-all",
                              formData.phase === p.id 
-                               ? "bg-[var(--ink-charcoal)] border-[var(--ink-charcoal)] text-white shadow-md" 
+                               ? "bg-black border-black text-white shadow-md" 
                                : "bg-white border-neutral-100 text-neutral-400 hover:text-neutral-600 hover:border-neutral-200"
                            )}
                          >
@@ -200,23 +203,23 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
           <div className="space-y-10 pt-10 border-t border-neutral-100">
              <div className="flex items-center gap-3">
                 <Target className="h-4 w-4 text-[var(--accent-sand)]" />
-                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Escopo do Projeto e Próxima Ação</label>
+                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('project_modal.scope_section')}</label>
              </div>
              
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <MinimalTextarea label="Descrição do Projeto" value={formData.what_sold} onChange={v => setFormData({...formData, what_sold: v})} placeholder="Defina os objetivos principais..." />
-                <MinimalTextarea label="Próxima Ação Imediata" value={formData.next_action} onChange={v => setFormData({...formData, next_action: v})} placeholder="Próximo passo imediato..." />
+                <MinimalTextarea label={t('project_modal.description_label')} value={formData.what_sold} onChange={v => setFormData({...formData, what_sold: v})} placeholder={t('project_modal.description_placeholder')} />
+                <MinimalTextarea label={t('project_modal.next_action_label')} value={formData.next_action} onChange={v => setFormData({...formData, next_action: v})} placeholder={t('project_modal.next_action_placeholder')} />
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <MinimalTextarea label="Definição de Concluído" value={formData.definition_of_done} onChange={v => setFormData({...formData, definition_of_done: v})} placeholder="Critérios para conclusão..." />
-                <MinimalTextarea label="Fora do Escopo" value={formData.not_included} onChange={v => setFormData({...formData, not_included: v})} placeholder="Limites explícitos..." />
+                <MinimalTextarea label={t('project_modal.dod_label')} value={formData.definition_of_done} onChange={v => setFormData({...formData, definition_of_done: v})} placeholder={t('project_modal.dod_placeholder')} />
+                <MinimalTextarea label={t('project_modal.oos_label')} value={formData.not_included} onChange={v => setFormData({...formData, not_included: v})} placeholder={t('project_modal.oos_placeholder')} />
              </div>
           </div>
 
           {/* Classification Tags */}
           <div className="space-y-6 pt-10 border-t border-neutral-100">
-             <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Tags do Projeto</label>
+             <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">{t('project_modal.tags_label')}</label>
              <div className="bg-white border border-neutral-100 rounded-2xl p-6 space-y-4">
                 <div className="flex flex-wrap gap-2">
                    {tags.map(t => (
@@ -229,7 +232,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                      value={tagInput}
                      onChange={e => setTagInput(e.target.value)}
                      onKeyDown={addTag}
-                     placeholder="+ Adicionar tag..."
+                     placeholder={t('project_modal.add_tag_placeholder')}
                      className="bg-transparent border-none p-0 text-[10px] font-bold text-neutral-300 placeholder:text-neutral-100 focus:ring-0 uppercase tracking-widest mt-0.5"
                    />
                 </div>
@@ -238,13 +241,13 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
 
           {/* Submit Actions */}
           <div className="flex justify-end items-center gap-8 pt-10">
-             <button type="button" onClick={onClose} className="text-[10px] font-bold text-neutral-300 hover:text-neutral-500 uppercase tracking-widest transition-colors">Cancelar</button>
+             <button type="button" onClick={onClose} className="text-[10px] font-bold text-neutral-300 hover:text-neutral-500 uppercase tracking-widest transition-colors">{t('common.cancel')}</button>
              <button
                type="submit"
                disabled={submitting}
                className="btn-minimal btn-primary px-12 py-5 h-auto text-[10px]"
              >
-               {submitting ? 'Salvando...' : (editClient ? 'Atualizar Projeto' : 'Criar Projeto')}
+               {submitting ? t('project_modal.saving') : (editClient ? t('project_modal.updated') : t('project_modal.created'))}
              </button>
           </div>
         </form>

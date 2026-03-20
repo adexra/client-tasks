@@ -3,8 +3,10 @@ import { X, Clock, Trash2, Rocket, Target } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { cn } from '../lib/utils';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = null, clients = [] }) {
+  const { t } = useLanguage();
   const toast = useToast();
   const [formData, setFormData] = useState({
     title: '',
@@ -37,7 +39,7 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
 
   async function handleSubmit(e) {
       e.preventDefault();
-      if (!formData.title.trim()) return toast.error('O título da tarefa é obrigatório');
+      if (!formData.title.trim()) return toast.error(t('task_modal.title_required'));
       
       setSubmitting(true);
       const payload = {
@@ -61,9 +63,9 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
 
       if (error) {
         console.error('Task Submission Error:', error);
-        toast.error('Falha na sincronização: ' + (error.message || 'Erro desconhecido'));
+        toast.error(t('task_modal.sync_failed') + ': ' + (error.message || 'Error'));
       } else {
-        toast.success(editTask ? 'Tarefa atualizada' : 'Tarefa criada');
+        toast.success(editTask ? t('task_modal.task_updated') : t('task_modal.task_created'));
         onTaskSaved();
         onClose();
       }
@@ -72,10 +74,10 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
 
   async function handleDelete() {
     if (!editTask) return;
-    if (!confirm('Excluir permanentemente esta tarefa?')) return;
+    if (!confirm(t('common.confirm_delete'))) return;
     const { error } = await supabase.from('tasks').delete().eq('id', editTask.id);
     if (!error) {
-      toast.success('Tarefa excluída');
+      toast.success(t('task_modal.task_deleted'));
       onTaskSaved();
       onClose();
     }
@@ -91,8 +93,10 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
         {/* Header */}
         <div className="px-10 py-10 border-b border-neutral-100 flex items-center justify-between">
            <div className="space-y-1">
-              <h2 className="text-3xl font-serif text-[var(--ink-primary)]">{editTask ? 'Editar Tarefa' : 'Nova Tarefa'}</h2>
-              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Configuração da Tarefa</p>
+              <h2 className="text-3xl font-serif text-[var(--ink-primary)]">
+                {editTask ? t('task_modal.edit_title') : t('task_modal.new_title')}
+              </h2>
+              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('task_modal.config')}</p>
            </div>
            <button onClick={onClose} className="p-2 hover:bg-neutral-50 rounded-full transition-colors text-neutral-300 hover:text-neutral-500">
              <X className="h-6 w-6" />
@@ -102,41 +106,41 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
         <form onSubmit={handleSubmit} className="p-10 space-y-10 bg-neutral-50/20">
           <div className="space-y-8">
             <div className="space-y-2">
-              <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Título da Tarefa</label>
+              <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('task_modal.title_label')}</label>
               <input
                 autoFocus
                 required
                 value={formData.title}
                 onChange={e => set('title')(e.target.value)}
                 className="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 text-sm font-medium text-ink-primary placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-slate-200 transition-all font-sans"
-                placeholder="O que exatamente precisa ser feito?"
+                placeholder={t('task_modal.title_placeholder')}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Lista de Tarefas</label>
+                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('task_modal.list_label')}</label>
                 <select
                   value={formData.bucket}
                   onChange={e => set('bucket')(e.target.value)}
                   className="w-full bg-white border border-border-light rounded-xl px-4 py-4 text-[10px] font-bold text-ink-secondary focus:outline-none focus:ring-1 focus:ring-slate-200 uppercase tracking-widest transition-all appearance-none cursor-pointer"
                 >
-                  <option value="today">Hoje</option>
-                  <option value="this_week">Esta Semana</option>
-                  <option value="backlog">Backlog</option>
+                  <option value="today">{t('task_modal.buckets.today')}</option>
+                  <option value="this_week">{t('task_modal.buckets.this_week')}</option>
+                  <option value="backlog">{t('task_modal.buckets.backlog')}</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Prioridade</label>
+                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('task_modal.priority_label')}</label>
                 <select
                   value={formData.priority}
                   onChange={e => set('priority')(e.target.value)}
                   className="w-full bg-white border border-border-light rounded-xl px-4 py-4 text-[10px] font-bold text-ink-secondary focus:outline-none focus:ring-1 focus:ring-slate-200 uppercase tracking-widest transition-all appearance-none cursor-pointer"
                 >
-                  <option value="high">Crítica</option>
-                  <option value="medium">Prioritária</option>
-                  <option value="low">Suporte</option>
-                  <option value="very_low">Mínima</option>
+                  <option value="high">{t('task_modal.priorities.high')}</option>
+                  <option value="medium">{t('task_modal.priorities.medium')}</option>
+                  <option value="low">{t('task_modal.priorities.low')}</option>
+                  <option value="very_low">{t('task_modal.priorities.very_low')}</option>
                 </select>
               </div>
             </div>
@@ -144,7 +148,7 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
                 <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5" /> Tempo Estimado (Min)
+                  <Clock className="h-3.5 w-3.5" /> {t('task_modal.estimated_label')}
                 </label>
                 <input
                   type="number"
@@ -154,13 +158,13 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Vincular ao Projeto</label>
+                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('task_modal.link_project')}</label>
                 <select
                   value={formData.client_id}
                   onChange={e => set('client_id')(e.target.value)}
                   className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-4 text-[10px] font-bold text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-200 uppercase tracking-widest italic"
                 >
-                  <option value="">Tarefa Geral</option>
+                  <option value="">{t('task_modal.general_task')}</option>
                   {clients.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -169,11 +173,11 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
             </div>
 
             <div className="space-y-2">
-              <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">Detalhes da Tarefa</label>
+              <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('task_modal.details_label')}</label>
               <textarea
                 value={formData.description}
                 onChange={e => set('description')(e.target.value)}
-                placeholder="Detalhes para esta tarefa..."
+                placeholder={t('task_modal.details_placeholder')}
                 rows={3}
                 className="w-full bg-white border border-border-light rounded-xl px-6 py-4 text-sm font-medium text-ink-secondary placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-slate-200 transition-all resize-none italic leading-relaxed font-sans"
               />
@@ -188,13 +192,13 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
              ) : <div />}
              
              <div className="flex gap-8 items-center">
-                <button type="button" onClick={onClose} className="text-[10px] font-bold text-neutral-300 hover:text-neutral-500 uppercase tracking-widest transition-colors">Cancelar</button>
+                <button type="button" onClick={onClose} className="text-[10px] font-bold text-neutral-300 hover:text-neutral-500 uppercase tracking-widest transition-colors">{t('common.cancel')}</button>
                 <button
                   type="submit"
                   disabled={submitting}
                   className="btn-minimal btn-primary px-10 py-5 h-auto text-[10px]"
                 >
-                  {submitting ? 'Salvando...' : editTask ? 'Atualizar Tarefa' : 'Criar Tarefa'}
+                  {submitting ? t('common.saving') : editTask ? t('task_modal.task_updated') : t('task_modal.task_created')}
                 </button>
              </div>
           </div>
