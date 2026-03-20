@@ -16,6 +16,7 @@ import { cn } from '../lib/utils';
 import TagBadge from '../components/TagBadge';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
+import TaskModal from '../components/TaskModal';
 
 export default function PriorityView() {
   const { t, language } = useLanguage();
@@ -91,10 +92,10 @@ export default function PriorityView() {
     }
   }
 
-  const todayTasks = tasks.filter(t => t.bucket === 'today' && !t.done);
-  const weekTasks = tasks.filter(t => (t.bucket === 'this_week' || t.bucket === 'today') && !t.done);
-  const backlogTasks = tasks.filter(t => t.bucket === 'backlog' && !t.done);
-  const doneTasks = tasks.filter(t => t.done);
+  const todayTasks = tasks.filter(task => task.bucket === 'today' && !task.done);
+  const weekTasks = tasks.filter(task => (task.bucket === 'this_week' || task.bucket === 'today') && !task.done);
+  const backlogTasks = tasks.filter(task => task.bucket === 'backlog' && !task.done);
+  const doneTasks = tasks.filter(task => task.done);
   
   const isTodayOverloaded = todayTasks.length > 5;
 
@@ -154,7 +155,7 @@ export default function PriorityView() {
               </div>
               <div className="space-y-4">
                 {todayTasks.map(task => (
-                  <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
+                  <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={tk => setModal({ open: true, task: tk })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
                 ))}
                 {todayTasks.length === 0 && (
                   <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex flex-col items-center justify-center text-neutral-200">
@@ -169,8 +170,8 @@ export default function PriorityView() {
                  <p className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.1em]">{t('execution.weekly_tasks')}</p>
               </div>
               <div className="space-y-4">
-                {tasks.filter(t => t.bucket === 'this_week' && !t.done).map(task => (
-                  <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
+                {tasks.filter(task => task.bucket === 'this_week' && !task.done).map(task => (
+                  <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={tk => setModal({ open: true, task: tk })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
                 ))}
               </div>
             </div>
@@ -181,7 +182,7 @@ export default function PriorityView() {
         <Column label={BUCKETS.backlog.label} icon={BUCKETS.backlog.icon}>
           <div className="space-y-4">
             {backlogTasks.map(task => (
-              <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
+              <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={tk => setModal({ open: true, task: tk })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
             ))}
             {backlogTasks.length === 0 && (
                <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">{t('execution.backlog_clear')}</div>
@@ -193,7 +194,7 @@ export default function PriorityView() {
         <Column label={BUCKETS.done.label} icon={BUCKETS.done.icon}>
           <div className="space-y-4">
             {doneTasks.map(task => (
-              <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={t => setModal({ open: true, task: t })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
+              <TaskEditorialCard key={task.id} task={task} onMove={updateTaskBucket} onEdit={tk => setModal({ open: true, task: tk })} onToggleDone={toggleDone} t={t} PRIORITY_META={PRIORITY_META} />
             ))}
             {doneTasks.length === 0 && (
                <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">{t('execution.no_completions')}</div>
