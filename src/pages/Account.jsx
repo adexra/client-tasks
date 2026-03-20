@@ -133,64 +133,29 @@ export default function Account() {
   );
 }
 
-function EditorialInput({ label, value }) {
-  return (
-    <div className="space-y-3">
-      <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{label}</label>
-      <div className="w-full bg-white border border-neutral-100 rounded-xl px-6 py-4 text-sm font-medium text-neutral-500">
-         {value}
-      </div>
+const EditorialInput = ({ label, value }) => (
+  <div className="space-y-3">
+    <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{label}</label>
+    <div className="w-full bg-white border border-neutral-100 rounded-xl px-6 py-4 text-sm font-medium text-neutral-500">
+      {value}
     </div>
-  );
-}
+  </div>
+);
 
-function SecurityItem({ label, sub, active }) {
-  return (
-    <div className="flex items-center justify-between py-6 first:pt-0 last:pb-0">
-      <div className="space-y-1">
-        <h4 className="text-sm font-medium text-[var(--ink-primary)]">{label}</h4>
-        <p className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest">{sub}</p>
-      </div>
+const SecurityItem = ({ label, sub, active }) => (
+  <div className="flex items-center justify-between py-6 first:pt-0 last:pb-0">
+    <div className="space-y-1">
+      <h4 className="text-sm font-medium text-[var(--ink-primary)]">{label}</h4>
+      <p className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest">{sub}</p>
+    </div>
+    <div className={cn(
+      "h-6 w-11 rounded-full p-1 transition-colors duration-300",
+      active ? "bg-[var(--success-green)]" : "bg-neutral-200"
+    )}>
       <div className={cn(
-        "h-6 w-11 rounded-full p-1 transition-colors duration-300",
-        active ? "bg-[var(--success-green)]" : "bg-neutral-200"
-      )}>
-        <div className={cn(
-          "h-4 w-4 bg-white rounded-full shadow-sm transition-transform duration-300",
-          active ? "translate-x-5" : "translate-x-0"
-        )} />
-      </div>
+        "h-4 w-4 bg-white rounded-full shadow-sm transition-transform duration-300",
+        active ? "translate-x-5" : "translate-x-0"
+      )} />
     </div>
-  );
-}
-
-function EditorialInput({ label, value }) {
-  return (
-    <div className="space-y-3">
-      <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{label}</label>
-      <div className="w-full bg-white border border-neutral-100 rounded-xl px-6 py-4 text-sm font-medium text-neutral-500">
-         {value}
-      </div>
-    </div>
-  );
-}
-
-function SecurityItem({ label, sub, active }) {
-  return (
-    <div className="flex items-center justify-between py-6 first:pt-0 last:pb-0">
-      <div className="space-y-1">
-        <h4 className="text-sm font-medium text-[var(--ink-primary)]">{label}</h4>
-        <p className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest">{sub}</p>
-      </div>
-      <div className={cn(
-        "h-6 w-11 rounded-full p-1 transition-colors duration-300",
-        active ? "bg-[var(--success-green)]" : "bg-neutral-200"
-      )}>
-        <div className={cn(
-          "h-4 w-4 bg-white rounded-full shadow-sm transition-transform duration-300",
-          active ? "translate-x-5" : "translate-x-0"
-        )} />
-      </div>
-    </div>
-  );
-}
+  </div>
+);
