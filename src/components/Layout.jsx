@@ -168,70 +168,67 @@ export default function Layout() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-6 md:gap-10">
-            <div className="flex items-center gap-4 md:gap-6">
-              <div className="hidden md:block text-right">
-                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">{t('financials.income')}</p>
-                <div 
-                  className="flex items-center gap-2 group cursor-pointer select-none" 
-                  onClick={() => {
-                    const options = ['BRL', 'USD', 'EUR'];
-                    const next = options[(options.indexOf(displayCurrency) + 1) % options.length];
-                    changeCurrency(next);
-                  }}
-                >
-                  <p className="text-sm font-serif text-success-green tabular-nums">
-                    {displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ '}
-                    {displayedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                  <RefreshCcw className="h-2.5 w-2.5 text-neutral-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
+          <div className="flex items-center gap-3">
+            {/* Financial Stats Pill Group */}
+            <div className="flex items-center divide-x divide-border-light border border-border-light rounded-xl overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+              {/* Income — md+ */}
+              <div
+                className="hidden md:flex flex-col items-end px-4 py-2 gap-0.5 cursor-pointer group hover:bg-neutral-50 transition-colors select-none"
+                onClick={() => {
+                  const options = ['BRL', 'USD', 'EUR'];
+                  const next = options[(options.indexOf(displayCurrency) + 1) % options.length];
+                  changeCurrency(next);
+                }}
+                title="Click to change currency"
+              >
+                <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-[0.12em] leading-none flex items-center gap-1">
+                  {t('financials.total_billed')}
+                  <RefreshCcw className="h-2 w-2 opacity-0 group-hover:opacity-60 transition-opacity" />
+                </span>
+                <span className="text-sm font-serif text-emerald-600 tabular-nums whitespace-nowrap leading-snug">
+                  {displayCurrency === 'BRL' ? 'R$\u00A0' : displayCurrency === 'USD' ? '$\u00A0' : '€\u00A0'}
+                  {displayedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
 
-              <div className="hidden sm:block text-right">
-                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">{t('financials.expenses')}</p>
-                <p className="text-sm font-serif text-rose-500 tabular-nums">
-                  {displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ '}
+              {/* Expenses — sm+ */}
+              <div className="hidden sm:flex flex-col items-end px-4 py-2 gap-0.5">
+                <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-[0.12em] leading-none">{t('financials.expenses')}</span>
+                <span className="text-sm font-serif text-rose-500 tabular-nums whitespace-nowrap leading-snug">
+                  {displayCurrency === 'BRL' ? 'R$\u00A0' : displayCurrency === 'USD' ? '$\u00A0' : '€\u00A0'}
                   {displayedExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
+                </span>
               </div>
 
-              <div className="hidden xl:block h-4 w-[1px] bg-border-light" />
-              
-              <div className="hidden lg:block text-right">
-                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1">{t('financials.net_margin')}</p>
-                <p className={cn(
-                  "text-sm font-serif tabular-nums",
+              {/* Net Margin — lg+ */}
+              <div className="hidden lg:flex flex-col items-end px-4 py-2 gap-0.5">
+                <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-[0.12em] leading-none">{t('financials.net_margin')}</span>
+                <span className={cn(
+                  "text-sm font-serif tabular-nums whitespace-nowrap leading-snug",
                   totals.marginBRL >= 0 ? "text-emerald-500" : "text-rose-500"
                 )}>
-                  {displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ '}
+                  {displayCurrency === 'BRL' ? 'R$\u00A0' : displayCurrency === 'USD' ? '$\u00A0' : '€\u00A0'}
                   {fromBRL(totals.marginBRL, displayCurrency).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
+                </span>
               </div>
 
-              <div className="hidden md:block h-4 w-[1px] bg-border-light" />
-
-              <div className="text-right">
-                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1 px-1">{t('nav.bank')}</p>
-                <p className={cn(
-                  "text-sm font-serif tabular-nums",
-                  totals.bankBRL >= 0 ? "text-[var(--ink-primary)]" : "text-rose-600 font-bold"
+              {/* Bank — always visible */}
+              <div className="flex flex-col items-end px-4 py-2 gap-0.5">
+                <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-[0.12em] leading-none">{t('nav.bank')}</span>
+                <span className={cn(
+                  "text-sm font-serif tabular-nums whitespace-nowrap leading-snug",
+                  totals.bankBRL >= 0 ? "text-ink-primary" : "text-rose-600"
                 )}>
-                  {displayCurrency === 'BRL' ? 'R$ ' : displayCurrency === 'USD' ? '$ ' : '€ '}
+                  {displayCurrency === 'BRL' ? 'R$\u00A0' : displayCurrency === 'USD' ? '$\u00A0' : '€\u00A0'}
                   {fromBRL(totals.bankBRL, displayCurrency).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
+                </span>
               </div>
             </div>
 
-            <div className="hidden md:block h-8 w-[1px] bg-border-light" />
-
-            <div className="hidden sm:flex items-center gap-3 py-1">
-              <div className="text-right">
-                <p className="text-[10px] text-neutral-400 font-medium leading-none mb-1">{t('nav.operator')}</p>
-                <p className="text-xs font-semibold text-ink-primary tracking-tight">Operador do Sistema</p>
-              </div>
-              <div className="h-9 w-9 rounded-lg bg-accent-sand flex items-center justify-center border border-border-light text-ink-charcoal">
-                 <Cpu className="h-4 w-4" />
+            {/* Operator Avatar — sm+ */}
+            <div className="hidden sm:flex items-center gap-2.5 pl-1">
+              <div className="h-9 w-9 rounded-lg bg-accent-sand flex items-center justify-center border border-border-light text-ink-charcoal shrink-0">
+                <Cpu className="h-4 w-4" />
               </div>
             </div>
           </div>
