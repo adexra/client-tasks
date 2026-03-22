@@ -4,13 +4,14 @@ import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
+import { PROJECT_TEMPLATES } from '../lib/templates';
 
 export default function AddClientModal({ isOpen, onClose, onClientAdded, editClient = null }) {
   const { t } = useLanguage();
   const toast = useToast();
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
-    what_sold: '', next_action: '', definition_of_done: '', not_included: '', contact_link: ''
+    what_sold: '', next_action: '', definition_of_done: '', not_included: '', contact_link: '', main_delivery: 'none'
   });
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState([]);
@@ -36,7 +37,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
     } else {
       setFormData({ 
         name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
-        what_sold: '', next_action: '', definition_of_done: '', not_included: '', contact_link: ''
+        what_sold: '', next_action: '', definition_of_done: '', not_included: '', contact_link: '', main_delivery: 'none'
       });
       setTags([]);
     }
@@ -62,14 +63,17 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       tags, 
       revenue: parseFloat(formData.revenue) || 0 
     };
+    
+    // remove main_delivery as it doesn't belong to the clients table
+    const { main_delivery, ...clientDBPayload } = dataToSave;
 
     let error;
     let newClient;
     if (editClient) {
-      const { error: err } = await supabase.from('clients').update(dataToSave).eq('id', editClient.id);
+      const { error: err } = await supabase.from('clients').update(clientDBPayload).eq('id', editClient.id);
       error = err;
     } else {
-      const { data, error: err } = await supabase.from('clients').insert([dataToSave]).select().single();
+      const { data, error: err } = await supabase.from('clients').insert([clientDBPayload]).select().single();
       error = err;
       newClient = data;
     }
@@ -80,9 +84,31 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
         amount: parseFloat(formData.revenue),
         description: 'Initial Project Fee',
         currency: formData.currency,
-        is_paid: true
+        is_paid: false
       }]);
-    } else if (!error && editClient) {
+    } 
+    
+    // Add template tasks for new clients if selected
+    if (!error && !editClient && formData.main_delivery !== 'none' && newClient) {
+      const templateTasks = PROJECT_TEMPLATES[formData.main_delivery];
+      if (templateTasks) {
+        const todayDate = new Date().toISOString().split('T')[0];
+        const tasksToInsert = templateTasks.map(task => ({
+          ...task,
+          client_id: newClient.id,
+          scheduled_date: todayDate,
+          created_at: new Date().toISOString()
+        }));
+        
+        const { error: tasksError } = await supabase.from('tasks').insert(tasksToInsert);
+        if (tasksError) {
+          console.error("Failed to insert template tasks:", tasksError);
+          toast.error("Warning: Client created, but failed to insert templates.");
+        }
+      }
+    }
+    
+    if (!error && editClient) {
       if (parseFloat(formData.revenue) !== parseFloat(editClient.revenue || 0)) {
         const { data: existing } = await supabase.from('client_payments')
           .select('id').eq('client_id', editClient.id).eq('description', 'Initial Project Fee');
@@ -97,7 +123,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
              amount: parseFloat(formData.revenue),
              description: 'Initial Project Fee',
              currency: formData.currency,
-             is_paid: true
+             is_paid: false
            }]);
         }
       }
@@ -169,6 +195,23 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                         <MinimalInput label={t('project_modal.revenue_label')} value={formData.revenue} onChange={v => setFormData({...formData, revenue: v})} placeholder="0.00" type="number" />
                      </div>
                  </div>
+
+                 {!editClient && (
+                    <div>
+                        <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-2 ml-1">{t('project_modal.main_delivery_label')}</label>
+                        <select 
+                          value={formData.main_delivery} 
+                          onChange={e => setFormData({...formData, main_delivery: e.target.value})}
+                          className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3.5 text-xs font-bold text-[var(--ink-secondary)] focus:outline-none focus:ring-1 focus:ring-neutral-200"
+                        >
+                          <option value="none">{t('project_modal.main_delivery.none')}</option>
+                          <option value="framer_site">{t('project_modal.main_delivery.framer_site')}</option>
+                          <option value="automation">{t('project_modal.main_delivery.automation')}</option>
+                          <option value="advertising">{t('project_modal.main_delivery.advertising')}</option>
+                          <option value="update">{t('project_modal.main_delivery.update')}</option>
+                        </select>
+                    </div>
+                 )}
                  
                  <div>
                     <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-3 ml-1">{t('project_modal.phase_label')}</label>

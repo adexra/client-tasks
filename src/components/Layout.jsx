@@ -8,6 +8,7 @@ import {
   Target,
   RefreshCcw,
   Cpu,
+  LogOut,
   ChevronRight,
   CalendarClock,
   Wallet,
@@ -21,6 +22,7 @@ import FocusTimer from './FocusTimer';
 import TaskModal from './TaskModal';
 import { useFinancials } from '../context/FinancialContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
   { to: '/', icon: BarChart3, key: 'nav.dashboard' },
@@ -30,6 +32,7 @@ const NAV_ITEMS = [
 ];
 
 export default function Layout() {
+  const { signOut } = useAuth();
   const { totals, displayCurrency, changeCurrency, fromBRL } = useFinancials();
   const { t, language } = useLanguage();
   const [clients, setClients] = useState([]);
@@ -227,9 +230,13 @@ export default function Layout() {
 
             {/* Operator Avatar — sm+ */}
             <div className="hidden sm:flex items-center gap-2.5 pl-1">
-              <div className="h-9 w-9 rounded-lg bg-accent-sand flex items-center justify-center border border-border-light text-ink-charcoal shrink-0">
-                <Cpu className="h-4 w-4" />
-              </div>
+              <button 
+                onClick={signOut}
+                title="Sign Out"
+                className="h-9 w-9 rounded-lg bg-accent-sand flex items-center justify-center border border-border-light text-ink-charcoal shrink-0 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </header>

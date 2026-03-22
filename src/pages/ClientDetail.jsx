@@ -128,9 +128,31 @@ export default function ClientDetail() {
   }
 
   async function togglePaid(paymentId, currentStatus) {
+    const payment = payments.find(p => p.id === paymentId);
+    let updateData = { is_paid: !currentStatus };
+
+    if (!currentStatus && payment) {
+      // Marking as paid — snapshot the BRL value right now using live FX
+      try {
+        const usdToBRL = 5.20;
+        const eurToBRL = 6.00;
+        const amt = parseFloat(payment.amount) || 0;
+        let brlValue = amt;
+        if (payment.currency === 'USD') brlValue = amt * usdToBRL;
+        if (payment.currency === 'EUR') brlValue = amt * eurToBRL;
+        updateData.paid_brl_amount = Math.round(brlValue * 100) / 100;
+      } catch {
+        // FX fetch failed — fall back to stored amount as BRL (safe default)
+        updateData.paid_brl_amount = null;
+      }
+    } else {
+      // Unmarking as paid — clear the snapshot
+      updateData.paid_brl_amount = null;
+    }
+
     const { error } = await supabase
       .from('client_payments')
-      .update({ is_paid: !currentStatus })
+      .update(updateData)
       .eq('id', paymentId);
     
     if (!error) {

@@ -4,25 +4,18 @@ import { supabase } from '../lib/supabase';
 const FinancialContext = createContext();
 
 export function FinancialProvider({ children }) {
-  const [fxRates, setFxRates] = useState({ USD: 6.12, EUR: 6.64 });
+  const [fxRates, setFxRates] = useState({ USD: 5.20, EUR: 6.00 });
   const [displayCurrency, setDisplayCurrency] = useState(() => localStorage.getItem('displayCurrency') || 'BRL');
   const [payments, setPayments] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchFX = useCallback(async () => {
-    try {
-      const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const data = await res.json();
-      if (data && data.rates) {
-        setFxRates({
-          USD: data.rates.BRL || 6.12,
-          EUR: (data.rates.BRL / data.rates.EUR) || 6.64
-        });
-      }
-    } catch (e) {
-      console.warn("FX fetch failed, using fallback.");
-    }
+  const fetchFX = useCallback(() => {
+    // Fixed conversion as requested by the user
+    setFxRates({
+      USD: 5.20,
+      EUR: 6.00
+    });
   }, []);
 
   const loadData = useCallback(async () => {
@@ -74,7 +67,14 @@ export function FinancialProvider({ children }) {
   const totals = useMemo(() => {
     const incomeBRL = payments.reduce((sum, p) => sum + toBRL(parseFloat(p.amount) || 0, p.currency), 0);
     const expensesBRL = expenses.reduce((sum, e) => sum + toBRL(parseFloat(e.amount) || 0, e.currency), 0);
-    const paidBRL = payments.filter(p => p.is_paid).reduce((sum, p) => sum + toBRL(parseFloat(p.amount) || 0, p.currency), 0);
+    // Use paid_brl_amount (frozen at time of payment) to prevent FX drift.
+    // Fall back to live conversion only if snapshot is missing.
+    const paidBRL = payments
+      .filter(p => p.is_paid)
+      .reduce((sum, p) => {
+        const frozen = parseFloat(p.paid_brl_amount);
+        return sum + (isNaN(frozen) ? toBRL(parseFloat(p.amount) || 0, p.currency) : frozen);
+      }, 0);
     
     return {
       incomeBRL,

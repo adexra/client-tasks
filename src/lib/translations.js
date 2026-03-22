@@ -282,6 +282,14 @@ export const translations = {
         financial_section: 'Project Financials',
         currency_label: 'Currency',
         revenue_label: 'Initial Fee / Revenue',
+        main_delivery_label: 'Main Delivery / Template',
+        main_delivery: {
+            none: 'None (Blank Project)',
+            framer_site: 'Framer Website',
+            automation: 'Process Automation',
+            advertising: 'Paid Advertising',
+            update: 'System Update'
+        },
         phase_label: 'Current Phase',
         phases: {
             onboarding: 'Onboarding',
@@ -611,6 +619,14 @@ export const translations = {
         financial_section: 'Financeiro do Projeto',
         currency_label: 'Moeda',
         revenue_label: 'Taxa / Faturamento Inicial',
+        main_delivery_label: 'Entrega Principal / Template',
+        main_delivery: {
+            none: 'Nenhum (Projeto em Branco)',
+            framer_site: 'Site no Framer',
+            automation: 'Automação de Processos',
+            advertising: 'Tráfego Pago',
+            update: 'Atualização de Sistema'
+        },
         phase_label: 'Fase Atual',
         phases: {
             onboarding: 'Integração',

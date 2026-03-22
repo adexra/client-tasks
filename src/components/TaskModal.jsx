@@ -42,10 +42,20 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
       if (!formData.title.trim()) return toast.error(t('task_modal.title_required'));
       
       setSubmitting(true);
+      const todayDate = new Date().toISOString().split('T')[0];
+      
+      let finalScheduledDate = null;
+      if (formData.bucket === 'today') {
+        finalScheduledDate = todayDate;
+      } else if (formData.bucket === 'this_week') {
+        finalScheduledDate = (editTask && editTask.bucket === 'this_week' && editTask.scheduled_date) ? editTask.scheduled_date : todayDate;
+      }
+
       const payload = {
         ...formData,
         client_id: formData.client_id || null,
-        estimated_minutes: parseInt(formData.estimated_minutes) || 30
+        estimated_minutes: parseInt(formData.estimated_minutes) || 30,
+        scheduled_date: finalScheduledDate
       };
 
       let error;
