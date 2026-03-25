@@ -70,8 +70,8 @@ export default function PriorityView() {
   const PRIORITY_META = {
     high:     { label: t('execution.critical'),  color: 'text-rose-500',    bg: 'bg-rose-50',    weight: 3 },
     medium:   { label: t('execution.high'),      color: 'text-amber-500',   bg: 'bg-amber-50',   weight: 2 },
-    low:      { label: t('execution.support'),   color: 'text-neutral-400', bg: 'bg-neutral-50', weight: 1 },
-    very_low: { label: t('execution.internal'),  color: 'text-neutral-300', bg: 'bg-neutral-50', weight: 0 },
+    low:      { label: t('execution.support'),   color: 'text-ink-muted',   bg: 'bg-neutral-50', weight: 1 },
+    very_low: { label: t('execution.internal'),  color: 'text-ink-secondary', bg: 'bg-neutral-50', weight: 0 },
   };
 
   const [clients, setClients]           = useState([]);
@@ -342,7 +342,7 @@ export default function PriorityView() {
             {/* TODAY */}
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.1em]">
+                <p className="text-[10px] font-bold text-ink-muted uppercase tracking-[0.1em]">
                   {t('execution.today_tasks')}
                 </p>
                 <div className="flex items-center gap-2">
@@ -439,14 +439,14 @@ export default function PriorityView() {
             {/* THIS WEEK — grouped by day */}
             <div className="space-y-6">
               <div className="pb-3 border-b border-neutral-100">
-                <p className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.1em]">{t('execution.weekly_tasks')}</p>
+                <p className="text-[10px] font-bold text-ink-muted uppercase tracking-[0.1em]">{t('execution.weekly_tasks')}</p>
               </div>
               {Object.entries(weekTasksByDay).length === 0 && (
                 <p className="text-[10px] text-neutral-200 italic uppercase tracking-widest text-center py-8">No upcoming tasks</p>
               )}
               {Object.entries(weekTasksByDay).map(([dateKey, dayTasks]) => (
                 <div key={dateKey} className="space-y-3">
-                  <p className="text-[9px] font-bold text-neutral-300 uppercase tracking-[0.15em] flex items-center gap-2">
+                  <p className="text-[9px] font-bold text-ink-muted uppercase tracking-[0.15em] flex items-center gap-2">
                     <span className="h-[1px] w-4 bg-neutral-200 inline-block" />
                     {formatDayLabel(dateKey, language)}
                   </p>
@@ -564,7 +564,7 @@ function Column({ label, icon: Icon, children }) {
   return (
     <div className="space-y-10 min-h-[600px]">
       <div className="flex items-center gap-4">
-        <Icon className="h-4 w-4 text-neutral-300" />
+        <Icon className="h-4 w-4 text-ink-muted" />
         <h2 className="text-xl font-serif text-[var(--ink-primary)]">{label}.</h2>
       </div>
       <div className="px-1">{children}</div>
@@ -582,7 +582,7 @@ function ClientMinimalCard({ client }) {
         </div>
         {client.next_action && (
           <div className="pt-4 border-t border-neutral-50">
-            <p className="text-xs font-medium text-neutral-400 leading-snug italic">{client.next_action}</p>
+            <p className="text-xs font-semibold text-ink-muted leading-snug italic">{client.next_action}</p>
           </div>
         )}
         <div className="flex flex-wrap gap-1.5">
@@ -681,7 +681,7 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, language, PR
                 style={{ width: `${Math.round((subStats.done / subStats.total) * 100)}%` }}
               />
             </div>
-            <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-widest whitespace-nowrap">
+            <span className="text-[8px] font-bold text-ink-muted uppercase tracking-widest whitespace-nowrap">
               {subStats.done} / {subStats.total} Steps
             </span>
           </div>
@@ -690,7 +690,7 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, language, PR
         <div className="flex items-center justify-between mt-3 gap-2">
           <div className="flex items-center gap-3 min-w-0">
             {task.clients?.name && (
-              <p className={cn("text-[9px] font-bold uppercase tracking-widest truncate", task.done ? "text-neutral-300" : "text-neutral-400")}>
+              <p className={cn("text-[9px] font-bold uppercase tracking-widest truncate", task.done ? "text-neutral-300" : "text-ink-muted")}>
                 {task.clients.name}
               </p>
             )}

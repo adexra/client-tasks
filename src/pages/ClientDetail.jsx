@@ -101,9 +101,41 @@ export default function ClientDetail() {
   }
 
   async function deleteClient() {
-    if (!confirm(t('client_detail.delete_confirm'))) return;
+    // 1. Check for open tasks
+    const { data: openTasks, error: checkError } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('client_id', id)
+      .eq('done', false);
+
+    if (checkError) {
+      console.error('Error checking projects tasks:', checkError);
+    }
+
+    const hasOpenTasks = openTasks && openTasks.length > 0;
+    
+    let deleteTasksConfirmed = false;
+    if (hasOpenTasks) {
+      if (confirm(t('client_detail.delete_confirm_with_tasks', { count: openTasks.length }))) {
+        deleteTasksConfirmed = true;
+      } else {
+        // If they don't want to delete tasks, or they cancel the whole thing?
+        // Let's ask if they want to cancel deletion or just keep tasks.
+        if (!confirm(t('client_detail.delete_confirm_only_project'))) return;
+      }
+    } else {
+      if (!confirm(t('client_detail.delete_confirm'))) return;
+    }
+
+    if (deleteTasksConfirmed) {
+      await supabase.from('tasks').delete().eq('client_id', id).eq('done', false);
+    }
+
     const { error } = await supabase.from('clients').delete().eq('id', id);
-    if (!error) { toast.success(t('client_detail.project_deleted')); navigate('/'); }
+    if (!error) { 
+      toast.success(t('client_detail.project_deleted')); 
+      navigate('/'); 
+    }
   }
 
   async function addPayment(e) {

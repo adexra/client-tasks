@@ -142,24 +142,24 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-neutral-900/40 backdrop-blur-md" onClick={onClose} />
       
-      <div className="relative bg-white border border-neutral-200 rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 flex flex-col">
+      <div className="relative bg-white border border-neutral-200 rounded-2xl md:rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="px-10 py-10 border-b border-neutral-100 flex items-center justify-between">
+        <div className="px-6 py-6 md:px-10 md:py-10 border-b border-neutral-100 flex items-center justify-between bg-white shrink-0">
            <div className="space-y-1">
               <h2 className="text-3xl font-serif text-[var(--ink-primary)]">
                 {editTask ? t('task_modal.edit_title') : t('task_modal.new_title')}
               </h2>
-              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('task_modal.config')}</p>
-           </div>
+              <label className="text-[10px] font-bold text-ink-muted uppercase tracking-widest ml-1">{t('task_modal.config')}</label>
+            </div>
            <button onClick={onClose} className="p-2 hover:bg-neutral-50 rounded-full transition-colors text-neutral-300 hover:text-neutral-500">
-             <X className="h-6 w-6" />
+             <X className="h-5 w-5 md:h-6 md:w-6" />
            </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-10 space-y-10 bg-neutral-50/20">
+        <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-8 md:space-y-10 bg-neutral-50/20 overflow-y-auto">
           <div className="space-y-8">
             <div className="space-y-2">
-              <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('task_modal.title_label')}</label>
+              <label className="text-[10px] font-bold text-ink-muted uppercase tracking-widest ml-1">{t('task_modal.title_label')}</label>
               <input
                 autoFocus
                 required
@@ -172,7 +172,7 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
 
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('task_modal.list_label')}</label>
+                <label className="text-[10px] font-bold text-ink-muted uppercase tracking-widest ml-1">{t('task_modal.list_label')}</label>
                 <select
                   value={formData.bucket}
                   onChange={e => set('bucket')(e.target.value)}
@@ -184,7 +184,7 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('task_modal.priority_label')}</label>
+                <label className="text-[10px] font-bold text-ink-muted uppercase tracking-widest ml-1">{t('task_modal.priority_label')}</label>
                 <select
                   value={formData.priority}
                   onChange={e => set('priority')(e.target.value)}
@@ -200,7 +200,7 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
 
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                <label className="text-[10px] font-bold text-ink-muted uppercase tracking-widest ml-1 flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" /> {t('task_modal.estimated_label')}
                 </label>
                 <input
@@ -211,7 +211,7 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('task_modal.link_project')}</label>
+                <label className="text-[10px] font-bold text-ink-muted uppercase tracking-widest ml-1">{t('task_modal.link_project')}</label>
                 <select
                   value={formData.client_id}
                   onChange={e => set('client_id')(e.target.value)}
@@ -226,7 +226,7 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
             </div>
 
             <div className="space-y-2">
-              <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('task_modal.details_label')}</label>
+              <label className="text-[10px] font-bold text-ink-muted uppercase tracking-widest ml-1">{t('task_modal.details_label')}</label>
               <textarea
                 value={formData.description}
                 onChange={e => set('description')(e.target.value)}
@@ -238,11 +238,11 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
 
             {/* Subtasks Section */}
             <div className="space-y-4 pt-4 border-t border-neutral-100">
-              <div className="flex items-center justify-between">
-                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <label className="text-[10px] font-bold text-ink-muted uppercase tracking-widest ml-1 flex items-center gap-2">
                   <ListTodo className="h-3.5 w-3.5" /> Sub-tasks
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                   <select 
                     onChange={(e) => {
                       if (e.target.value) {
@@ -250,7 +250,7 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
                         e.target.value = '';
                       }
                     }}
-                    className="text-[8px] font-bold uppercase tracking-widest text-neutral-400 bg-neutral-50 px-2 py-1 rounded border border-neutral-100 focus:outline-none"
+                    className="flex-1 sm:flex-none text-[9px] font-bold uppercase tracking-widest text-ink-secondary bg-white px-3 py-2 rounded-lg border border-neutral-200 focus:outline-none shadow-sm cursor-pointer"
                   >
                     <option value="">Apply Template</option>
                     <option value="automations">Automations</option>
@@ -258,61 +258,70 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
                   <button 
                     type="button" 
                     onClick={addSubtask}
-                    className="text-[8px] font-bold uppercase tracking-widest text-[var(--ink-primary)] bg-neutral-100 px-3 py-1 rounded hover:bg-neutral-200 transition-colors"
+                    className="flex-1 sm:flex-none text-[9px] font-bold uppercase tracking-widest text-white bg-ink-charcoal px-4 py-2 rounded-lg hover:bg-black transition-all shadow-sm"
                   >
                     + Add Step
                   </button>
                 </div>
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-3 mt-4">
                 {subtasks.map((st, idx) => (
-                  <div key={idx} className="flex items-center gap-3 group">
+                  <div key={idx} className="flex items-center gap-3 group bg-white p-3 rounded-xl border border-neutral-50 shadow-sm transition-all hover:border-neutral-200">
                     <button
                       type="button"
                       onClick={() => updateSubtask(idx, 'done', !st.done)}
-                      className="shrink-0"
+                      className="shrink-0 transition-transform active:scale-90"
                     >
-                      {st.done ? <CheckSquare className="h-4 w-4 text-emerald-500" /> : <Square className="h-4 w-4 text-neutral-300" />}
+                      {st.done ? <CheckSquare className="h-5 w-5 text-emerald-600" /> : <Square className="h-5 w-5 text-neutral-400" />}
                     </button>
                     <input
                       value={st.title}
                       onChange={e => updateSubtask(idx, 'title', e.target.value)}
-                      placeholder="Step description..."
+                      placeholder="e.g. Set up n8n trigger..."
                       className={cn(
-                        "flex-1 bg-transparent border-none p-0 text-sm focus:ring-0 placeholder:text-neutral-300 transition-all",
-                        st.done && "line-through text-neutral-300"
+                        "flex-1 bg-transparent border-none p-0 text-sm font-medium focus:ring-0 placeholder:text-neutral-300 transition-all",
+                        st.done ? "line-through text-neutral-400" : "text-ink-primary"
                       )}
                     />
                     <button
                       type="button"
                       onClick={() => removeSubtask(idx)}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-neutral-300 hover:text-rose-500 transition-all"
+                      className="opacity-0 group-hover:opacity-100 p-2 text-neutral-400 hover:text-rose-500 transition-all"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 ))}
                 {subtasks.length === 0 && (
-                  <p className="text-[10px] text-neutral-300 italic py-2">No sub-tasks added yet.</p>
+                  <p className="text-[11px] font-medium text-neutral-400 italic py-4 text-center bg-neutral-50/50 rounded-xl border border-dashed border-neutral-200 uppercase tracking-widest">
+                    No sub-tasks added yet.
+                  </p>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="flex justify-between items-center pt-8 border-t border-neutral-100">
-             {editTask ? (
-               <button type="button" onClick={handleDelete} className="p-3 text-neutral-300 hover:text-rose-500 transition-colors">
-                 <Trash2 className="h-5 w-5" />
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-8 border-t border-neutral-100 shrink-0">
+             <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
+               {editTask && (
+                 <button type="button" onClick={handleDelete} className="p-3 text-neutral-400 hover:text-rose-500 transition-colors border border-transparent hover:border-rose-100 rounded-xl">
+                   <Trash2 className="h-5 w-5" />
+                 </button>
+               )}
+               <button type="button" onClick={onClose} className="sm:hidden text-[10px] font-bold text-ink-muted hover:text-ink-primary uppercase tracking-widest transition-colors">
+                 {t('common.cancel')}
                </button>
-             ) : <div />}
+             </div>
              
-             <div className="flex gap-8 items-center">
-                <button type="button" onClick={onClose} className="text-[10px] font-bold text-neutral-300 hover:text-neutral-500 uppercase tracking-widest transition-colors">{t('common.cancel')}</button>
+             <div className="flex items-center gap-6 w-full sm:w-auto">
+                <button type="button" onClick={onClose} className="hidden sm:inline-block text-[10px] font-bold text-ink-muted hover:text-ink-primary uppercase tracking-widest transition-colors">
+                  {t('common.cancel')}
+                </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="btn-minimal btn-primary px-10 py-5 h-auto text-[10px]"
+                  className="w-full sm:w-auto btn-minimal btn-primary px-10 py-4 md:py-5 h-auto text-[10px] shadow-lg shadow-black/5"
                 >
                   {submitting ? t('common.saving') : editTask ? t('task_modal.task_updated') : t('task_modal.task_created')}
                 </button>
