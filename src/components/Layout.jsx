@@ -14,7 +14,9 @@ import {
   Wallet,
   TrendingDown,
   Menu,
-  X
+  X,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
@@ -33,7 +35,7 @@ const NAV_ITEMS = [
 
 export default function Layout() {
   const { signOut } = useAuth();
-  const { totals, displayCurrency, changeCurrency, fromBRL } = useFinancials();
+  const { totals, displayCurrency, changeCurrency, fromBRL, showPrivacy, togglePrivacy } = useFinancials();
   const { t, language } = useLanguage();
   const [clients, setClients] = useState([]);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -172,6 +174,15 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Privacy Toggle — always visible */}
+            <button
+              onClick={togglePrivacy}
+              className="p-2 text-neutral-400 hover:text-ink-charcoal transition-colors focus:ring-0 rounded-lg hover:bg-neutral-50 border border-border-light"
+              title={showPrivacy ? "Show Finances" : "Hide Finances"}
+            >
+              {showPrivacy ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+
             {/* Financial Stats Pill Group */}
             <div className="flex items-center divide-x divide-border-light border border-border-light rounded-xl overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
               {/* Income — md+ */}
@@ -190,7 +201,7 @@ export default function Layout() {
                 </span>
                 <span className="text-sm font-serif text-emerald-600 tabular-nums whitespace-nowrap leading-snug">
                   {displayCurrency === 'BRL' ? 'R$\u00A0' : displayCurrency === 'USD' ? '$\u00A0' : '€\u00A0'}
-                  {displayedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {showPrivacy ? '***' : displayedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
 
@@ -199,7 +210,7 @@ export default function Layout() {
                 <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-[0.12em] leading-none">{t('financials.expenses')}</span>
                 <span className="text-sm font-serif text-rose-500 tabular-nums whitespace-nowrap leading-snug">
                   {displayCurrency === 'BRL' ? 'R$\u00A0' : displayCurrency === 'USD' ? '$\u00A0' : '€\u00A0'}
-                  {displayedExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {showPrivacy ? '***' : displayedExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
 
@@ -211,7 +222,7 @@ export default function Layout() {
                   totals.marginBRL >= 0 ? "text-emerald-500" : "text-rose-500"
                 )}>
                   {displayCurrency === 'BRL' ? 'R$\u00A0' : displayCurrency === 'USD' ? '$\u00A0' : '€\u00A0'}
-                  {fromBRL(totals.marginBRL, displayCurrency).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {showPrivacy ? '***' : fromBRL(totals.marginBRL, displayCurrency).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
 
@@ -223,7 +234,7 @@ export default function Layout() {
                   totals.bankBRL >= 0 ? "text-ink-primary" : "text-rose-600"
                 )}>
                   {displayCurrency === 'BRL' ? 'R$\u00A0' : displayCurrency === 'USD' ? '$\u00A0' : '€\u00A0'}
-                  {fromBRL(totals.bankBRL, displayCurrency).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {showPrivacy ? '***' : fromBRL(totals.bankBRL, displayCurrency).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
             </div>

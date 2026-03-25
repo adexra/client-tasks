@@ -91,11 +91,14 @@ export default function PriorityView() {
   async function load(suppressOverloadCheck = false) {
     setLoading(true);
 
-    const [cRes, tRes] = await Promise.all([
+    const [cRes, tRes, sRes] = await Promise.all([
       supabase.from('clients').select('*').eq('status', 'active'),
-      supabase.from('tasks').select('*, clients(name)').order('created_at', { ascending: true })
+      supabase.from('tasks').select('*, clients(name)').order('created_at', { ascending: true }),
+      supabase.from('subtasks').select('*')
     ]);
     if (!cRes.error) setClients(cRes.data || []);
+    
+    let allSubtasks = sRes.data || [];
 
     let allTasks = tRes.data || [];
     const today = todayStr();
@@ -151,7 +154,13 @@ export default function PriorityView() {
         localStorage.setItem(pushKey, '1');
       }
 
-      setTasks(allTasks);
+      // Map subtasks to tasks
+      const tasksWithSubtasks = allTasks.map(task => ({
+        ...task,
+        subtasks: allSubtasks.filter(s => s.task_id === task.id)
+      }));
+
+      setTasks(tasksWithSubtasks);
 
       // ③ Overload warning (once per day)
       if (!suppressOverloadCheck) {
@@ -599,6 +608,11 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, language, PR
     return CLIENT_ACCENTS[sum % CLIENT_ACCENTS.length];
   })();
 
+  const subStats = task.subtasks?.length > 0 ? {
+    total: task.subtasks.length,
+    done: task.subtasks.filter(s => s.done).length
+  } : null;
+
   return (
     <div className={cn(
       "surface-card p-6 flex items-start gap-4 group transition-all border-l-4",
@@ -658,6 +672,20 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, language, PR
           "text-sm font-medium leading-normal tracking-tight transition-all",
           task.done ? "line-through text-neutral-400" : "text-[var(--ink-primary)]"
         )}>{task.title}</p>
+
+        {subStats && (
+          <div className="mt-3 flex items-center gap-2">
+            <div className="flex-1 h-1 bg-neutral-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-emerald-400 transition-all duration-500" 
+                style={{ width: `${Math.round((subStats.done / subStats.total) * 100)}%` }}
+              />
+            </div>
+            <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-widest whitespace-nowrap">
+              {subStats.done} / {subStats.total} Steps
+            </span>
+          </div>
+        )}
 
         <div className="flex items-center justify-between mt-3 gap-2">
           <div className="flex items-center gap-3 min-w-0">

@@ -9,6 +9,7 @@ export function FinancialProvider({ children }) {
   const [payments, setPayments] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showPrivacy, setShowPrivacy] = useState(() => localStorage.getItem('showPrivacy') === 'true');
 
   const fetchFX = useCallback(() => {
     // Fixed conversion as requested by the user
@@ -64,6 +65,14 @@ export function FinancialProvider({ children }) {
     localStorage.setItem('displayCurrency', curr);
   };
 
+  const togglePrivacy = () => {
+    setShowPrivacy(prev => {
+      const next = !prev;
+      localStorage.setItem('showPrivacy', String(next));
+      return next;
+    });
+  };
+
   const totals = useMemo(() => {
     const incomeBRL = payments.reduce((sum, p) => sum + toBRL(parseFloat(p.amount) || 0, p.currency), 0);
     const expensesBRL = expenses.reduce((sum, e) => sum + toBRL(parseFloat(e.amount) || 0, e.currency), 0);
@@ -95,7 +104,9 @@ export function FinancialProvider({ children }) {
     refreshData: loadData,
     toBRL,
     fromBRL,
-    totals
+    totals,
+    showPrivacy,
+    togglePrivacy
   };
 
   return (

@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
+import { SUBTASK_TEMPLATES } from '../lib/templates';
+import { ListTodo, CheckSquare, Square } from 'lucide-react';
 
 export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = null, clients = [] }) {
   const { t } = useLanguage();
@@ -16,9 +18,19 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
     estimated_minutes: 30,
     client_id: ''
   });
+  const [subtasks, setSubtasks] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    async function fetchSubtasks() {
+      if (editTask) {
+        const { data, error } = await supabase.from('subtasks').select('*').eq('task_id', editTask.id).order('created_at', { ascending: true });
+        if (!error) setSubtasks(data || []);
+      } else {
+        setSubtasks([]);
+      }
+    }
+
     if (editTask) {
       setFormData({
         title: editTask.title || '',
@@ -28,10 +40,12 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
         estimated_minutes: editTask.estimated_minutes || 30,
         client_id: editTask.client_id || ''
       });
+      fetchSubtasks();
     } else {
       setFormData({
         title: '', description: '', bucket: 'this_week', priority: 'medium', estimated_minutes: 30, client_id: ''
       });
+      setSubtasks([]);
     }
   }, [editTask, isOpen]);
 
@@ -60,24 +74,41 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
 
       let error;
       try {
-        if (editTask) {
-          const { error: err } = await supabase.from('tasks').update(payload).eq('id', editTask.id);
-          error = err;
+        let savedTaskId = editTask ? editTask.id : null;
+        
+        if (!editTask) {
+          const { data: insertedData, error: fetchError } = await supabase.from('tasks').insert([payload]).select('id').single();
+          if (fetchError) {
+             console.error('Insert Fetch Error:', fetchError);
+          } else {
+             savedTaskId = insertedData.id;
+          }
         } else {
-          const { error: err } = await supabase.from('tasks').insert([payload]);
-          error = err;
+          const { error: updateError } = await supabase.from('tasks').update(payload).eq('id', editTask.id);
+          if (updateError) console.error('Update Error:', updateError);
         }
-      } catch (err) {
-        error = err;
-      }
+        
+        if (savedTaskId) {
+          // Handle Subtasks
+          // Delete existing for this task ID and re-insert
+          await supabase.from('subtasks').delete().eq('task_id', savedTaskId);
+          
+          if (subtasks.length > 0) {
+            const subtaskPayload = subtasks.filter(s => s.title.trim()).map(s => ({
+              task_id: savedTaskId,
+              title: s.title,
+              done: !!s.done
+            }));
+            await supabase.from('subtasks').insert(subtaskPayload);
+          }
+        }
 
-      if (error) {
-        console.error('Task Submission Error:', error);
-        toast.error(t('task_modal.sync_failed') + ': ' + (error.message || 'Error'));
-      } else {
         toast.success(editTask ? t('task_modal.task_updated') : t('task_modal.task_created'));
         onTaskSaved();
         onClose();
+      } catch (err) {
+        console.error('Task Submission Error:', err);
+        toast.error(t('task_modal.sync_failed') + ': ' + (err.message || 'Error'));
       }
       setSubmitting(false);
   }
@@ -94,6 +125,18 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
   }
 
   const set = (key) => (val) => setFormData(prev => ({ ...prev, [key]: val }));
+
+  const addSubtask = () => setSubtasks([...subtasks, { title: '', done: false }]);
+  const updateSubtask = (index, field, value) => {
+    const next = [...subtasks];
+    next[index][field] = value;
+    setSubtasks(next);
+  };
+  const removeSubtask = (index) => setSubtasks(subtasks.filter((_, i) => i !== index));
+  const applyTemplate = (key) => {
+    const items = SUBTASK_TEMPLATES[key].map(title => ({ title, done: false }));
+    setSubtasks([...subtasks, ...items]);
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -191,6 +234,69 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
                 rows={3}
                 className="w-full bg-white border border-border-light rounded-xl px-6 py-4 text-sm font-medium text-ink-secondary placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-slate-200 transition-all resize-none italic leading-relaxed font-sans"
               />
+            </div>
+
+            {/* Subtasks Section */}
+            <div className="space-y-4 pt-4 border-t border-neutral-100">
+              <div className="flex items-center justify-between">
+                <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <ListTodo className="h-3.5 w-3.5" /> Sub-tasks
+                </label>
+                <div className="flex gap-2">
+                  <select 
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        applyTemplate(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="text-[8px] font-bold uppercase tracking-widest text-neutral-400 bg-neutral-50 px-2 py-1 rounded border border-neutral-100 focus:outline-none"
+                  >
+                    <option value="">Apply Template</option>
+                    <option value="automations">Automations</option>
+                  </select>
+                  <button 
+                    type="button" 
+                    onClick={addSubtask}
+                    className="text-[8px] font-bold uppercase tracking-widest text-[var(--ink-primary)] bg-neutral-100 px-3 py-1 rounded hover:bg-neutral-200 transition-colors"
+                  >
+                    + Add Step
+                  </button>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                {subtasks.map((st, idx) => (
+                  <div key={idx} className="flex items-center gap-3 group">
+                    <button
+                      type="button"
+                      onClick={() => updateSubtask(idx, 'done', !st.done)}
+                      className="shrink-0"
+                    >
+                      {st.done ? <CheckSquare className="h-4 w-4 text-emerald-500" /> : <Square className="h-4 w-4 text-neutral-300" />}
+                    </button>
+                    <input
+                      value={st.title}
+                      onChange={e => updateSubtask(idx, 'title', e.target.value)}
+                      placeholder="Step description..."
+                      className={cn(
+                        "flex-1 bg-transparent border-none p-0 text-sm focus:ring-0 placeholder:text-neutral-300 transition-all",
+                        st.done && "line-through text-neutral-300"
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeSubtask(idx)}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-neutral-300 hover:text-rose-500 transition-all"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                {subtasks.length === 0 && (
+                  <p className="text-[10px] text-neutral-300 italic py-2">No sub-tasks added yet.</p>
+                )}
+              </div>
             </div>
           </div>
 

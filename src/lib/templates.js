@@ -59,3 +59,23 @@ export const PROJECT_TEMPLATES = {
     { title: "[PHASE 4] Publish", description: "Deploy updates", bucket: "backlog", priority: "high", estimated_minutes: 15 }
   ]
 };
+export const SUBTASK_TEMPLATES = {
+  automations: [
+    "Define problem",
+    "Identify solution",
+    "Draw system diagram",
+    "Create or Add Credentials (emails, api keys, subdomain etc)",
+    "Build or Connect RAG",
+    "Begin documentation agent",
+    "Create n8n file",
+    "Name it",
+    "Turn on Error Handling",
+    "Build Trigger",
+    "Build Brain",
+    "Build Schema",
+    "Build Workers",
+    "Test Workflow",
+    "Publish",
+    "Sell"
+  ]
+};
