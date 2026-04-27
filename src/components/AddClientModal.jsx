@@ -119,6 +119,35 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       }
     }
 
+    // Auto-create the 4 standard phases for new projects
+    if (!error && !editClient && newClient) {
+      const phases = [
+        { phase_name: 'onboarding', order_index: 0, fields: [
+          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: '[]' },
+          { field_key: 'Timeline', field_type: 'date', field_value: '' },
+        ]},
+        { phase_name: 'delivery', order_index: 1, fields: [
+          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: '[]' },
+          { field_key: 'Timeline', field_type: 'date', field_value: '' },
+        ]},
+        { phase_name: 'qa', order_index: 2, fields: [
+          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: '[]' },
+        ]},
+        { phase_name: 'update', order_index: 3, fields: [
+          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: '[]' },
+          { field_key: 'Timeline', field_type: 'date', field_value: '' },
+        ]},
+      ];
+      for (const p of phases) {
+        const { data: phaseRow } = await supabase.from('client_phases')
+          .insert([{ client_id: newClient.id, phase_name: p.phase_name, order_index: p.order_index, completed: false }])
+          .select('id').single();
+        if (phaseRow?.id && p.fields.length) {
+          await supabase.from('phase_fields').insert(p.fields.map(f => ({ ...f, phase_id: phaseRow.id })));
+        }
+      }
+    }
+
     if (!error && !editClient && formData.revenue > 0 && newClient) {
       await supabase.from('client_payments').insert([{
         client_id: newClient.id,
