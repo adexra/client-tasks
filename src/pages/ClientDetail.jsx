@@ -38,6 +38,7 @@ export default function ClientDetail() {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [tasks, setTasks] = useState([]);
   const [payments, setPayments] = useState([]);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [newPayment, setNewPayment] = useState({ amount: '', description: '', currency: 'BRL', is_recurring: false, recurring_start_date: new Date().toISOString().split('T')[0] });
@@ -88,6 +89,14 @@ export default function ClientDetail() {
         .order('created_at', { ascending: true });
 
       setContacts(contactsData || []);
+
+      const { data: tasksData } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('client_id', id)
+        .order('created_at', { ascending: true });
+
+      setTasks(tasksData || []);
     } catch (err) {
       console.error(err);
       toast.error(t('client_detail.sync_error'));
@@ -345,7 +354,11 @@ export default function ClientDetail() {
                    )}
                    <div className="flex items-center gap-2.5">
                       <Globe className="h-3.5 w-3.5 text-neutral-300" />
-                      <span className="text-sm font-medium text-neutral-500 italic">{client.url || t('client_detail.no_url')}</span>
+                      {client.url ? (
+                        <a href={client.url.startsWith('http') ? client.url : `https://${client.url}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[var(--accent-sand)] hover:underline italic">{client.url}</a>
+                      ) : (
+                        <span className="text-sm font-medium text-neutral-500 italic">{t('client_detail.no_url')}</span>
+                      )}
                    </div>
                 </div>
              </div>
@@ -443,6 +456,27 @@ export default function ClientDetail() {
               <PhaseSection key={p.id} phase={p} onUpdate={loadClientData} />
            ))}
         </div>
+
+        {/* Project Tasks */}
+        {tasks.length > 0 && (
+          <div className="space-y-8 pt-20 border-t border-[var(--border-light)]">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <h2 className="text-4xl font-serif text-[var(--ink-primary)]">{t('client_detail.tasks_title') || 'Project Tasks'}</h2>
+                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{tasks.filter(t => !t.done).length} pending · {tasks.filter(t => t.done).length} done</p>
+              </div>
+              <div className="h-[1px] flex-1 bg-neutral-100 mx-10" />
+            </div>
+            <div className="space-y-2">
+              {tasks.map(task => (
+                <ProjectTaskRow key={task.id} task={task} onToggle={async () => {
+                  await supabase.from('tasks').update({ done: !task.done }).eq('id', task.id);
+                  loadClientData();
+                }} />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Payments / Billing Logic */}
         <div className="space-y-12 pt-20 border-t border-[var(--border-light)]">
@@ -634,6 +668,32 @@ export default function ClientDetail() {
         onClientAdded={loadClientData}
         editClient={client}
       />
+    </div>
+  );
+}
+
+function ProjectTaskRow({ task, onToggle }) {
+  const priorityColor = { high: 'bg-rose-500', medium: 'bg-amber-400', low: 'bg-neutral-300', very_low: 'bg-neutral-200' };
+  return (
+    <div
+      onClick={onToggle}
+      className={cn(
+        "flex items-center gap-4 px-5 py-3.5 rounded-xl border cursor-pointer transition-all group",
+        task.done
+          ? "bg-neutral-50 border-neutral-100 opacity-50"
+          : "bg-white border-neutral-100 hover:border-neutral-200 hover:shadow-sm"
+      )}
+    >
+      <span className={cn(
+        "h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center transition-all",
+        task.done ? "bg-neutral-400 border-neutral-400" : "border-neutral-300 group-hover:border-neutral-400"
+      )}>
+        {task.done && <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+      </span>
+      <span className={cn("text-sm font-medium flex-1 select-none", task.done ? "line-through text-neutral-400" : "text-neutral-700")}>{task.title}</span>
+      {task.priority && !task.done && (
+        <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", priorityColor[task.priority] || 'bg-neutral-300')} />
+      )}
     </div>
   );
 }
