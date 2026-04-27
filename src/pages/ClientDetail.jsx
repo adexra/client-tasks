@@ -35,6 +35,7 @@ export default function ClientDetail() {
   const { t, language } = useLanguage();
   const [client, setClient] = useState(null);
   const [phases, setPhases] = useState([]);
+  const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [payments, setPayments] = useState([]);
@@ -78,9 +79,15 @@ export default function ClientDetail() {
         .eq('client_id', id)
         .order('created_at', { ascending: false });
 
-      if (!paymentsError) {
-        setPayments(paymentsData || []);
-      }
+      if (!paymentsError) setPayments(paymentsData || []);
+
+      const { data: contactsData } = await supabase
+        .from('contacts')
+        .select('*')
+        .eq('client_id', id)
+        .order('created_at', { ascending: true });
+
+      setContacts(contactsData || []);
     } catch (err) {
       console.error(err);
       toast.error(t('client_detail.sync_error'));
@@ -385,11 +392,11 @@ export default function ClientDetail() {
 
            <div className="space-y-8 pt-8 border-t border-[var(--border-light)]">
               {/* Contacts */}
-              {client.contacts?.length > 0 && (
+              {contacts.length > 0 && (
                 <div className="space-y-3">
                   <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Contacts</label>
                   <div className="space-y-2">
-                    {client.contacts.map((c, i) => (
+                    {contacts.map((c, i) => (
                       <div key={i} className="bg-neutral-50 rounded-xl p-3 space-y-0.5">
                         {c.name && <p className="text-xs font-bold text-neutral-700">{c.name}{c.role ? <span className="font-normal text-neutral-400 ml-1">· {c.role}</span> : ''}</p>}
                         {c.phone && <p className="text-[10px] text-neutral-500 font-medium">{c.phone}</p>}

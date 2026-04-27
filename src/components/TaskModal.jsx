@@ -16,10 +16,12 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
     bucket: 'this_week',
     priority: 'medium',
     estimated_minutes: 30,
-    client_id: ''
+    client_id: '',
+    contact_id: ''
   });
   const [subtasks, setSubtasks] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [clientContacts, setClientContacts] = useState([]);
 
   useEffect(() => {
     async function fetchSubtasks() {
@@ -38,16 +40,26 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
         bucket: editTask.bucket || 'this_week',
         priority: editTask.priority || 'medium',
         estimated_minutes: editTask.estimated_minutes || 30,
-        client_id: editTask.client_id || ''
+        client_id: editTask.client_id || '',
+        contact_id: editTask.contact_id || ''
       });
       fetchSubtasks();
     } else {
       setFormData({
-        title: '', description: '', bucket: 'this_week', priority: 'medium', estimated_minutes: 30, client_id: ''
+        title: '', description: '', bucket: 'this_week', priority: 'medium', estimated_minutes: 30, client_id: '', contact_id: ''
       });
       setSubtasks([]);
     }
   }, [editTask, isOpen]);
+
+  useEffect(() => {
+    async function loadContacts() {
+      if (!formData.client_id) { setClientContacts([]); return; }
+      const { data } = await supabase.from('contacts').select('*').eq('client_id', formData.client_id).order('created_at');
+      setClientContacts(data || []);
+    }
+    loadContacts();
+  }, [formData.client_id]);
 
   if (!isOpen) return null;
 
@@ -68,6 +80,7 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
       const payload = {
         ...formData,
         client_id: formData.client_id || null,
+        contact_id: formData.contact_id || null,
         estimated_minutes: parseInt(formData.estimated_minutes) || 30,
         scheduled_date: finalScheduledDate
       };
@@ -214,7 +227,7 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
                 <label className="text-[10px] font-bold text-ink-muted uppercase tracking-widest ml-1">{t('task_modal.link_project')}</label>
                 <select
                   value={formData.client_id}
-                  onChange={e => set('client_id')(e.target.value)}
+                  onChange={e => { set('client_id')(e.target.value); set('contact_id')(''); }}
                   className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-4 text-[10px] font-bold text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-200 uppercase tracking-widest italic"
                 >
                   <option value="">{t('task_modal.general_task')}</option>
@@ -224,6 +237,22 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
                 </select>
               </div>
             </div>
+
+            {clientContacts.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-ink-muted uppercase tracking-widest ml-1">Assign Contact</label>
+                <select
+                  value={formData.contact_id}
+                  onChange={e => set('contact_id')(e.target.value)}
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-4 text-[10px] font-bold text-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-200 tracking-widest"
+                >
+                  <option value="">— No contact —</option>
+                  {clientContacts.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}{c.role ? ` · ${c.role}` : ''}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-ink-muted uppercase tracking-widest ml-1">{t('task_modal.details_label')}</label>

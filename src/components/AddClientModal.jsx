@@ -97,17 +97,26 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
     };
 
     // remove fields that don't belong to the clients table
-    const { main_delivery, is_recurring, recurring_start_date, ...clientDBPayload } = dataToSave;
+    const { main_delivery, is_recurring, recurring_start_date, contacts: _contacts, ...clientDBPayload } = dataToSave;
 
     let error;
     let newClient;
     if (editClient) {
       const { error: err } = await supabase.from('clients').update(clientDBPayload).eq('id', editClient.id);
       error = err;
+      if (!err && contacts.length > 0) {
+        await supabase.from('contacts').delete().eq('client_id', editClient.id);
+        const rows = contacts.filter(c => c.name?.trim()).map(c => ({ ...c, client_id: editClient.id }));
+        if (rows.length) await supabase.from('contacts').insert(rows);
+      }
     } else {
       const { data, error: err } = await supabase.from('clients').insert([clientDBPayload]).select().single();
       error = err;
       newClient = data;
+      if (!err && newClient && contacts.length > 0) {
+        const rows = contacts.filter(c => c.name?.trim()).map(c => ({ ...c, client_id: newClient.id }));
+        if (rows.length) await supabase.from('contacts').insert(rows);
+      }
     }
 
     if (!error && !editClient && formData.revenue > 0 && newClient) {
