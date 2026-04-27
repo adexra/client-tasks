@@ -227,6 +227,18 @@ function StatsCard({ label, value, subtext }) {
   );
 }
 
+function parseFirstAction(raw) {
+  if (!raw) return '';
+  try {
+    const items = JSON.parse(raw);
+    if (Array.isArray(items)) {
+      const first = items.find(i => !i.done) || items[0];
+      return first ? first.text : '';
+    }
+  } catch {}
+  return raw;
+}
+
 function ClientEditorialCard({ client, payments, currency }) {
   const { toBRL, fromBRL } = useFinancials();
   const { t, language } = useLanguage();
@@ -273,7 +285,7 @@ function ClientEditorialCard({ client, payments, currency }) {
              <div className="pt-6 border-t border-neutral-50 flex items-start gap-3">
                 <div className="h-1.5 w-1.5 rounded-full bg-[var(--accent-sand)] mt-1.5 shrink-0" />
                 <p className="text-[13px] font-medium text-neutral-500 leading-snug">
-                   {client.next_action}
+                   {parseFirstAction(client.next_action)}
                 </p>
              </div>
           )}
