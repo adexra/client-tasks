@@ -165,8 +165,9 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       const templateTasks = PROJECT_TEMPLATES[formData.main_delivery];
       if (templateTasks) {
         const todayDate = new Date().toISOString().split('T')[0];
-        const tasksToInsert = templateTasks.map(task => ({
+        const tasksToInsert = templateTasks.map(({ description, ...task }) => ({
           ...task,
+          details: description,
           client_id: newClient.id,
           scheduled_date: todayDate,
           created_at: new Date().toISOString()
