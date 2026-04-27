@@ -39,7 +39,7 @@ export default function ClientDetail() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [payments, setPayments] = useState([]);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [newPayment, setNewPayment] = useState({ amount: '', description: '', currency: 'BRL' });
+  const [newPayment, setNewPayment] = useState({ amount: '', description: '', currency: 'BRL', is_recurring: false, recurring_start_date: new Date().toISOString().split('T')[0] });
 
   async function loadClientData() {
     setLoading(true);
@@ -147,12 +147,14 @@ export default function ClientDetail() {
       amount: parseFloat(newPayment.amount),
       description: newPayment.description,
       currency: newPayment.currency || client.currency,
-      is_paid: false
+      is_paid: false,
+      is_recurring: newPayment.is_recurring,
+      recurring_start_date: newPayment.is_recurring ? newPayment.recurring_start_date : null,
     }]);
 
     if (!error) {
       toast.success(t('client_detail.billing_added'));
-      setNewPayment({ amount: '', description: '', currency: 'BRL' });
+      setNewPayment({ amount: '', description: '', currency: 'BRL', is_recurring: false, recurring_start_date: new Date().toISOString().split('T')[0] });
       setShowPaymentForm(false);
       loadClientData();
       window.dispatchEvent(new Event('financial-updated'));
@@ -202,6 +204,24 @@ export default function ClientDetail() {
       loadClientData();
       window.dispatchEvent(new Event('financial-updated'));
     }
+  }
+
+  async function terminateRecurring(paymentId) {
+    if (!confirm('Terminate this recurring fee? It will be marked as ended today.')) return;
+    const { error } = await supabase.from('client_payments')
+      .update({ terminated_at: new Date().toISOString() })
+      .eq('id', paymentId);
+    if (!error) {
+      toast.success('Recurring fee terminated.');
+      loadClientData();
+      window.dispatchEvent(new Event('financial-updated'));
+    }
+  }
+
+  function monthsActive(startDate, terminatedAt) {
+    const start = new Date(startDate);
+    const end = terminatedAt ? new Date(terminatedAt) : new Date();
+    return Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24 * 30.44)));
   }
 
   const currentBill = payments.filter(p => !p.is_paid).reduce((sum, p) => sum + parseFloat(p.amount), 0);
@@ -435,83 +455,163 @@ export default function ClientDetail() {
 
           {showPaymentForm && (
             <div className="surface-card p-10 bg-neutral-50/30 animate-in slide-in-from-top-4 duration-500">
-               <form onSubmit={addPayment} className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+               <form onSubmit={addPayment} className="space-y-6">
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                   <div className="md:col-span-2 space-y-2">
-                    <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('client_detail.task_description')}</label>
-                    <input 
-                      type="text" 
-                      required 
+                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('client_detail.task_description')}</label>
+                    <input
+                      type="text"
+                      required
                       value={newPayment.description}
                       onChange={e => setNewPayment({...newPayment, description: e.target.value})}
-                      className="w-full bg-white border border-neutral-100 rounded-xl px-4 py-3 text-sm"
+                      className="w-full bg-white border border-neutral-100 rounded-xl px-4 py-3 text-sm text-neutral-700"
                       placeholder={t('client_detail.description_placeholder')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('financials.amount')} ({client.currency})</label>
-                    <input 
-                      type="number" 
-                      required 
+                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('financials.amount')} ({client.currency})</label>
+                    <input
+                      type="number"
+                      required
                       value={newPayment.amount}
                       onChange={e => setNewPayment({...newPayment, amount: e.target.value})}
-                      className="w-full bg-white border border-neutral-100 rounded-xl px-4 py-3 text-sm font-serif"
+                      className="w-full bg-white border border-neutral-100 rounded-xl px-4 py-3 text-sm font-serif text-neutral-700"
                       placeholder="0.00"
                     />
                   </div>
                   <button type="submit" className="btn-minimal btn-primary h-11">
                     <span className="text-[10px] uppercase font-bold tracking-widest">{t('client_detail.record_billing')}</span>
                   </button>
+                 </div>
+
+                 {/* Recurring toggle */}
+                 <div className="flex flex-wrap items-center gap-6 pt-2 border-t border-neutral-100">
+                   <button
+                     type="button"
+                     onClick={() => setNewPayment(p => ({...p, is_recurring: !p.is_recurring}))}
+                     className={cn(
+                       "flex items-center gap-2.5 px-4 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all",
+                       newPayment.is_recurring
+                         ? "bg-violet-50 border-violet-200 text-violet-600"
+                         : "bg-white border-neutral-100 text-neutral-400 hover:border-neutral-200"
+                     )}
+                   >
+                     <span className={cn(
+                       "h-3.5 w-7 rounded-full transition-colors relative",
+                       newPayment.is_recurring ? "bg-violet-400" : "bg-neutral-200"
+                     )}>
+                       <span className={cn(
+                         "absolute top-0.5 h-2.5 w-2.5 rounded-full bg-white shadow transition-all",
+                         newPayment.is_recurring ? "left-[14px]" : "left-0.5"
+                       )} />
+                     </span>
+                     Monthly Recurring
+                   </button>
+
+                   {newPayment.is_recurring && (
+                     <div className="flex items-center gap-2">
+                       <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Start Date</label>
+                       <input
+                         type="date"
+                         value={newPayment.recurring_start_date}
+                         onChange={e => setNewPayment(p => ({...p, recurring_start_date: e.target.value}))}
+                         className="bg-white border border-neutral-100 rounded-lg px-3 py-1.5 text-xs text-neutral-700 focus:outline-none focus:ring-1 focus:ring-violet-200"
+                       />
+                     </div>
+                   )}
+                 </div>
                </form>
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-             {payments.map(p => (
-               <div key={p.id} className="surface-card p-8 flex flex-col justify-between group">
+             {payments.map(p => {
+               const months = p.is_recurring && p.recurring_start_date ? monthsActive(p.recurring_start_date, p.terminated_at) : null;
+               const totalCollected = months ? parseFloat(p.amount) * months : null;
+               const isTerminated = !!p.terminated_at;
+               return (
+               <div key={p.id} className={cn("surface-card p-8 flex flex-col justify-between group", isTerminated && "opacity-60")}>
                   <div className="space-y-4">
                      <div className="flex justify-between items-start">
-                        <span className="text-[9px] font-mono text-neutral-300 uppercase">{new Date(p.created_at).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-mono text-neutral-300 uppercase">{new Date(p.created_at).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}</span>
+                          {p.is_recurring && (
+                            <span className={cn(
+                              "px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest",
+                              isTerminated ? "bg-neutral-100 text-neutral-400" : "bg-violet-50 text-violet-500 border border-violet-100"
+                            )}>
+                              {isTerminated ? 'Ended' : 'Monthly'}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex gap-2">
-                           <button 
-                             onClick={() => togglePaid(p.id, p.is_paid)}
-                             className={cn(
-                               "px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest transition-all",
-                               p.is_paid 
-                                ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
-                                : "bg-neutral-50 text-neutral-400 border border-neutral-100 hover:border-emerald-200 hover:text-emerald-500"
-                             )}
-                           >
-                             {p.is_paid ? t('financials.paid') : t('financials.pending')}
-                           </button>
+                           {!p.is_recurring && (
+                             <button
+                               onClick={() => togglePaid(p.id, p.is_paid)}
+                               className={cn(
+                                 "px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest transition-all",
+                                 p.is_paid
+                                  ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                                  : "bg-neutral-50 text-neutral-400 border border-neutral-100 hover:border-emerald-200 hover:text-emerald-500"
+                               )}
+                             >
+                               {p.is_paid ? t('financials.paid') : t('financials.pending')}
+                             </button>
+                           )}
                         </div>
                      </div>
                      <div>
                         <h4 className="text-base font-serif text-[var(--ink-primary)] leading-tight">{p.description}</h4>
-                        <p className="text-[11px] font-medium text-neutral-400 mt-1 italic">{t('client_detail.billable_task')}</p>
+                        {p.is_recurring && p.recurring_start_date && (
+                          <p className="text-[10px] font-medium text-neutral-400 mt-1">
+                            Since {new Date(p.recurring_start_date).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}
+                            {isTerminated && ` · Ended ${new Date(p.terminated_at).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}`}
+                            {!isTerminated && <span className="text-violet-400 ml-1">· {months}mo active</span>}
+                          </p>
+                        )}
+                        {!p.is_recurring && <p className="text-[11px] font-medium text-neutral-400 mt-1 italic">{t('client_detail.billable_task')}</p>}
                      </div>
                   </div>
-                  
+
                   <div className="pt-8 flex items-end justify-between">
-                     <div className="flex items-baseline gap-1">
-                        <span className="text-[10px] font-medium text-neutral-400">{CURRENCY_SYMBOLS[p.currency || 'BRL']}</span>
-                        <span className="text-2xl font-serif text-[var(--ink-primary)]">{parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                     <div>
+                       <div className="flex items-baseline gap-1">
+                          <span className="text-[10px] font-medium text-neutral-400">{CURRENCY_SYMBOLS[p.currency || 'BRL']}</span>
+                          <span className="text-2xl font-serif text-[var(--ink-primary)]">{parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          {p.is_recurring && <span className="text-[9px] text-neutral-400 font-medium ml-1">/mo</span>}
+                       </div>
+                       {totalCollected !== null && (
+                         <p className="text-[10px] font-bold text-neutral-500 mt-0.5">
+                           {CURRENCY_SYMBOLS[p.currency || 'BRL']}{totalCollected.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total · {months} payments
+                         </p>
+                       )}
                      </div>
-                     
+
                      <div className="flex items-center gap-3">
-                        <button 
+                        {p.is_recurring && !isTerminated && (
+                          <button
+                            onClick={() => terminateRecurring(p.id)}
+                            className="text-[8px] font-bold uppercase tracking-widest text-neutral-300 hover:text-rose-500 transition-colors border border-neutral-100 hover:border-rose-200 px-2 py-1 rounded-lg"
+                          >
+                            Terminate
+                          </button>
+                        )}
+                        <button
                           onClick={() => deletePayment(p.id)}
                           className="text-neutral-200 hover:text-rose-500 transition-colors p-1"
                         >
                           <Trash className="h-3.5 w-3.5" />
                         </button>
-                        <div className={cn(
-                          "h-1.5 w-1.5 rounded-full animate-pulse",
-                          p.is_paid ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-neutral-200"
-                        )} />
+                        {!p.is_recurring && (
+                          <div className={cn(
+                            "h-1.5 w-1.5 rounded-full animate-pulse",
+                            p.is_paid ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-neutral-200"
+                          )} />
+                        )}
                      </div>
                   </div>
                </div>
-             ))}
+             )})}
              {payments.length === 0 && (
                <div className="col-span-full py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-300 text-[10px] font-bold uppercase tracking-[0.3em] italic">
                   {t('client_detail.no_billing_records')}
