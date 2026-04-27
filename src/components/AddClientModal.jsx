@@ -25,7 +25,8 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
   const toast = useToast();
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
-    what_sold: '', contact_link: '', main_delivery: 'none'
+    what_sold: '', contact_link: '', main_delivery: 'none',
+    is_recurring: false, recurring_start_date: new Date().toISOString().split('T')[0]
   });
   const [nextActions, setNextActions] = useState([]);
   const [doneItems, setDoneItems] = useState([]);
@@ -47,7 +48,9 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
         currency: editClient.currency || 'USD',
         what_sold: editClient.what_sold || '',
         contact_link: editClient.contact_link || '',
-        main_delivery: 'none'
+        main_delivery: 'none',
+        is_recurring: false,
+        recurring_start_date: new Date().toISOString().split('T')[0]
       });
       setNextActions(parseChecklist(editClient.next_action));
       setDoneItems(parseChecklist(editClient.definition_of_done));
@@ -57,7 +60,8 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
     } else {
       setFormData({
         name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
-        what_sold: '', contact_link: '', main_delivery: 'none'
+        what_sold: '', contact_link: '', main_delivery: 'none',
+        is_recurring: false, recurring_start_date: new Date().toISOString().split('T')[0]
       });
       setNextActions([]);
       setDoneItems([]);
@@ -92,8 +96,8 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       not_included: serializeChecklist(oosItems),
     };
 
-    // remove main_delivery as it doesn't belong to the clients table
-    const { main_delivery, ...clientDBPayload } = dataToSave;
+    // remove fields that don't belong to the clients table
+    const { main_delivery, is_recurring, recurring_start_date, ...clientDBPayload } = dataToSave;
 
     let error;
     let newClient;
@@ -110,9 +114,11 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       await supabase.from('client_payments').insert([{
         client_id: newClient.id,
         amount: parseFloat(formData.revenue),
-        description: 'Initial Project Fee',
+        description: formData.is_recurring ? 'Monthly Retainer' : 'Initial Project Fee',
         currency: formData.currency,
-        is_paid: false
+        is_paid: false,
+        is_recurring: formData.is_recurring,
+        recurring_start_date: formData.is_recurring ? formData.recurring_start_date : null,
       }]);
     } 
     
@@ -264,8 +270,8 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                  <div className="grid grid-cols-3 gap-4">
                     <div className="col-span-1">
                        <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-2 ml-1">{t('project_modal.currency_label')}</label>
-                       <select 
-                         value={formData.currency} 
+                       <select
+                         value={formData.currency}
                          onChange={e => setFormData({...formData, currency: e.target.value})}
                          className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3.5 text-xs font-bold text-[var(--ink-primary)] focus:outline-none focus:ring-1 focus:ring-neutral-200"
                        >
@@ -277,6 +283,43 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                      <div className="col-span-2">
                         <MinimalInput label={t('project_modal.revenue_label')} value={formData.revenue} onChange={v => setFormData({...formData, revenue: v})} placeholder="0.00" type="number" />
                      </div>
+                 </div>
+
+                 {/* Recurring toggle */}
+                 <div className="space-y-3">
+                   <button
+                     type="button"
+                     onClick={() => setFormData(f => ({...f, is_recurring: !f.is_recurring}))}
+                     className={cn(
+                       "flex items-center gap-2.5 px-4 py-2.5 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all w-full",
+                       formData.is_recurring
+                         ? "bg-violet-50 border-violet-200 text-violet-600"
+                         : "bg-white border-neutral-100 text-neutral-400 hover:border-neutral-200 hover:text-neutral-600"
+                     )}
+                   >
+                     <span className={cn(
+                       "h-3.5 w-7 rounded-full transition-colors relative flex-shrink-0",
+                       formData.is_recurring ? "bg-violet-400" : "bg-neutral-200"
+                     )}>
+                       <span className={cn(
+                         "absolute top-0.5 h-2.5 w-2.5 rounded-full bg-white shadow transition-all",
+                         formData.is_recurring ? "left-[14px]" : "left-0.5"
+                       )} />
+                     </span>
+                     Monthly Recurring Fee
+                   </button>
+
+                   {formData.is_recurring && (
+                     <div className="flex items-center gap-3 pl-1">
+                       <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">Start Date</label>
+                       <input
+                         type="date"
+                         value={formData.recurring_start_date}
+                         onChange={e => setFormData(f => ({...f, recurring_start_date: e.target.value}))}
+                         className="bg-white border border-neutral-200 rounded-lg px-3 py-2 text-xs text-neutral-700 focus:outline-none focus:ring-1 focus:ring-violet-200"
+                       />
+                     </div>
+                   )}
                  </div>
 
                  {!editClient && (
