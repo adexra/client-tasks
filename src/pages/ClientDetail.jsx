@@ -360,10 +360,10 @@ export default function ClientDetail() {
                    </div>
                 </div>
                 <div className="space-y-4">
-                   <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                   <label className="text-[10px] font-bold text-violet-500 uppercase tracking-[0.2em] flex items-center gap-2">
                       <Activity className="h-3.5 w-3.5" /> {t('portfolio.next_action')}
                    </label>
-                   <div className="surface-card bg-emerald-50/30 border-emerald-100 p-6 md:p-8 min-h-[140px]">
+                   <div className="surface-card bg-violet-50/40 border-violet-100 p-6 md:p-8 min-h-[140px]">
                       <NextActionDisplay raw={client.next_action} fallback={getNextAction()} />
                    </div>
                 </div>
@@ -417,12 +417,12 @@ export default function ClientDetail() {
 
               <div className="space-y-6">
                  <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">{t('client_detail.dod')}</label>
-                    <ChecklistDisplay raw={client.definition_of_done} empty={t('client_detail.not_defined')} />
+                    <label className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">{t('client_detail.dod')}</label>
+                    <ChecklistDisplay raw={client.definition_of_done} empty={t('client_detail.not_defined')} variant="emerald" />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">{t('client_detail.out_of_scope')}</label>
-                    <ChecklistDisplay raw={client.not_included} empty={t('client_detail.no_out_of_scope')} />
+                    <label className="text-[9px] font-bold text-rose-400 uppercase tracking-widest">{t('client_detail.out_of_scope')}</label>
+                    <ChecklistDisplay raw={client.not_included} empty={t('client_detail.no_out_of_scope')} variant="rose" />
                  </div>
               </div>
            </div>
@@ -645,7 +645,7 @@ function NextActionDisplay({ raw, fallback }) {
     if (Array.isArray(parsed) && parsed.length) items = parsed;
   } catch {}
   if (!items.length) {
-    return <p className="italic text-[var(--ink-charcoal)] leading-relaxed font-bold text-sm">{fallback}</p>;
+    return <p className="italic text-violet-700 leading-relaxed font-bold text-sm">{fallback}</p>;
   }
   return (
     <ul className="space-y-2">
@@ -653,18 +653,24 @@ function NextActionDisplay({ raw, fallback }) {
         <li key={i} className="flex items-start gap-2.5">
           <span className={cn(
             "mt-0.5 h-3.5 w-3.5 rounded border flex-shrink-0 flex items-center justify-center",
-            item.done ? "bg-emerald-500 border-emerald-500" : "border-emerald-300"
+            item.done ? "bg-violet-500 border-violet-500" : "border-violet-300"
           )}>
             {item.done && <svg className="h-2 w-2 text-white" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
           </span>
-          <span className={cn("text-sm font-medium leading-snug", item.done ? "line-through text-neutral-400" : "text-[var(--ink-charcoal)] font-bold")}>{item.text}</span>
+          <span className={cn("text-sm font-medium leading-snug", item.done ? "line-through text-neutral-400" : "text-violet-800 font-bold")}>{item.text}</span>
         </li>
       ))}
     </ul>
   );
 }
 
-function ChecklistDisplay({ raw, empty }) {
+const CHECKLIST_VARIANTS = {
+  emerald: { border: 'border-emerald-400', bg: 'bg-emerald-500', unchecked: 'border-emerald-200', text: 'text-emerald-800', done: 'text-neutral-400' },
+  rose:    { border: 'border-rose-400',    bg: 'bg-rose-400',    unchecked: 'border-rose-200',    text: 'text-rose-800',    done: 'text-neutral-400' },
+  neutral: { border: 'border-neutral-400', bg: 'bg-black',       unchecked: 'border-neutral-300', text: 'text-neutral-700', done: 'text-neutral-400' },
+};
+
+function ChecklistDisplay({ raw, empty, variant = 'neutral' }) {
   if (!raw) return <p className="text-xs font-medium text-neutral-400 italic">{empty}</p>;
   let items = [];
   try {
@@ -674,17 +680,18 @@ function ChecklistDisplay({ raw, empty }) {
     items = raw.split('\n').filter(Boolean).map(text => ({ text, done: false }));
   }
   if (!items.length) return <p className="text-xs font-medium text-neutral-400 italic">{empty}</p>;
+  const v = CHECKLIST_VARIANTS[variant] || CHECKLIST_VARIANTS.neutral;
   return (
     <ul className="space-y-1.5">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-2">
           <span className={cn(
             "mt-0.5 h-3.5 w-3.5 rounded border flex-shrink-0 flex items-center justify-center",
-            item.done ? "bg-black border-black" : "border-neutral-300"
+            item.done ? `${v.bg} ${v.border}` : v.unchecked
           )}>
             {item.done && <svg className="h-2 w-2 text-white" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
           </span>
-          <span className={cn("text-xs font-medium leading-snug", item.done ? "line-through text-neutral-300" : "text-neutral-600")}>{item.text}</span>
+          <span className={cn("text-xs font-medium leading-snug", item.done ? `line-through ${v.done}` : v.text)}>{item.text}</span>
         </li>
       ))}
     </ul>

@@ -392,18 +392,21 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                   items={nextActions}
                   onChange={setNextActions}
                   placeholder={t('project_modal.next_action_placeholder')}
+                  variant="violet"
                 />
                 <ChecklistField
                   label={t('project_modal.dod_label')}
                   items={doneItems}
                   onChange={setDoneItems}
                   placeholder={t('project_modal.dod_placeholder')}
+                  variant="emerald"
                 />
                 <ChecklistField
                   label={t('project_modal.oos_label')}
                   items={oosItems}
                   onChange={setOosItems}
                   placeholder={t('project_modal.oos_placeholder')}
+                  variant="rose"
                 />
              </div>
           </div>
@@ -477,8 +480,16 @@ function MinimalTextarea({ label, value, onChange, placeholder }) {
   );
 }
 
-function ChecklistField({ label, items, onChange, placeholder }) {
+const FIELD_VARIANTS = {
+  violet:  { label: 'text-violet-500',  border: 'border-violet-200',  bg: 'bg-violet-500',  unchecked: 'border-violet-300 hover:border-violet-500',  text: 'text-violet-800'  },
+  emerald: { label: 'text-emerald-600', border: 'border-emerald-200', bg: 'bg-emerald-500', unchecked: 'border-emerald-300 hover:border-emerald-500', text: 'text-emerald-800' },
+  rose:    { label: 'text-rose-500',    border: 'border-rose-200',    bg: 'bg-rose-400',    unchecked: 'border-rose-300 hover:border-rose-400',       text: 'text-rose-800'    },
+  neutral: { label: 'text-neutral-500', border: 'border-neutral-200', bg: 'bg-black',       unchecked: 'border-neutral-300 hover:border-neutral-500', text: 'text-neutral-700' },
+};
+
+function ChecklistField({ label, items, onChange, placeholder, variant = 'neutral' }) {
   const [input, setInput] = useState('');
+  const v = FIELD_VARIANTS[variant] || FIELD_VARIANTS.neutral;
 
   function addItem(e) {
     if ((e.key === 'Enter' || e.type === 'click') && input.trim()) {
@@ -498,8 +509,8 @@ function ChecklistField({ label, items, onChange, placeholder }) {
 
   return (
     <div className="space-y-2">
-      <label className="block text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{label}</label>
-      <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+      <label className={cn("block text-[9px] font-bold uppercase tracking-widest ml-1", v.label)}>{label}</label>
+      <div className={cn("bg-white border rounded-xl overflow-hidden", v.border)}>
         {items.length > 0 && (
           <ul className="divide-y divide-neutral-50 max-h-40 overflow-y-auto">
             {items.map((item, i) => (
@@ -509,14 +520,12 @@ function ChecklistField({ label, items, onChange, placeholder }) {
                   onClick={() => toggleItem(i)}
                   className={cn(
                     "h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors",
-                    item.done
-                      ? "bg-black border-black text-white"
-                      : "border-neutral-300 hover:border-neutral-500"
+                    item.done ? `${v.bg} border-transparent text-white` : v.unchecked
                   )}
                 >
                   {item.done && <svg className="h-2.5 w-2.5" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </button>
-                <span className={cn("flex-1 text-xs font-medium leading-snug", item.done ? "line-through text-neutral-300" : "text-neutral-600")}>{item.text}</span>
+                <span className={cn("flex-1 text-xs font-medium leading-snug", item.done ? "line-through text-neutral-300" : v.text)}>{item.text}</span>
                 <button
                   type="button"
                   onClick={() => removeItem(i)}
