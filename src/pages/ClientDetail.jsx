@@ -462,8 +462,8 @@ export default function ClientDetail() {
           <div className="space-y-8 pt-20 border-t border-[var(--border-light)]">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                <h2 className="text-4xl font-serif text-[var(--ink-primary)]">{t('client_detail.tasks_title') || 'Project Tasks'}</h2>
-                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{tasks.filter(t => !t.done).length} pending · {tasks.filter(t => t.done).length} done</p>
+                <h2 className="text-4xl font-serif text-[var(--ink-primary)]">{t('client_detail.tasks_title')}</h2>
+                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('client_detail.tasks_subtitle')} · {tasks.filter(tk => !tk.done).length} pending</p>
               </div>
               <div className="h-[1px] flex-1 bg-neutral-100 mx-10" />
             </div>
