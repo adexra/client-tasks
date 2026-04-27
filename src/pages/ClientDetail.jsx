@@ -364,7 +364,7 @@ export default function ClientDetail() {
                       <Activity className="h-3.5 w-3.5" /> {t('portfolio.next_action')}
                    </label>
                    <div className="surface-card bg-violet-50/40 border-violet-100 p-6 md:p-8 min-h-[140px]">
-                      <NextActionDisplay raw={client.next_action} fallback={getNextAction()} />
+                      <NextActionDisplay raw={client.next_action} fallback={getNextAction()} clientId={client.id} onUpdate={loadClientData} />
                    </div>
                 </div>
              </div>
@@ -418,11 +418,11 @@ export default function ClientDetail() {
               <div className="space-y-6">
                  <div className="space-y-2">
                     <label className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">{t('client_detail.dod')}</label>
-                    <ChecklistDisplay raw={client.definition_of_done} empty={t('client_detail.not_defined')} variant="emerald" />
+                    <DodDisplay raw={client.definition_of_done} empty={t('client_detail.not_defined')} clientId={client.id} onUpdate={loadClientData} />
                  </div>
                  <div className="space-y-2">
                     <label className="text-[9px] font-bold text-rose-400 uppercase tracking-widest">{t('client_detail.out_of_scope')}</label>
-                    <ChecklistDisplay raw={client.not_included} empty={t('client_detail.no_out_of_scope')} variant="rose" />
+                    <OosDisplay raw={client.not_included} empty={t('client_detail.no_out_of_scope')} />
                  </div>
               </div>
            </div>
@@ -638,62 +638,93 @@ export default function ClientDetail() {
   );
 }
 
-function NextActionDisplay({ raw, fallback }) {
-  let items = [];
+function parseChecklist(raw) {
+  if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length) items = parsed;
+    if (Array.isArray(parsed)) return parsed;
   } catch {}
-  if (!items.length) {
-    return <p className="italic text-violet-700 leading-relaxed font-bold text-sm">{fallback}</p>;
+  return raw.split('\n').filter(Boolean).map(text => ({ text, done: false }));
+}
+
+function NextActionDisplay({ raw, fallback, clientId, onUpdate }) {
+  const [items, setItems] = useState([]);
+  useEffect(() => { setItems(parseChecklist(raw)); }, [raw]);
+
+  async function toggle(i) {
+    const next = items.map((item, idx) => idx === i ? { ...item, done: !item.done } : item);
+    setItems(next);
+    await supabase.from('clients').update({ next_action: JSON.stringify(next) }).eq('id', clientId);
+    onUpdate();
   }
+
+  if (!items.length) return <p className="italic text-violet-700 leading-relaxed font-bold text-sm">{fallback}</p>;
   return (
     <ul className="space-y-2">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-2.5">
-          <span className={cn(
-            "mt-0.5 h-3.5 w-3.5 rounded border flex-shrink-0 flex items-center justify-center",
-            item.done ? "bg-violet-500 border-violet-500" : "border-violet-300"
-          )}>
+          <button
+            onClick={() => toggle(i)}
+            className={cn(
+              "mt-0.5 h-3.5 w-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-all cursor-pointer hover:scale-110",
+              item.done ? "bg-violet-500 border-violet-500" : "border-violet-300 hover:border-violet-500"
+            )}
+          >
             {item.done && <svg className="h-2 w-2 text-white" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-          </span>
-          <span className={cn("text-sm font-medium leading-snug", item.done ? "line-through text-neutral-400" : "text-violet-800 font-bold")}>{item.text}</span>
+          </button>
+          <span className={cn("text-sm font-medium leading-snug select-none", item.done ? "line-through text-neutral-400" : "text-violet-800 font-bold")}>{item.text}</span>
         </li>
       ))}
     </ul>
   );
 }
 
-const CHECKLIST_VARIANTS = {
-  emerald: { border: 'border-emerald-400', bg: 'bg-emerald-500', unchecked: 'border-emerald-200', text: 'text-emerald-800', done: 'text-neutral-400' },
-  rose:    { border: 'border-rose-400',    bg: 'bg-rose-400',    unchecked: 'border-rose-200',    text: 'text-rose-800',    done: 'text-neutral-400' },
-  neutral: { border: 'border-neutral-400', bg: 'bg-black',       unchecked: 'border-neutral-300', text: 'text-neutral-700', done: 'text-neutral-400' },
-};
+function DodDisplay({ raw, empty, clientId, onUpdate }) {
+  const [items, setItems] = useState([]);
+  useEffect(() => { setItems(parseChecklist(raw)); }, [raw]);
 
-function ChecklistDisplay({ raw, empty, variant = 'neutral' }) {
-  if (!raw) return <p className="text-xs font-medium text-neutral-400 italic">{empty}</p>;
-  let items = [];
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) items = parsed;
-  } catch {
-    items = raw.split('\n').filter(Boolean).map(text => ({ text, done: false }));
+  async function toggle(i) {
+    const next = items.map((item, idx) => idx === i ? { ...item, done: !item.done } : item);
+    setItems(next);
+    await supabase.from('clients').update({ definition_of_done: JSON.stringify(next) }).eq('id', clientId);
+    onUpdate();
   }
+
   if (!items.length) return <p className="text-xs font-medium text-neutral-400 italic">{empty}</p>;
-  const v = CHECKLIST_VARIANTS[variant] || CHECKLIST_VARIANTS.neutral;
   return (
     <ul className="space-y-1.5">
       {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-2">
+        <li
+          key={i}
+          onClick={() => toggle(i)}
+          className={cn(
+            "flex items-start gap-2 cursor-pointer transition-opacity duration-300 group/dod",
+            item.done ? "opacity-100" : "opacity-50 hover:opacity-75"
+          )}
+        >
           <span className={cn(
-            "mt-0.5 h-3.5 w-3.5 rounded border flex-shrink-0 flex items-center justify-center",
-            item.done ? `${v.bg} ${v.border}` : v.unchecked
+            "mt-0.5 h-3.5 w-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-all",
+            item.done ? "bg-emerald-500 border-emerald-500" : "border-emerald-300 group-hover/dod:border-emerald-400"
           )}>
             {item.done && <svg className="h-2 w-2 text-white" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
           </span>
-          <span className={cn("text-xs font-medium leading-snug", item.done ? `line-through ${v.done}` : v.text)}>{item.text}</span>
+          <span className={cn("text-xs font-medium leading-snug select-none", item.done ? "text-emerald-700 font-bold" : "text-emerald-900")}>{item.text}</span>
         </li>
       ))}
     </ul>
+  );
+}
+
+function OosDisplay({ raw, empty }) {
+  const items = parseChecklist(raw);
+  if (!items.length) return <p className="text-xs font-medium text-neutral-400 italic">{empty}</p>;
+  return (
+    <div className="flex flex-col gap-1.5">
+      {items.map((item, i) => (
+        <div key={i} className="bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
+          <span className="text-xs font-medium text-rose-700 leading-snug">{item.text}</span>
+        </div>
+      ))}
+    </div>
   );
 }
