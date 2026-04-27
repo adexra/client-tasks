@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
-import { PROJECT_TEMPLATES } from '../lib/templates';
+import { PROJECT_TEMPLATES, PHASE_TEMPLATES } from '../lib/templates';
 
 function parseChecklist(raw) {
   if (!raw) return [];
@@ -121,20 +121,21 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
 
     // Auto-create the 4 standard phases for new projects
     if (!error && !editClient && newClient) {
+      const toTasklist = (items) => JSON.stringify(items.map(text => ({ text, done: false })));
       const phases = [
         { phase_name: 'onboarding', order_index: 0, fields: [
-          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: '[]' },
+          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: toTasklist(PHASE_TEMPLATES.onboarding) },
           { field_key: 'Timeline', field_type: 'date', field_value: '' },
         ]},
         { phase_name: 'delivery', order_index: 1, fields: [
-          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: '[]' },
+          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: toTasklist(PHASE_TEMPLATES.delivery) },
           { field_key: 'Timeline', field_type: 'date', field_value: '' },
         ]},
         { phase_name: 'qa', order_index: 2, fields: [
-          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: '[]' },
+          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: toTasklist(PHASE_TEMPLATES.qa) },
         ]},
         { phase_name: 'update', order_index: 3, fields: [
-          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: '[]' },
+          { field_key: 'Execution Roadmap', field_type: 'tasklist', field_value: toTasklist(PHASE_TEMPLATES.update) },
           { field_key: 'Timeline', field_type: 'date', field_value: '' },
         ]},
       ];

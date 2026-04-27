@@ -1,64 +1,78 @@
+// Template tasks shown in project task list (per delivery type)
 export const PROJECT_TEMPLATES = {
   framer_site: [
-    { title: "[PHASE 1] Analyze brief", description: "Study inspiration and determine direction", bucket: "backlog", priority: "high", estimated_minutes: 30 },
-    { title: "[PHASE 1] Study inspiration", description: "Look at competitor and inspiration sites", bucket: "backlog", priority: "medium", estimated_minutes: 45 },
-    { title: "[PHASE 1] Define sections + page structure", description: "Create clear layout plan (no building yet)", bucket: "backlog", priority: "high", estimated_minutes: 60 },
-
-    { title: "[PHASE 2] Choose template", description: "Select the starting Framer template", bucket: "backlog", priority: "medium", estimated_minutes: 30 },
-    { title: "[PHASE 2] Create new Framer project", description: "Set up the project workspace", bucket: "backlog", priority: "medium", estimated_minutes: 15 },
-    { title: "[PHASE 2] Add preview domain", description: "Configure framerapp staging domain", bucket: "backlog", priority: "low", estimated_minutes: 15 },
-    { title: "[PHASE 2] Set up base structure", description: "Define base components and structure", bucket: "backlog", priority: "high", estimated_minutes: 45 },
-    { title: "[PHASE 2] Add color styles", description: "Setup 60/30/10 + shades 50–900", bucket: "backlog", priority: "high", estimated_minutes: 30 },
-    { title: "[PHASE 2] Select typography", description: "Set font styles and sizing", bucket: "backlog", priority: "high", estimated_minutes: 30 },
-    { title: "[PHASE 2] Create pages + breakpoints", description: "Setup all needed pages and tablet/mobile breakpoints", bucket: "backlog", priority: "high", estimated_minutes: 60 },
-
-    { title: "[PHASE 3] Build first 2–3 sections (homepage)", description: "Start visual design exploration", bucket: "backlog", priority: "high", estimated_minutes: 120 },
-    { title: "[PHASE 3] Add reusable components", description: "Convert repeated elements into components", bucket: "backlog", priority: "medium", estimated_minutes: 60 },
-    { title: "[PHASE 3] Define design direction", description: "Finalize visual style based on 2-3 sections", bucket: "backlog", priority: "high", estimated_minutes: 45 },
-    { title: "[PHASE 3] Send for feedback", description: "Checkpoint before full build", bucket: "backlog", priority: "high", estimated_minutes: 30 },
-
-    { title: "[PHASE 4] Complete homepage design", description: "Finish all sections on homepage", bucket: "backlog", priority: "high", estimated_minutes: 180 },
-    { title: "[PHASE 4] Polish all sections", description: "Refine spacing, interactions, and visuals", bucket: "backlog", priority: "high", estimated_minutes: 120 },
-    { title: "[PHASE 4] Add CMS structure", description: "Set up collections, fields, and templates if needed", bucket: "backlog", priority: "medium", estimated_minutes: 90 },
-    { title: "[PHASE 4] Start next page(s)", description: "Build out remaining pages", bucket: "backlog", priority: "high", estimated_minutes: 180 },
-    { title: "[PHASE 4] Add real content + CMS data", description: "Populate site with actual content", bucket: "backlog", priority: "high", estimated_minutes: 90 },
-
-    { title: "[PHASE 5] Responsive adjustments", description: "Optimize for tablet and mobile breakpoints", bucket: "backlog", priority: "high", estimated_minutes: 120 },
-    { title: "[PHASE 5] Link buttons and navigation", description: "Connect all internal and external links", bucket: "backlog", priority: "medium", estimated_minutes: 60 },
-    { title: "[PHASE 5] Optimize images", description: "Compress and format assets", bucket: "backlog", priority: "medium", estimated_minutes: 45 },
-
-    { title: "[PHASE 6] Test all pages", description: "QA testing for bugs and layout issues", bucket: "backlog", priority: "high", estimated_minutes: 90 },
-    { title: "[PHASE 6] Fix bugs", description: "Address QA findings", bucket: "backlog", priority: "high", estimated_minutes: 60 },
-    { title: "[PHASE 6] Check typography consistency", description: "Ensure heading and paragraph styles are uniform", bucket: "backlog", priority: "medium", estimated_minutes: 30 },
-    { title: "[PHASE 6] Check spacing/layout consistency", description: "Ensure consistent margins/padding", bucket: "backlog", priority: "medium", estimated_minutes: 30 },
-
-    { title: "[PHASE 7] Set heading structure (H1, H2)", description: "Semantic HTML check", bucket: "backlog", priority: "high", estimated_minutes: 30 },
-    { title: "[PHASE 7] Basic SEO (titles, descriptions)", description: "Set meta tags and opengraph", bucket: "backlog", priority: "high", estimated_minutes: 45 },
-    { title: "[PHASE 7] Connect domain", description: "Point DNS to Framer", bucket: "backlog", priority: "high", estimated_minutes: 30 },
-    { title: "[PHASE 7] Publish site", description: "Launch to production", bucket: "backlog", priority: "high", estimated_minutes: 15 },
-    { title: "[PHASE 7] Submit sitemap / indexing", description: "Send to GSC", bucket: "backlog", priority: "medium", estimated_minutes: 15 }
+    { title: "Analyze brief", details: "Study the project brief and define direction", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "List necessary sections and structure", details: "Create a clear layout plan before building", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Create color scheme", details: "Define 60/30/10 palette with shades", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Select main font", details: "Choose and apply typography system", bucket: "backlog", priority: "high", estimated_minutes: 20 },
+    { title: "Create new Framer site", details: "Set up project workspace in Framer", bucket: "backlog", priority: "medium", estimated_minutes: 15 },
+    { title: "Choose template", details: "Select the starting Framer template", bucket: "backlog", priority: "medium", estimated_minutes: 20 },
+    { title: "Set up template base", details: "Configure base structure and components", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Add necessary pages and breakpoints", details: "Create all pages and tablet/mobile breakpoints", bucket: "backlog", priority: "high", estimated_minutes: 60 },
+    { title: "Build hero section", details: "Design and build the main hero", bucket: "backlog", priority: "high", estimated_minutes: 90 },
+    { title: "Add components", details: "Convert repeated elements into reusable components", bucket: "backlog", priority: "medium", estimated_minutes: 60 },
+    { title: "Build sections", details: "Complete all remaining page sections", bucket: "backlog", priority: "high", estimated_minutes: 180 },
+    { title: "Add CMS logic", details: "Set up collections, fields, and templates", bucket: "backlog", priority: "medium", estimated_minutes: 90 },
+    { title: "Finish page designs", details: "Polish all pages to final design", bucket: "backlog", priority: "high", estimated_minutes: 120 },
+    { title: "Add CMS content", details: "Populate CMS collections with real data", bucket: "backlog", priority: "high", estimated_minutes: 60 },
+    { title: "Add real content", details: "Replace placeholder text and images", bucket: "backlog", priority: "high", estimated_minutes: 60 },
+    { title: "Set H-tags", details: "Ensure correct H1/H2/H3 semantic structure", bucket: "backlog", priority: "high", estimated_minutes: 20 },
+    { title: "Add alt text", details: "Add alt text to all images", bucket: "backlog", priority: "medium", estimated_minutes: 20 },
+    { title: "Set metadata", details: "Configure meta titles, descriptions and OG tags", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Check links, buttons, and images", details: "Verify all interactive elements work", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Run tests", details: "QA across all pages and breakpoints", bucket: "backlog", priority: "high", estimated_minutes: 90 },
+    { title: "Polish and fix bugs", details: "Address all QA findings", bucket: "backlog", priority: "high", estimated_minutes: 60 },
+    { title: "Set up email submissions", details: "Connect forms to email or CRM", bucket: "backlog", priority: "medium", estimated_minutes: 30 },
+    { title: "Change domain", details: "Point DNS to Framer", bucket: "backlog", priority: "high", estimated_minutes: 20 },
+    { title: "Launch", details: "Publish to production and submit sitemap", bucket: "backlog", priority: "high", estimated_minutes: 15 },
   ],
   automation: [
-    { title: "[PHASE 1] Map Workflow", description: "Map out current and desired flow", bucket: "backlog", priority: "high", estimated_minutes: 60 },
-    { title: "[PHASE 2] Setup Tools/Connections", description: "Connect APIs or tools (Make/Zapier)", bucket: "backlog", priority: "high", estimated_minutes: 60 },
-    { title: "[PHASE 3] Build Automation", description: "Create the scenario/zap", bucket: "backlog", priority: "high", estimated_minutes: 120 },
-    { title: "[PHASE 4] QA & Testing", description: "Test the automation with dummy data", bucket: "backlog", priority: "high", estimated_minutes: 60 },
-    { title: "[PHASE 5] Launch & Handover", description: "Turn on automation and document process", bucket: "backlog", priority: "high", estimated_minutes: 45 }
+    { title: "Identify client problem", details: "Understand the root problem to solve", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Identify end goal", details: "Define what success looks like", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Identify necessities", details: "List required inputs, outputs, and data", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Identify compliance and rules", details: "Check for data/privacy/legal constraints", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Identify required tech", details: "Determine tools, APIs, and integrations needed", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Identify low-fidelity flow", details: "Sketch the automation flow before building", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Create initial documentation and schema", details: "Document the system design and data schema", bucket: "backlog", priority: "high", estimated_minutes: 60 },
+    { title: "Launch The Viber", details: "Set up the automation platform / workspace", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Create first-phase automation", details: "Build the initial version of the workflow", bucket: "backlog", priority: "high", estimated_minutes: 120 },
+    { title: "Test", details: "Internal testing with dummy data", bucket: "backlog", priority: "high", estimated_minutes: 60 },
+    { title: "Client test", details: "Walk client through the automation", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Iteration", details: "Refine based on client feedback", bucket: "backlog", priority: "medium", estimated_minutes: 60 },
+    { title: "Deploy", details: "Move automation to production environment", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Delivery", details: "Hand over documentation and access", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Maintenance", details: "Monitor and fix any post-launch issues", bucket: "backlog", priority: "low", estimated_minutes: 30 },
   ],
   advertising: [
-    { title: "[PHASE 1] Strategy Setup", description: "Define goals, audience and budget", bucket: "backlog", priority: "high", estimated_minutes: 60 },
-    { title: "[PHASE 2] Ad Creatives & Copy", description: "Create visuals and ad copy", bucket: "backlog", priority: "high", estimated_minutes: 120 },
-    { title: "[PHASE 3] Campaign Setup", description: "Build campaign in ad manager", bucket: "backlog", priority: "high", estimated_minutes: 90 },
-    { title: "[PHASE 4] QA & Review", description: "Review tracking, links, and budget config", bucket: "backlog", priority: "high", estimated_minutes: 45 },
-    { title: "[PHASE 5] Launch", description: "Publish campaign", bucket: "backlog", priority: "high", estimated_minutes: 15 }
+    { title: "Determine goals", details: "Define campaign objectives and KPIs", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Identify target audience", details: "Define demographics, interests, and behaviors", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Market research", details: "Analyze competitors and market landscape", bucket: "backlog", priority: "high", estimated_minutes: 60 },
+    { title: "Keyword research", details: "Find high-intent keywords for targeting", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Determine daily budget", details: "Set and allocate ad spend per campaign", bucket: "backlog", priority: "high", estimated_minutes: 20 },
+    { title: "Draw funnel", details: "Map out the full ad-to-conversion funnel", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Create copywriting", details: "Write headlines, descriptions, and CTAs", bucket: "backlog", priority: "high", estimated_minutes: 90 },
+    { title: "Google Tag setup", details: "Install and configure conversion tracking", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Set up follow-up points", details: "Configure retargeting audiences and triggers", bucket: "backlog", priority: "medium", estimated_minutes: 30 },
+    { title: "Test landing pages", details: "QA landing pages for speed and conversion", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Test payments", details: "Verify checkout and payment flow works", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Test complete user flow", details: "End-to-end test from ad click to conversion", bucket: "backlog", priority: "high", estimated_minutes: 45 },
+    { title: "Reporting", details: "Set up reporting dashboard and send first report", bucket: "backlog", priority: "medium", estimated_minutes: 30 },
   ],
   update: [
-    { title: "[PHASE 1] Scope Review", description: "Review requested updates", bucket: "backlog", priority: "high", estimated_minutes: 30 },
-    { title: "[PHASE 2] Code/Design adjustments", description: "Implement changes", bucket: "backlog", priority: "high", estimated_minutes: 90 },
-    { title: "[PHASE 3] QA & Test", description: "Verify update did not break existing features", bucket: "backlog", priority: "high", estimated_minutes: 45 },
-    { title: "[PHASE 4] Publish", description: "Deploy updates", bucket: "backlog", priority: "high", estimated_minutes: 15 }
-  ]
+    { title: "What was requested", details: "Document exactly what the client asked for", bucket: "backlog", priority: "high", estimated_minutes: 20 },
+    { title: "What's needed", details: "Identify dependencies and required work", bucket: "backlog", priority: "high", estimated_minutes: 30 },
+    { title: "Delivery", details: "Implement, QA, and deliver the updates", bucket: "backlog", priority: "high", estimated_minutes: 90 },
+  ],
 };
+
+// General tasks pre-populated into phase roadmap fields for ALL project types
+export const PHASE_TEMPLATES = {
+  onboarding: ["Scope", "Deliverables", "Dependencies", "Timeline"],
+  delivery: ["Design system", "Images", "Total pages", "Task list"],
+  qa: ["Typography and color", "Responsiveness", "Bugs", "As requested by client"],
+  update: ["What was requested", "What's needed", "Delivery"],
+};
+
 export const SUBTASK_TEMPLATES = {
   automations: [
     "Define problem",
