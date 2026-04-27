@@ -30,6 +30,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
   const [nextActions, setNextActions] = useState([]);
   const [doneItems, setDoneItems] = useState([]);
   const [oosItems, setOosItems] = useState([]);
+  const [contacts, setContacts] = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -51,6 +52,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       setNextActions(parseChecklist(editClient.next_action));
       setDoneItems(parseChecklist(editClient.definition_of_done));
       setOosItems(parseChecklist(editClient.not_included));
+      setContacts(editClient.contacts || []);
       setTags(editClient.tags || []);
     } else {
       setFormData({
@@ -60,6 +62,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       setNextActions([]);
       setDoneItems([]);
       setOosItems([]);
+      setContacts([]);
       setTags([]);
     }
   }, [editClient, isOpen]);
@@ -82,6 +85,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
     const dataToSave = {
       ...formData,
       tags,
+      contacts,
       revenue: parseFloat(formData.revenue) || 0,
       next_action: serializeChecklist(nextActions),
       definition_of_done: serializeChecklist(doneItems),
@@ -172,7 +176,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-neutral-900/40 backdrop-blur-md" onClick={onClose} />
       
-      <div className="relative bg-white border border-neutral-200 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 max-h-[95vh] flex flex-col">
+      <div className="relative bg-white border border-neutral-200 rounded-3xl w-full max-w-5xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 max-h-[95vh] flex flex-col">
         {/* Modal Header */}
         <div className="p-10 border-b border-neutral-100 flex items-center justify-between">
            <div className="space-y-1">
@@ -190,12 +194,67 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
           {/* Identity Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-6">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">{t('project_modal.identity_section')}</label>
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">{t('project_modal.identity_section')}</label>
               <div className="space-y-4">
                  <MinimalInput label={t('project_modal.name_label')} value={formData.name} onChange={v => setFormData({...formData, name: v})} placeholder={t('project_modal.name_placeholder')} />
-                 <MinimalInput label={t('project_modal.email_label')} value={formData.email} onChange={v => setFormData({...formData, email: v})} placeholder={t('project_modal.email_placeholder')} />
-                 <MinimalInput label={t('project_modal.contact_link_label')} value={formData.contact_link} onChange={v => setFormData({...formData, contact_link: v})} placeholder={t('project_modal.contact_link_placeholder')} />
                  <MinimalInput label={t('project_modal.website_label')} value={formData.url} onChange={v => setFormData({...formData, url: v})} placeholder={t('project_modal.website_placeholder')} />
+                 <MinimalInput label={t('project_modal.contact_link_label')} value={formData.contact_link} onChange={v => setFormData({...formData, contact_link: v})} placeholder={t('project_modal.contact_link_placeholder')} />
+              </div>
+
+              {/* Contacts */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Contacts / People</label>
+                  <button
+                    type="button"
+                    onClick={() => setContacts([...contacts, { name: '', role: '', email: '', phone: '' }])}
+                    className="flex items-center gap-1 text-[9px] font-bold text-neutral-400 hover:text-neutral-700 uppercase tracking-widest transition-colors"
+                  >
+                    <Plus className="h-3 w-3" /> Add
+                  </button>
+                </div>
+                {contacts.length === 0 && (
+                  <p className="text-[10px] text-neutral-300 italic">No contacts yet. Add the owner, manager, or any relevant person.</p>
+                )}
+                <div className="space-y-3">
+                  {contacts.map((c, i) => (
+                    <div key={i} className="bg-white border border-neutral-100 rounded-xl p-4 space-y-2 relative group/contact">
+                      <button
+                        type="button"
+                        onClick={() => setContacts(contacts.filter((_, idx) => idx !== i))}
+                        className="absolute top-3 right-3 opacity-0 group-hover/contact:opacity-100 text-neutral-300 hover:text-rose-500 transition-all"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          value={c.name}
+                          onChange={e => setContacts(contacts.map((x, idx) => idx === i ? {...x, name: e.target.value} : x))}
+                          placeholder="Full name"
+                          className="col-span-2 bg-neutral-50 border border-neutral-100 rounded-lg px-3 py-2 text-xs font-semibold text-neutral-700 placeholder:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-neutral-200"
+                        />
+                        <input
+                          value={c.role}
+                          onChange={e => setContacts(contacts.map((x, idx) => idx === i ? {...x, role: e.target.value} : x))}
+                          placeholder="Role (Owner, Manager…)"
+                          className="bg-neutral-50 border border-neutral-100 rounded-lg px-3 py-2 text-xs text-neutral-600 placeholder:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-neutral-200"
+                        />
+                        <input
+                          value={c.phone}
+                          onChange={e => setContacts(contacts.map((x, idx) => idx === i ? {...x, phone: e.target.value} : x))}
+                          placeholder="Phone / WhatsApp"
+                          className="bg-neutral-50 border border-neutral-100 rounded-lg px-3 py-2 text-xs text-neutral-600 placeholder:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-neutral-200"
+                        />
+                        <input
+                          value={c.email}
+                          onChange={e => setContacts(contacts.map((x, idx) => idx === i ? {...x, email: e.target.value} : x))}
+                          placeholder="Email"
+                          className="col-span-2 bg-neutral-50 border border-neutral-100 rounded-lg px-3 py-2 text-xs text-neutral-600 placeholder:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-neutral-200"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 

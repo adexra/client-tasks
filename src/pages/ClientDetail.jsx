@@ -364,6 +364,22 @@ export default function ClientDetail() {
            </div>
 
            <div className="space-y-8 pt-8 border-t border-[var(--border-light)]">
+              {/* Contacts */}
+              {client.contacts?.length > 0 && (
+                <div className="space-y-3">
+                  <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Contacts</label>
+                  <div className="space-y-2">
+                    {client.contacts.map((c, i) => (
+                      <div key={i} className="bg-neutral-50 rounded-xl p-3 space-y-0.5">
+                        {c.name && <p className="text-xs font-bold text-neutral-700">{c.name}{c.role ? <span className="font-normal text-neutral-400 ml-1">· {c.role}</span> : ''}</p>}
+                        {c.phone && <p className="text-[10px] text-neutral-500 font-medium">{c.phone}</p>}
+                        {c.email && <p className="text-[10px] text-neutral-400 italic">{c.email}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-4">
                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Tags</label>
                  <div className="flex flex-wrap gap-2">
