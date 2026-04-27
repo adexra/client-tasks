@@ -43,8 +43,8 @@ export default function ClientDetail() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [newPayment, setNewPayment] = useState({ amount: '', description: '', currency: 'BRL', is_recurring: false, recurring_start_date: new Date().toISOString().split('T')[0] });
 
-  async function loadClientData() {
-    setLoading(true);
+  async function loadClientData(showSpinner = false) {
+    if (showSpinner) setLoading(true);
     try {
       if (!id) throw new Error('Invalid ID');
       
@@ -106,7 +106,7 @@ export default function ClientDetail() {
     }
   }
 
-  useEffect(() => { loadClientData(); }, [id]);
+  useEffect(() => { loadClientData(true); }, [id]);
 
   async function updateStatus(status) {
     const { error } = await supabase.from('clients').update({ status }).eq('id', id);
@@ -470,8 +470,8 @@ export default function ClientDetail() {
             <div className="space-y-2">
               {tasks.map(task => (
                 <ProjectTaskRow key={task.id} task={task} onToggle={async () => {
+                  setTasks(prev => prev.map(t => t.id === task.id ? { ...t, done: !t.done } : t));
                   await supabase.from('tasks').update({ done: !task.done }).eq('id', task.id);
-                  loadClientData();
                 }} />
               ))}
             </div>
@@ -715,7 +715,6 @@ function NextActionDisplay({ raw, fallback, clientId, onUpdate }) {
     const next = items.map((item, idx) => idx === i ? { ...item, done: !item.done } : item);
     setItems(next);
     await supabase.from('clients').update({ next_action: JSON.stringify(next) }).eq('id', clientId);
-    onUpdate();
   }
 
   if (!items.length) return <p className="italic text-violet-700 leading-relaxed font-bold text-sm">{fallback}</p>;
@@ -747,7 +746,6 @@ function DodDisplay({ raw, empty, clientId, onUpdate }) {
     const next = items.map((item, idx) => idx === i ? { ...item, done: !item.done } : item);
     setItems(next);
     await supabase.from('clients').update({ definition_of_done: JSON.stringify(next) }).eq('id', clientId);
-    onUpdate();
   }
 
   if (!items.length) return <p className="text-xs font-medium text-neutral-400 italic">{empty}</p>;
