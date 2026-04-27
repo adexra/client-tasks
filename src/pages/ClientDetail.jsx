@@ -211,6 +211,15 @@ export default function ClientDetail() {
   function getNextAction() {
     const placeholders = ["Awaiting high-impact trajectory points.", "Awaiting high-impact trajectory points", "Aguardando pontos de trajetória de alto impacto."];
     if (client.next_action && !placeholders.includes(client.next_action)) {
+      // Try JSON checklist format — return first pending item
+      try {
+        const items = JSON.parse(client.next_action);
+        if (Array.isArray(items)) {
+          const first = items.find(i => !i.done);
+          if (first) return first.text;
+          if (items.length > 0) return items[items.length - 1].text;
+        }
+      } catch {}
       return client.next_action;
     }
 
@@ -316,7 +325,7 @@ export default function ClientDetail() {
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                 <div className="space-y-4">
-                   <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                   <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] flex items-center gap-2">
                       <Target className="h-3.5 w-3.5" /> {t('client_detail.project_scope')}
                    </label>
                    <div className="surface-card p-6 md:p-8 min-h-[140px] flex items-center italic text-[var(--ink-secondary)] leading-relaxed">
@@ -324,11 +333,11 @@ export default function ClientDetail() {
                    </div>
                 </div>
                 <div className="space-y-4">
-                   <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                   <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] flex items-center gap-2">
                       <Activity className="h-3.5 w-3.5" /> {t('portfolio.next_action')}
                    </label>
-                   <div className="surface-card bg-emerald-50/30 border-emerald-100 p-6 md:p-8 min-h-[140px] flex items-center italic text-[var(--ink-charcoal)] leading-relaxed font-bold">
-                      {getNextAction()}
+                   <div className="surface-card bg-emerald-50/30 border-emerald-100 p-6 md:p-8 min-h-[140px]">
+                      <NextActionDisplay raw={client.next_action} fallback={getNextAction()} />
                    </div>
                 </div>
              </div>
@@ -365,12 +374,12 @@ export default function ClientDetail() {
 
               <div className="space-y-6">
                  <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">{t('client_detail.dod')}</label>
-                    <p className="text-xs font-medium text-neutral-500 leading-relaxed italic">{client.definition_of_done || t('client_detail.not_defined')}</p>
+                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">{t('client_detail.dod')}</label>
+                    <ChecklistDisplay raw={client.definition_of_done} empty={t('client_detail.not_defined')} />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">{t('client_detail.out_of_scope')}</label>
-                    <p className="text-xs font-medium text-neutral-500 leading-relaxed italic">{client.not_included || t('client_detail.no_out_of_scope')}</p>
+                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">{t('client_detail.out_of_scope')}</label>
+                    <ChecklistDisplay raw={client.not_included} empty={t('client_detail.no_out_of_scope')} />
                  </div>
               </div>
            </div>
@@ -503,5 +512,58 @@ export default function ClientDetail() {
         editClient={client}
       />
     </div>
+  );
+}
+
+function NextActionDisplay({ raw, fallback }) {
+  let items = [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length) items = parsed;
+  } catch {}
+  if (!items.length) {
+    return <p className="italic text-[var(--ink-charcoal)] leading-relaxed font-bold text-sm">{fallback}</p>;
+  }
+  return (
+    <ul className="space-y-2">
+      {items.map((item, i) => (
+        <li key={i} className="flex items-start gap-2.5">
+          <span className={cn(
+            "mt-0.5 h-3.5 w-3.5 rounded border flex-shrink-0 flex items-center justify-center",
+            item.done ? "bg-emerald-500 border-emerald-500" : "border-emerald-300"
+          )}>
+            {item.done && <svg className="h-2 w-2 text-white" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+          </span>
+          <span className={cn("text-sm font-medium leading-snug", item.done ? "line-through text-neutral-400" : "text-[var(--ink-charcoal)] font-bold")}>{item.text}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ChecklistDisplay({ raw, empty }) {
+  if (!raw) return <p className="text-xs font-medium text-neutral-400 italic">{empty}</p>;
+  let items = [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) items = parsed;
+  } catch {
+    items = raw.split('\n').filter(Boolean).map(text => ({ text, done: false }));
+  }
+  if (!items.length) return <p className="text-xs font-medium text-neutral-400 italic">{empty}</p>;
+  return (
+    <ul className="space-y-1.5">
+      {items.map((item, i) => (
+        <li key={i} className="flex items-start gap-2">
+          <span className={cn(
+            "mt-0.5 h-3.5 w-3.5 rounded border flex-shrink-0 flex items-center justify-center",
+            item.done ? "bg-black border-black" : "border-neutral-300"
+          )}>
+            {item.done && <svg className="h-2 w-2 text-white" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+          </span>
+          <span className={cn("text-xs font-medium leading-snug", item.done ? "line-through text-neutral-300" : "text-neutral-600")}>{item.text}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

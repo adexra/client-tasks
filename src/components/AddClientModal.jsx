@@ -1,18 +1,35 @@
 import { useState, useEffect } from 'react';
-import { X, Search, Plus, UserPlus, Target, Mail, Globe, Phone, DollarSign } from 'lucide-react';
+import { X, Plus, Target, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
 import { PROJECT_TEMPLATES } from '../lib/templates';
 
+function parseChecklist(raw) {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map(i => typeof i === 'string' ? { text: i, done: false } : i);
+  } catch {}
+  // Legacy plain text — convert each line to a checklist item
+  return raw.split('\n').filter(Boolean).map(text => ({ text, done: false }));
+}
+
+function serializeChecklist(items) {
+  return JSON.stringify(items.filter(i => i.text.trim()));
+}
+
 export default function AddClientModal({ isOpen, onClose, onClientAdded, editClient = null }) {
   const { t } = useLanguage();
   const toast = useToast();
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
-    what_sold: '', next_action: '', definition_of_done: '', not_included: '', contact_link: '', main_delivery: 'none'
+    what_sold: '', contact_link: '', main_delivery: 'none'
   });
+  const [nextActions, setNextActions] = useState([]);
+  const [doneItems, setDoneItems] = useState([]);
+  const [oosItems, setOosItems] = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -28,17 +45,21 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
         revenue: editClient.revenue || '',
         currency: editClient.currency || 'USD',
         what_sold: editClient.what_sold || '',
-        next_action: editClient.next_action || '',
-        definition_of_done: editClient.definition_of_done || '',
-        not_included: editClient.not_included || '',
-        contact_link: editClient.contact_link || ''
+        contact_link: editClient.contact_link || '',
+        main_delivery: 'none'
       });
+      setNextActions(parseChecklist(editClient.next_action));
+      setDoneItems(parseChecklist(editClient.definition_of_done));
+      setOosItems(parseChecklist(editClient.not_included));
       setTags(editClient.tags || []);
     } else {
-      setFormData({ 
+      setFormData({
         name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
-        what_sold: '', next_action: '', definition_of_done: '', not_included: '', contact_link: '', main_delivery: 'none'
+        what_sold: '', contact_link: '', main_delivery: 'none'
       });
+      setNextActions([]);
+      setDoneItems([]);
+      setOosItems([]);
       setTags([]);
     }
   }, [editClient, isOpen]);
@@ -56,14 +77,17 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
   async function handleSubmit(e) {
     if (e) e.preventDefault();
     if (!formData.name) return toast.error(t('project_modal.name_required'));
-    
+
     setSubmitting(true);
-    const dataToSave = { 
-      ...formData, 
-      tags, 
-      revenue: parseFloat(formData.revenue) || 0 
+    const dataToSave = {
+      ...formData,
+      tags,
+      revenue: parseFloat(formData.revenue) || 0,
+      next_action: serializeChecklist(nextActions),
+      definition_of_done: serializeChecklist(doneItems),
+      not_included: serializeChecklist(oosItems),
     };
-    
+
     // remove main_delivery as it doesn't belong to the clients table
     const { main_delivery, ...clientDBPayload } = dataToSave;
 
@@ -248,15 +272,28 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                 <Target className="h-4 w-4 text-[var(--accent-sand)]" />
                 <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('project_modal.scope_section')}</label>
              </div>
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <MinimalTextarea label={t('project_modal.description_label')} value={formData.what_sold} onChange={v => setFormData({...formData, what_sold: v})} placeholder={t('project_modal.description_placeholder')} />
-                <MinimalTextarea label={t('project_modal.next_action_label')} value={formData.next_action} onChange={v => setFormData({...formData, next_action: v})} placeholder={t('project_modal.next_action_placeholder')} />
-             </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <MinimalTextarea label={t('project_modal.dod_label')} value={formData.definition_of_done} onChange={v => setFormData({...formData, definition_of_done: v})} placeholder={t('project_modal.dod_placeholder')} />
-                <MinimalTextarea label={t('project_modal.oos_label')} value={formData.not_included} onChange={v => setFormData({...formData, not_included: v})} placeholder={t('project_modal.oos_placeholder')} />
+             <MinimalTextarea label={t('project_modal.description_label')} value={formData.what_sold} onChange={v => setFormData({...formData, what_sold: v})} placeholder={t('project_modal.description_placeholder')} />
+
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <ChecklistField
+                  label={t('project_modal.next_action_label')}
+                  items={nextActions}
+                  onChange={setNextActions}
+                  placeholder={t('project_modal.next_action_placeholder')}
+                />
+                <ChecklistField
+                  label={t('project_modal.dod_label')}
+                  items={doneItems}
+                  onChange={setDoneItems}
+                  placeholder={t('project_modal.dod_placeholder')}
+                />
+                <ChecklistField
+                  label={t('project_modal.oos_label')}
+                  items={oosItems}
+                  onChange={setOosItems}
+                  placeholder={t('project_modal.oos_placeholder')}
+                />
              </div>
           </div>
 
@@ -284,13 +321,13 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
 
           {/* Submit Actions */}
           <div className="flex justify-end items-center gap-8 pt-10">
-             <button type="button" onClick={onClose} className="text-[10px] font-bold text-neutral-300 hover:text-neutral-500 uppercase tracking-widest transition-colors">{t('common.cancel')}</button>
+             <button type="button" onClick={onClose} className="text-[10px] font-bold text-neutral-400 hover:text-neutral-700 uppercase tracking-widest transition-colors">{t('common.cancel')}</button>
              <button
                type="submit"
                disabled={submitting}
                className="btn-minimal btn-primary px-12 py-5 h-auto text-[10px]"
              >
-               {submitting ? t('project_modal.saving') : (editClient ? t('project_modal.updated') : t('project_modal.created'))}
+               {submitting ? t('project_modal.saving') : (editClient ? t('common.save') : t('project_modal.new_title'))}
              </button>
           </div>
         </form>
@@ -302,13 +339,13 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
 function MinimalInput({ label, value, onChange, placeholder, type = "text" }) {
   return (
     <div className="space-y-2 group">
-      <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{label}</label>
+      <label className="block text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{label}</label>
       <input
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-white border border-neutral-200 rounded-xl px-6 py-4 text-sm font-medium text-[var(--ink-primary)] placeholder:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-neutral-200 transition-all"
+        className="w-full bg-white border border-neutral-200 rounded-xl px-6 py-4 text-sm font-medium text-[var(--ink-primary)] placeholder:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-neutral-300 transition-all"
       />
     </div>
   );
@@ -317,14 +354,87 @@ function MinimalInput({ label, value, onChange, placeholder, type = "text" }) {
 function MinimalTextarea({ label, value, onChange, placeholder }) {
   return (
     <div className="space-y-2 group">
-      <label className="block text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{label}</label>
+      <label className="block text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{label}</label>
       <textarea
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        rows={3}
-        className="w-full bg-white border border-neutral-200 rounded-xl px-6 py-4 text-sm font-medium text-[var(--ink-secondary)] placeholder:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-neutral-200 transition-all italic leading-relaxed resize-none"
+        rows={4}
+        className="w-full bg-white border border-neutral-200 rounded-xl px-6 py-4 text-sm font-medium text-[var(--ink-secondary)] placeholder:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-neutral-300 transition-all leading-relaxed resize-none"
       />
+    </div>
+  );
+}
+
+function ChecklistField({ label, items, onChange, placeholder }) {
+  const [input, setInput] = useState('');
+
+  function addItem(e) {
+    if ((e.key === 'Enter' || e.type === 'click') && input.trim()) {
+      e.preventDefault?.();
+      onChange([...items, { text: input.trim(), done: false }]);
+      setInput('');
+    }
+  }
+
+  function removeItem(idx) {
+    onChange(items.filter((_, i) => i !== idx));
+  }
+
+  function toggleItem(idx) {
+    onChange(items.map((item, i) => i === idx ? { ...item, done: !item.done } : item));
+  }
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{label}</label>
+      <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+        {items.length > 0 && (
+          <ul className="divide-y divide-neutral-50 max-h-40 overflow-y-auto">
+            {items.map((item, i) => (
+              <li key={i} className="flex items-center gap-3 px-4 py-2.5 group/item">
+                <button
+                  type="button"
+                  onClick={() => toggleItem(i)}
+                  className={cn(
+                    "h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors",
+                    item.done
+                      ? "bg-black border-black text-white"
+                      : "border-neutral-300 hover:border-neutral-500"
+                  )}
+                >
+                  {item.done && <svg className="h-2.5 w-2.5" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </button>
+                <span className={cn("flex-1 text-xs font-medium leading-snug", item.done ? "line-through text-neutral-300" : "text-neutral-600")}>{item.text}</span>
+                <button
+                  type="button"
+                  onClick={() => removeItem(i)}
+                  className="opacity-0 group-hover/item:opacity-100 text-neutral-300 hover:text-rose-500 transition-all"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="flex items-center gap-2 px-4 py-2.5 border-t border-neutral-50">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={addItem}
+            placeholder={items.length === 0 ? placeholder : '+ Add another...'}
+            className="flex-1 bg-transparent text-xs font-medium text-neutral-600 placeholder:text-neutral-300 focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={addItem}
+            disabled={!input.trim()}
+            className="h-6 w-6 rounded-lg bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center transition-colors disabled:opacity-30"
+          >
+            <Plus className="h-3 w-3 text-neutral-600" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
