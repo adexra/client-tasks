@@ -63,6 +63,9 @@ export default function AdPlanView() {
   const kpi = plan.target_kpi || {};
 
   const activeFunnel = FUNNEL_CFG.filter(f => funnel[f.key]?.enabled);
+  const med = plan.mediums || {};
+  const PLATFORM_LABELS = { google: 'Google Ads', meta: 'Meta Ads', tiktok: 'TikTok Ads', linkedin: 'LinkedIn Ads' };
+  const activeMediums = Object.entries(med).filter(([, v]) => v).map(([k]) => PLATFORM_LABELS[k] || k);
 
   return (
     <div style={s.page}>
@@ -106,6 +109,13 @@ export default function AdPlanView() {
           ))}
         </div>
 
+        {activeMediums.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+            {activeMediums.map(m => (
+              <span key={m} style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', background: 'rgba(51,98,255,0.12)', border: '1px solid rgba(51,98,255,0.3)', color: '#6b8fff', borderRadius: 8, padding: '6px 12px' }}>{m}</span>
+            ))}
+          </div>
+        )}
         {plan.start_date && (
           <p style={{ ...s.label, marginBottom: 48 }}>
             Start Date: <span style={{ color: '#F4F4F6' }}>{new Date(plan.start_date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>

@@ -17,6 +17,12 @@ function setNested(obj, path, val) {
 }
 
 const STAGES = ['tofu', 'mofu', 'bofu'];
+const PLATFORMS = [
+  { key: 'google', label: 'Google Ads', color: 'bg-blue-500' },
+  { key: 'meta', label: 'Meta Ads', color: 'bg-indigo-500' },
+  { key: 'tiktok', label: 'TikTok Ads', color: 'bg-pink-500' },
+  { key: 'linkedin', label: 'LinkedIn Ads', color: 'bg-sky-600' },
+];
 
 // When one stage's % changes, redistribute the delta to others proportionally
 function autoBalance(funnel, changedStage, newPct) {
@@ -72,9 +78,64 @@ const F = ({ label, children }) => (
 const ic = 'w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium text-ink-primary focus:outline-none focus:ring-1 focus:ring-neutral-300';
 const sc = ic + ' cursor-pointer appearance-none';
 
+// Extracted OUTSIDE the parent component to prevent remount on every render
+function Toggle({ checked, onChange }) {
+  return (
+    <div onClick={onChange} className={cn('h-5 w-9 rounded-full transition-all relative cursor-pointer shrink-0', checked ? 'bg-ink-charcoal' : 'bg-neutral-200')}>
+      <div className={cn('absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all', checked ? 'left-4' : 'left-0.5')} />
+    </div>
+  );
+}
+
+function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onToggle, onPctChange, onFieldChange }) {
+  const s = stageData;
+  return (
+    <div className={cn('surface-card p-6 space-y-5 border-t-2', color)}>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">{label}</p>
+          <p className="text-sm font-semibold text-ink-primary mt-0.5">{s.focus}</p>
+        </div>
+        <Toggle checked={s.enabled} onChange={onToggle} />
+      </div>
+      {s.enabled && (
+        <div className="space-y-5">
+          <div className="flex items-center gap-3">
+            <input
+              type="number" min={0} max={100} value={s.budget_pct}
+              onChange={e => onPctChange(+e.target.value)}
+              className="w-20 bg-white border border-neutral-200 rounded-xl px-3 py-2.5 text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-neutral-300"
+            />
+            <div className="text-xs text-neutral-400 font-medium leading-relaxed">
+              <span>% of budget</span><br />
+              <span className="text-ink-primary font-semibold">
+                {sym} {(budget * s.budget_pct / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total
+                &nbsp;·&nbsp;
+                {sym} {(daily * s.budget_pct / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/day
+              </span>
+            </div>
+          </div>
+          {stage === 'tofu' && <>
+            <F label="Audience Definition"><input value={s.audience} onChange={e => onFieldChange('audience', e.target.value)} className={ic} placeholder="Demographics, interests, lookalikes..." /></F>
+            <F label="Keywords / Search Terms"><textarea value={s.keywords} onChange={e => onFieldChange('keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Brand terms, informational queries..." /></F>
+          </>}
+          {stage === 'mofu' && <>
+            <F label="Remarketing Logic"><textarea value={s.remarketing_logic} onChange={e => onFieldChange('remarketing_logic', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="e.g. Visited landing page but did not convert..." /></F>
+          </>}
+          {stage === 'bofu' && <>
+            <F label="Conversion Flow Path"><textarea value={s.conversion_flow} onChange={e => onFieldChange('conversion_flow', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Ad → VSL → Lead Form → Thank You Page" /></F>
+            <F label="High-Intent Keywords"><textarea value={s.keywords} onChange={e => onFieldChange('keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Buy now, best price, hire now, compare..." /></F>
+          </>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const DEFAULT = {
   name: '', client_id: '', currency: 'BRL', total_budget: '', days: 30, start_date: '',
   target_kpi: { type: 'CPA', value: '' },
+  mediums: { google: true, meta: false, tiktok: false, linkedin: false },
   funnel: {
     tofu: { enabled: true, focus: 'Brand Awareness / Traffic', audience: '', keywords: '', budget_pct: 40 },
     mofu: { enabled: true, focus: 'Consideration / Engagement', remarketing_logic: '', budget_pct: 30 },
@@ -93,6 +154,12 @@ export default function AdPlanning() {
   const [clients, setClients] = useState([]);
   const [saving, setSaving] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
+
+  const makeFunnelHandlers = (stage) => ({
+    onToggle: () => setForm(f => ({ ...f, funnel: toggleStage(f.funnel, stage) })),
+    onPctChange: (v) => setForm(f => ({ ...f, funnel: autoBalance(f.funnel, stage, v) })),
+    onFieldChange: (field, v) => setForm(f => ({ ...f, funnel: { ...f.funnel, [stage]: { ...f.funnel[stage], [field]: v } } })),
+  });
 
   useEffect(() => {
     supabase.from('clients').select('id,name').eq('status', 'active').then(({ data }) => setClients(data || []));
@@ -118,13 +185,12 @@ export default function AdPlanning() {
 
   const handleSave = async () => {
     if (!form.name.trim()) return toast.error('Plan name is required');
-    // Auto-balance should keep it at 100, but guard anyway
     if (totalPct !== 100) return toast.error('Funnel budget must sum to exactly 100%');
     setSaving(true);
     const { data, error } = await supabase.from('ad_plans').insert([{
       name: form.name, client_id: form.client_id || null, currency: form.currency,
       total_budget: budget, days, start_date: form.start_date || null,
-      target_kpi: form.target_kpi, funnel: form.funnel,
+      target_kpi: form.target_kpi, funnel: form.funnel, mediums: form.mediums,
       conversion: form.conversion, audience: form.audience, creative: form.creative,
     }]).select('id').single();
     setSaving(false);
@@ -148,50 +214,6 @@ export default function AdPlanning() {
     loadPlans();
   };
 
-  const Toggle = ({ checked, onChange }) => (
-    <div onClick={onChange} className={cn('h-5 w-9 rounded-full transition-all relative cursor-pointer shrink-0', checked ? 'bg-ink-charcoal' : 'bg-neutral-200')}>
-      <div className={cn('absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all', checked ? 'left-4' : 'left-0.5')} />
-    </div>
-  );
-
-  const FunnelCard = ({ stage, label, color }) => {
-    const s = form.funnel[stage];
-    return (
-      <div className={cn('surface-card p-6 space-y-5 border-t-2', color)}>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">{label}</p>
-            <p className="text-sm font-semibold text-ink-primary mt-0.5">{s.focus}</p>
-          </div>
-          <Toggle checked={s.enabled} onChange={() => setForm(f => ({ ...f, funnel: toggleStage(f.funnel, stage) }))} />
-        </div>
-        {s.enabled && (
-          <div className="space-y-5">
-            <div className="flex items-center gap-3">
-              <input type="number" min={0} max={100} value={s.budget_pct}
-                onChange={e => setForm(f => ({ ...f, funnel: autoBalance(f.funnel, stage, +e.target.value) }))}
-                className="w-20 bg-white border border-neutral-200 rounded-xl px-3 py-2.5 text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-neutral-300" />
-              <div className="text-xs text-neutral-400 font-medium leading-relaxed">
-                <span>% of budget</span><br />
-                <span className="text-ink-primary font-semibold">{money(budget * s.budget_pct / 100, sym)} total · {money(daily * s.budget_pct / 100, sym)}/day</span>
-              </div>
-            </div>
-            {stage === 'tofu' && <>
-              <F label="Audience Definition"><input value={s.audience} onChange={e => set('funnel.tofu.audience', e.target.value)} className={ic} placeholder="Demographics, interests, lookalikes..." /></F>
-              <F label="Keywords / Search Terms"><textarea value={s.keywords} onChange={e => set('funnel.tofu.keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Brand terms, informational queries..." /></F>
-            </>}
-            {stage === 'mofu' && <>
-              <F label="Remarketing Logic"><textarea value={s.remarketing_logic} onChange={e => set('funnel.mofu.remarketing_logic', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="e.g. Visited landing page but did not convert, watched 50% of video..." /></F>
-            </>}
-            {stage === 'bofu' && <>
-              <F label="Conversion Flow Path"><textarea value={s.conversion_flow} onChange={e => set('funnel.bofu.conversion_flow', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Ad → VSL → Lead Form → Thank You Page" /></F>
-              <F label="High-Intent Keywords"><textarea value={s.keywords} onChange={e => set('funnel.bofu.keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Buy now, best price, hire now, compare..." /></F>
-            </>}
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-24">
@@ -299,7 +321,37 @@ export default function AdPlanning() {
               </div>
             </div>
 
-            {/* B: Funnel */}
+            {/* A2: Advertising Mediums */}
+            <div className="surface-card p-8 space-y-5">
+              <div>
+                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Section A2</p>
+                <h3 className="text-xl font-serif text-ink-primary mt-1">Advertising Mediums</h3>
+                <p className="text-xs text-neutral-400 mt-1">Select every platform this campaign will run on.</p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {PLATFORMS.map(p => {
+                  const active = form.mediums?.[p.key];
+                  return (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, mediums: { ...f.mediums, [p.key]: !f.mediums?.[p.key] } }))}
+                      className={cn(
+                        'flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left transition-all',
+                        active
+                          ? 'bg-ink-charcoal text-white border-ink-charcoal shadow-sm'
+                          : 'bg-white text-neutral-400 border-neutral-200 hover:border-neutral-300'
+                      )}
+                    >
+                      <div className={cn('h-2 w-2 rounded-full shrink-0', active ? 'bg-white' : 'bg-neutral-200')} />
+                      <span className="text-[11px] font-bold uppercase tracking-widest leading-tight">{p.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+
             <div className="space-y-3">
               <div>
                 <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Section B</p>
@@ -310,9 +362,15 @@ export default function AdPlanning() {
                 {totalPct !== 100 && <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
                 {totalPct === 100 ? '✓ Budget fully allocated (100%)' : totalPct > 100 ? `Over-allocated by ${totalPct - 100}% — reduce allocation` : `${100 - totalPct}% unallocated — assign remaining budget`}
               </div>
-              <FunnelCard stage="tofu" label="TOFU — Top of Funnel (Cold Audience)" color="border-t-sky-300" />
-              <FunnelCard stage="mofu" label="MOFU — Middle of Funnel (Remarketing)" color="border-t-violet-400" />
-              <FunnelCard stage="bofu" label="BOFU — Bottom of Funnel (Conversion)" color="border-t-emerald-400" />
+              {[{stage:'tofu',label:'TOFU — Top of Funnel (Cold Audience)',color:'border-t-sky-300'},{stage:'mofu',label:'MOFU — Middle of Funnel (Remarketing)',color:'border-t-violet-400'},{stage:'bofu',label:'BOFU — Bottom of Funnel (Conversion)',color:'border-t-emerald-400'}].map(cfg => (
+                <FunnelCard
+                  key={cfg.stage}
+                  stage={cfg.stage} label={cfg.label} color={cfg.color}
+                  stageData={form.funnel[cfg.stage]}
+                  budget={budget} daily={daily} sym={sym}
+                  {...makeFunnelHandlers(cfg.stage)}
+                />
+              ))}
             </div>
 
             {/* C: Conversion */}
