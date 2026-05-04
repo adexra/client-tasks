@@ -51,18 +51,20 @@ export default function AdPlanView() {
   const { name, client_id, clients, currency, total_budget, days, target_kpi, funnel, mediums, conversion } = plan;
   const sym = SYM[currency] || 'R$';
   const kpiVal = parseFloat(target_kpi?.value) || 0;
+  const kpiType = target_kpi?.type || 'CPA';
+  const budget = parseFloat(total_budget) || 0;
   
   // Calculations
   const bofuPct = funnel?.bofu?.budget_pct || 0;
-  const bofuBudget = total_budget * (bofuPct / 100);
+  const bofuBudget = budget * (bofuPct / 100);
   
   let projValue = '--';
   let projLabel = 'Estimativa de Volume';
   if (kpiVal > 0) {
-    if (target_kpi.type === 'CPA' || target_kpi.type === 'CPL' || target_kpi.type === 'Leads') {
+    if (kpiType === 'CPA' || kpiType === 'CPL' || kpiType === 'Leads') {
       projValue = Math.floor(bofuBudget / kpiVal).toLocaleString();
-      projLabel = `Estimativa de ${target_kpi.type === 'CPA' ? 'Conversões' : 'Leads'}`;
-    } else if (target_kpi.type === 'ROAS') {
+      projLabel = `Estimativa de ${kpiType === 'CPA' ? 'Conversões' : 'Leads'}`;
+    } else if (kpiType === 'ROAS') {
       projValue = `${sym} ${(bofuBudget * kpiVal).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
       projLabel = 'Receita Estimada';
     }
@@ -125,21 +127,21 @@ export default function AdPlanView() {
               <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <DollarSign className="h-3.5 w-3.5" /> Investimento
               </p>
-              <p className="text-3xl font-serif text-white">{sym} {total_budget.toLocaleString()}</p>
+              <p className="text-3xl font-serif text-white">{sym} {budget.toLocaleString()}</p>
             </div>
             
             <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 backdrop-blur-xl">
               <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <Clock className="h-3.5 w-3.5" /> Prazo
               </p>
-              <p className="text-3xl font-serif text-white">{days} Dias</p>
+              <p className="text-3xl font-serif text-white">{days || 30} Dias</p>
             </div>
 
             <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 backdrop-blur-xl">
               <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <Target className="h-3.5 w-3.5" /> Alvo de Aquisição
               </p>
-              <p className="text-3xl font-serif text-white">{sym} {kpiVal} <span className="text-sm text-neutral-500 font-sans">{target_kpi.type}</span></p>
+              <p className="text-3xl font-serif text-white">{sym} {kpiVal} <span className="text-sm text-neutral-500 font-sans">{kpiType}</span></p>
             </div>
 
             <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 backdrop-blur-xl relative overflow-hidden">
