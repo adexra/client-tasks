@@ -16,7 +16,8 @@ import {
   Menu,
   X,
   Eye,
-  EyeOff
+  EyeOff,
+  Megaphone
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { to: '/clients', icon: Users, key: 'nav.portfolio' },
   { to: '/priority', icon: Target, key: 'nav.execution' },
   { to: '/financials', icon: Wallet, key: 'nav.financials' },
+  { to: '/ads', icon: Megaphone, label: 'Ads Planning' },
 ];
 
 export default function Layout() {
@@ -99,7 +101,7 @@ export default function Layout() {
                     <>
                       <div className="flex items-center gap-3">
                         <item.icon className="h-4 w-4" />
-                        <span className="text-xs font-medium tracking-tight">{t(item.key)}</span>
+                        <span className="text-xs font-medium tracking-tight">{item.key ? t(item.key) : item.label}</span>
                       </div>
                       <ChevronRight className={cn("h-3 w-3 transition-transform opacity-0 group-hover:opacity-40", isActive && "opacity-20")} />
                     </>
@@ -268,7 +270,7 @@ export default function Layout() {
               )}
             >
               <item.icon className="h-5 w-5" />
-              <span className="text-[9px] font-bold uppercase tracking-wider">{t(item.key)}</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider">{item.key ? t(item.key) : item.label}</span>
             </NavLink>
           ))}
           <NavLink

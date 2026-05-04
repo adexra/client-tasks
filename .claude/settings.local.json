@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Vercel__list_teams",
+      "mcp__claude_ai_Vercel__list_projects",
+      "mcp__claude_ai_Vercel__get_project",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:5174)",
+      "Read(//c/Users/luanc/.claude/skills/webapp-testing/**)",
+      "Bash(python scripts/with_server.py --help)",
+      "Bash(cat)",
+      "Bash(python /tmp/test_app.py)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "mcp__claude_ai_Vercel__list_deployments",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "Bash(git commit *)"
+    ]
+  }
+}

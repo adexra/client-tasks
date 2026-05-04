@@ -11,6 +11,8 @@ import Clients from './pages/Clients';
 import Financials from './pages/Financials';
 import Account from './pages/Account';
 import Auth from './pages/Auth';
+import AdPlanning from './pages/AdPlanning';
+import AdPlanView from './pages/AdPlanView';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -58,6 +60,7 @@ export default function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+                <Route path="/plan/:id" element={<AdPlanView />} />
                 <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                   <Route index element={<Dashboard />} />
                   <Route path="clients" element={<Clients />} />
@@ -65,6 +68,7 @@ export default function App() {
                   <Route path="priority" element={<PriorityView />} />
                   <Route path="financials" element={<Financials />} />
                   <Route path="account" element={<Account />} />
+                  <Route path="ads" element={<AdPlanning />} />
                 </Route>
               </Routes>
             </BrowserRouter>
