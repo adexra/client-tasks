@@ -67,6 +67,10 @@
   .stat-value {
     @apply text-3xl font-serif text-ink-primary;
   }
+
+  .glass-card {
+    @apply bg-slate-900/40 backdrop-blur-[20px] border-t border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)];
+  }
 }
 
 /* Custom Scrollbar - Minimal */
