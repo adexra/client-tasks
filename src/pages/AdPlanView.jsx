@@ -1,23 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { 
-  ChevronLeft, ArrowDown, Target, Activity, Settings, Clock, 
-  BarChart2, Zap, LayoutTemplate, Share2, DollarSign,
-  ChevronRight, Database, Code, Filter, Sparkles, CheckCircle2,
-  Globe, Search, ArrowRight, ShoppingCart, User
+  ChevronLeft, Target, Globe, Search, ArrowRight, 
+  MessageSquare, MousePointer2, ShieldCheck, Zap,
+  TrendingUp, Calendar, Wallet, ExternalLink
 } from 'lucide-react';
 
 const SYM = { BRL: 'R$', USD: '$', EUR: '€' };
-
-const PLATFORM_ICONS = {
-  google: <Search className="h-4 w-4" />,
-  meta: <Globe className="h-4 w-4" />,
-  tiktok: <Activity className="h-4 w-4" />,
-  linkedin: <User className="h-4 w-4" />
-};
 
 export default function AdPlanView() {
   const { id } = useParams();
@@ -26,282 +18,292 @@ export default function AdPlanView() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    supabase.from('ad_plans').select('*, clients(name)').eq('id', id).single()
+    supabase.from('ad_plans')
+      .select('*, clients(name)')
+      .eq('id', id)
+      .single()
       .then(({ data, error }) => {
-        if (error || !data) setError('Plan not found');
-        else if (!data.is_active) setError('Plan is deactivated');
+        if (error || !data) setError('Projeto não encontrado');
+        else if (!data.is_active) setError('Este plano expirou ou está inativo');
         else setPlan(data);
-        
         setLoading(false);
       });
   }, [id]);
 
-  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" /></div>;
-  if (error) return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-white">
-      <div className="h-16 w-16 bg-slate-900 rounded-full flex items-center justify-center mb-6">
-        <Target className="h-8 w-8 text-slate-600" />
-      </div>
-      <h2 className="text-2xl font-serif mb-2">Unavailable</h2>
-      <p className="text-slate-500 mb-8 max-w-sm">{error}</p>
-      <Link to="/" className="btn-minimal btn-primary">Return to Dashboard</Link>
+  const stats = useMemo(() => {
+    if (!plan) return null;
+    const budget = parseFloat(plan.total_budget) || 0;
+    const kpiVal = parseFloat(plan.target_kpi?.value) || 0;
+    const type = plan.target_kpi?.type || 'CPA';
+    const sym = SYM[plan.currency] || 'R$';
+    
+    // Cálculo de volume baseado na última etapa do funil (Decisão)
+    const bofuPct = plan.funnel?.bofu?.budget_pct || 100;
+    const focusBudget = budget * (bofuPct / 100);
+    
+    let projection = '--';
+    if (kpiVal > 0) {
+      if (type === 'CPA' || type === 'CPL') {
+        projection = Math.floor(focusBudget / kpiVal).toLocaleString('pt-BR');
+      } else if (type === 'ROAS') {
+        projection = `${sym} ${(focusBudget * kpiVal).toLocaleString('pt-BR')}`;
+      }
+    }
+    return { budget, sym, projection, type };
+  }, [plan]);
+
+  if (loading) return (
+    <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+      <div className="h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
-  const { name, client_id, clients, currency, total_budget, days, target_kpi, funnel, mediums, conversion } = plan;
-  const sym = SYM[currency] || 'R$';
-  const kpiVal = parseFloat(target_kpi?.value) || 0;
-  const kpiType = target_kpi?.type || 'CPA';
-  const budget = parseFloat(total_budget) || 0;
-  
-  // Calculations
-  const bofuPct = funnel?.bofu?.budget_pct || 0;
-  const bofuBudget = budget * (bofuPct / 100);
-  
-  let projValue = '--';
-  if (kpiVal > 0) {
-    if (kpiType === 'CPA' || kpiType === 'CPL' || kpiType === 'Leads') {
-      projValue = Math.floor(bofuBudget / kpiVal).toLocaleString() + ` ${kpiType === 'CPA' ? 'Conversões' : 'Leads'}`;
-    } else if (kpiType === 'ROAS') {
-      projValue = `${sym} ${(bofuBudget * kpiVal).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-    }
-  }
-
-  const clientName = clients?.name || name;
-
-  // RevOps Parsing
-  const rawFlowString = funnel?.bofu?.conversion_flow || conversion?.flow || "Ad > Landing Page > Lead > CRM";
-  const flowSteps = rawFlowString.split('>').map(s => s.trim()).filter(Boolean);
-
-  const getActivePlatforms = (stageId) => {
-    const stagePlats = funnel?.[stageId]?.platforms;
-    if (stagePlats) {
-      return Object.entries(stagePlats).filter(([_, v]) => v).map(([k]) => k);
-    }
-    if (mediums) {
-      return Object.entries(mediums).filter(([_, v]) => v).map(([k]) => k);
-    }
-    return [];
-  };
+  if (error) return (
+    <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center p-6 text-white">
+      <h2 className="text-3xl font-serif mb-6">{error}</h2>
+      <Link to="/ad-planning" className="px-6 py-3 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-all">
+        Voltar ao Painel
+      </Link>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#031427] text-slate-200 font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-[#020617] text-slate-300 font-sans selection:bg-indigo-500/30">
       
-      {/* TopAppBar */}
-      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-20 bg-slate-950/80 backdrop-blur-[20px] border-b border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)]">
-        <div className="flex items-center gap-4">
-          <Link to="/ad-planning" className="text-emerald-400 hover:text-emerald-300 transition-colors">
-            <ChevronLeft className="h-6 w-6" />
-          </Link>
-          <div className="text-2xl font-medium tracking-[0.2em] text-slate-50 uppercase font-serif">Adexra</div>
-        </div>
-        <nav className="hidden md:flex space-x-8 font-serif tracking-tight antialiased">
-          <a className="text-emerald-400 border-b-2 border-emerald-500 pb-1 hover:text-emerald-300 transition-all duration-300" href="#">Strategic Flow</a>
-          <a className="text-slate-400 hover:text-slate-100 transition-colors duration-300" href="#">Overview</a>
-          <a className="text-slate-400 hover:text-slate-100 transition-colors duration-300" href="#">Investment</a>
-          <a className="text-slate-400 hover:text-slate-100 transition-colors duration-300" href="#">Governance</a>
-        </nav>
-        <div className="flex space-x-4 text-emerald-500">
-          <Settings className="h-6 w-6 hover:text-emerald-300 transition-all duration-300 cursor-pointer" />
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 md:px-12 pt-32 pb-32 space-y-20">
-        
-        {/* Executive HUD */}
-        <section className="animate-in fade-in slide-in-from-bottom-8 duration-1000">
-          <h1 className="text-5xl md:text-7xl font-serif text-white mb-10 text-center tracking-tight">Strategic Flow</h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            
-            <div className="glass-card rounded-xl p-8 flex flex-col justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Investimento Total</span>
-              <span className="text-3xl md:text-4xl font-serif text-emerald-400">{sym} {budget.toLocaleString()}</span>
-            </div>
-            
-            <div className="glass-card rounded-xl p-8 flex flex-col justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Prazo de Execução</span>
-              <span className="text-3xl md:text-4xl font-serif text-white">{days || 30} Dias</span>
-            </div>
-            
-            <div className="glass-card rounded-xl p-8 flex flex-col justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Meta de Retorno</span>
-              <span className="text-3xl md:text-4xl font-serif text-white">{kpiVal} <span className="text-sm font-sans text-slate-400">{kpiType}</span></span>
-            </div>
-            
-            <div className="glass-card rounded-xl p-8 flex flex-col justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Volume Estimado</span>
-              <span className="text-3xl md:text-4xl font-serif text-white">{projValue}</span>
-            </div>
-
+      {/* Navigation - Minimalist & Fixed */}
+      <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#020617]/80 backdrop-blur-md px-8 h-20 flex items-center justify-between">
+        <Link to="/ad-planning" className="flex items-center gap-2 group text-slate-500 hover:text-white transition-colors">
+          <ChevronLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-xs font-bold uppercase tracking-[0.2em]">Dashboard</span>
+        </Link>
+        <div className="text-lg font-serif italic text-white tracking-widest">ADEXRA <span className="text-indigo-500">.</span></div>
+        <div className="flex gap-6">
+          <div className="h-10 w-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 cursor-pointer transition-all">
+            <Zap className="h-4 w-4 text-indigo-400" />
           </div>
+        </div>
+      </nav>
+
+      <main className="max-w-6xl mx-auto px-8 pt-40 pb-32">
+        
+        {/* Header - The Narrative */}
+        <header className="mb-24">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center text-center space-y-6"
+          >
+            <span className="px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">
+              Planejamento Estratégico de Performance
+            </span>
+            <h1 className="text-5xl md:text-7xl font-serif text-white tracking-tight leading-tight max-w-4xl">
+              Dominando a jornada de <span className="italic text-indigo-400">{plan.clients?.name || plan.name}</span>
+            </h1>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5 border border-white/10 rounded-3xl mt-16 overflow-hidden">
+            <StatBlock icon={Wallet} label="Investimento Planejado" value={`${stats.sym} ${stats.budget.toLocaleString('pt-BR')}`} />
+            <StatBlock icon={Target} label={`Meta de ${stats.type}`} value={`${stats.type === 'CPA' ? stats.sym : ''} ${plan.target_kpi?.value || 0}${stats.type === 'ROAS' ? 'x' : ''}`} />
+            <StatBlock icon={TrendingUp} label="Volume Estimado" value={stats.projection} />
+          </div>
+        </header>
+
+        {/* The Strategy Breakdown - Visual & Tangible */}
+        <section className="space-y-32">
+          
+          {/* Phase 1: Awareness -> Tangible Ad Mockup */}
+          {plan.funnel?.tofu?.enabled && (
+            <JourneyPhase 
+              title="1. Descoberta & Alcance"
+              subtitle="Onde criamos o primeiro impacto e despertamos o desejo."
+              description="Nesta etapa, focamos em audiências que ainda não conhecem sua solução, utilizando segmentação por intenção e comportamento."
+              budget={`${stats.sym} ${(stats.budget * plan.funnel.tofu.budget_pct / 100).toLocaleString('pt-BR')}`}
+              pct={plan.funnel.tofu.budget_pct}
+              platform={Object.keys(plan.mediums || {}).find(k => plan.mediums[k]) || 'google'}
+            >
+              {/* Ad Mockup Wireframe */}
+              <div className="w-full aspect-video bg-slate-900/50 rounded-2xl border border-white/10 p-6 relative overflow-hidden group">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-8 w-8 rounded-full bg-slate-800" />
+                  <div className="space-y-1">
+                    <div className="h-2 w-24 bg-slate-800 rounded" />
+                    <div className="h-1.5 w-16 bg-slate-800/50 rounded" />
+                  </div>
+                </div>
+                <div className="aspect-[16/7] bg-indigo-500/10 rounded-xl border border-indigo-500/20 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">Visual Criativo Premium</span>
+                </div>
+                <div className="mt-4 space-y-2">
+                  <div className="h-3 w-full bg-slate-800 rounded" />
+                  <div className="h-3 w-2/3 bg-slate-800 rounded" />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#020617] to-transparent opacity-0 group-hover:opacity-10 transition-opacity" />
+              </div>
+            </JourneyPhase>
+          )}
+
+          {/* Phase 2: Intent -> The Logic */}
+          {plan.funnel?.mofu?.enabled && (
+            <JourneyPhase 
+              title="2. Consideração & Autoridade"
+              subtitle="Re-impactando quem demonstrou interesse real."
+              description={plan.funnel.mofu.remarketing_logic || "Estratégia de remarketing para quebrar objeções e reforçar os diferenciais da marca."}
+              budget={`${stats.sym} ${(stats.budget * plan.funnel.mofu.budget_pct / 100).toLocaleString('pt-BR')}`}
+              pct={plan.funnel.mofu.budget_pct}
+              reverse
+            >
+              <div className="space-y-4">
+                <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                  <div className="flex items-center gap-3 mb-4">
+                    <ShieldCheck className="h-5 w-5 text-indigo-400" />
+                    <span className="text-sm font-bold text-white uppercase tracking-widest">Protocolo de Confiança</span>
+                  </div>
+                  <p className="text-sm leading-relaxed opacity-60 italic">
+                    "O usuário que visitou o site nos últimos 7 dias verá anúncios focados em prova social e cases de sucesso."
+                  </p>
+                </div>
+                <div className="flex justify-center">
+                  <ArrowRight className="h-6 w-6 text-slate-700 rotate-90" />
+                </div>
+                <div className="p-6 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
+                  <span className="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">Trigger de Retenção Ativo</span>
+                </div>
+              </div>
+            </JourneyPhase>
+          )}
+
+          {/* Phase 3: Conversion -> The Result */}
+          {plan.funnel?.bofu?.enabled && (
+            <JourneyPhase 
+              title="3. Decisão & Aquisição"
+              subtitle="O momento da conversão final e fechamento."
+              description="Foco total em fundo de funil, capturando a demanda de quem está pronto para comprar agora."
+              budget={`${stats.sym} ${(stats.budget * plan.funnel.bofu.budget_pct / 100).toLocaleString('pt-BR')}`}
+              pct={plan.funnel.bofu.budget_pct}
+              platform="search"
+            >
+              <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-8 space-y-6">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 tracking-widest uppercase">
+                  <Search className="h-3 w-3" /> Google Search Preview
+                </div>
+                <div className="space-y-1">
+                  <div className="text-indigo-400 text-lg font-serif">Melhor {plan.name} em 2026</div>
+                  <div className="text-emerald-500/80 text-xs italic">https://seusite.com.br/conversao</div>
+                </div>
+                <div className="h-2 w-full bg-slate-800 rounded" />
+                <div className="h-2 w-3/4 bg-slate-800 rounded" />
+                <div className="pt-4 border-t border-white/5 flex justify-between items-center">
+                   <div className="flex items-center gap-2">
+                     <MousePointer2 className="h-4 w-4 text-indigo-400" />
+                     <span className="text-xs font-bold text-white uppercase tracking-widest italic">Action Required</span>
+                   </div>
+                   <div className="px-4 py-2 bg-indigo-500 rounded text-xs font-bold text-white">COMPRAR AGORA</div>
+                </div>
+              </div>
+            </JourneyPhase>
+          )}
+
         </section>
 
-        {/* The Golden Path & Investment GPS (Bento Grid Style) */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Vertical Flow (Left Column) */}
-          <div className="lg:col-span-8 relative">
-            {/* Vertical Line */}
-            <div className="absolute left-6 md:left-12 top-0 bottom-0 w-0.5 bg-slate-800 -ml-[1px]"></div>
-            
-            <div className="space-y-12 relative z-10">
-              
-              {/* TOFU */}
-              {funnel?.tofu?.enabled && (
-                <div className="glass-card rounded-xl p-8 ml-0 md:ml-24 flex flex-col md:flex-row gap-8 items-start relative">
-                  <div className="absolute left-6 md:left-[-72px] -top-6 md:top-12 w-12 h-12 rounded-full bg-[#031427] flex items-center justify-center border-2 border-emerald-400 z-20">
-                    <Filter className="text-emerald-400 h-5 w-5" />
-                  </div>
-                  
-                  <div className="flex-1 mt-6 md:mt-0">
-                    <h2 className="text-3xl font-serif text-white mb-2">Atração (TOFU)</h2>
-                    <p className="text-slate-400 mb-6">Foco: Quem estamos buscando</p>
-                    
-                    <div className="flex flex-wrap gap-4 mb-6">
-                      {getActivePlatforms('tofu').map(p => (
-                        <div key={p} className="bg-slate-900 px-4 py-2 rounded-full text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2 border border-white/5">
-                          {PLATFORM_ICONS[p]} <span className="capitalize">{p}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {(funnel.tofu.keywords || funnel.tofu.audience) && (
-                      <div className="space-y-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Segmentação Alvo</span>
-                        <div className="flex flex-wrap gap-2">
-                          {(funnel.tofu.keywords || funnel.tofu.audience).split(/[,|\n]+/).filter(Boolean).map((kw, i) => (
-                            <span key={i} className="px-3 py-1 bg-slate-800 rounded text-slate-200 text-sm">{kw.trim()}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* MOFU */}
-              {funnel?.mofu?.enabled && (
-                <div className="glass-card rounded-xl p-8 ml-0 md:ml-24 flex flex-col md:flex-row gap-8 items-start relative">
-                  <div className="absolute left-6 md:left-[-72px] -top-6 md:top-12 w-12 h-12 rounded-full bg-[#031427] flex items-center justify-center border-2 border-emerald-400 z-20">
-                    <Sparkles className="text-emerald-400 h-5 w-5" />
-                  </div>
-                  
-                  <div className="flex-1 mt-6 md:mt-0">
-                    <h2 className="text-3xl font-serif text-white mb-2">Nutrição (MOFU)</h2>
-                    <p className="text-slate-400 mb-6">Impactar quem demonstrou interesse real.</p>
-                    
-                    {funnel.mofu.remarketing_logic && (
-                      <div className="space-y-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Lógica de Remarketing</span>
-                        <p className="text-sm text-slate-300 italic font-serif opacity-80 border-l-2 border-emerald-400/30 pl-4">
-                          "{funnel.mofu.remarketing_logic}"
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* BOFU */}
-              {funnel?.bofu?.enabled && (
-                <div className="bg-emerald-900/20 backdrop-blur-[20px] rounded-xl p-8 ml-0 md:ml-24 border border-emerald-500/30 flex flex-col md:flex-row gap-8 items-start relative shadow-[0_0_40px_rgba(52,211,153,0.1)]">
-                  <div className="absolute left-6 md:left-[-72px] -top-6 md:top-12 w-12 h-12 rounded-full bg-emerald-400 flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.5)] z-20">
-                    <CheckCircle2 className="text-emerald-950 h-6 w-6" />
-                  </div>
-                  
-                  <div className="flex-1 w-full mt-6 md:mt-0">
-                    <h2 className="text-3xl font-serif text-emerald-400 mb-6">Conversão (BOFU)</h2>
-                    
-                    {/* Pipeline Arrow Map */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between w-full bg-slate-900/50 rounded-lg p-6 border border-white/5">
-                      {flowSteps.map((step, idx) => (
-                        <div key={idx} className="flex items-center flex-1 w-full sm:w-auto group">
-                          <div className="flex flex-col items-center text-center w-full">
-                            {idx === 0 && <Search className="text-slate-200 mb-2 h-6 w-6" />}
-                            {idx === 1 && <Globe className="text-slate-200 mb-2 h-6 w-6" />}
-                            {idx === 2 && <ShoppingCart className="text-slate-200 mb-2 h-6 w-6" />}
-                            {idx === 3 && <User className="text-emerald-400 mb-2 h-6 w-6" />}
-                            {idx > 3 && <Target className="text-emerald-400 mb-2 h-6 w-6" />}
-                            <span className={cn(
-                              "text-xs font-bold uppercase tracking-widest",
-                              idx === flowSteps.length - 1 ? "text-emerald-400" : "text-slate-200"
-                            )}>{step}</span>
-                          </div>
-                          {idx < flowSteps.length - 1 && (
-                            <ArrowRight className="text-emerald-400 my-4 sm:my-0 mx-2 flex-shrink-0" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+        {/* Technical Governance - Low key but authoritative */}
+        <section className="mt-40 pt-20 border-t border-white/10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
+            <div className="space-y-6">
+              <h3 className="text-2xl font-serif text-white italic">Infraestrutura RevOps</h3>
+              <p className="text-sm leading-relaxed text-slate-500">
+                Não apenas anúncios, mas um ecossistema. Integramos sua mídia com o CRM e ferramentas de automação para garantir que nenhum lead seja desperdiçado.
+              </p>
             </div>
-          </div>
-
-          {/* Investment GPS (Right Column) */}
-          <div className="lg:col-span-4 space-y-8 mt-10 lg:mt-0">
-            <div className="glass-card rounded-xl p-8 sticky top-32">
-              <h3 className="text-3xl font-serif text-white mb-8 border-b border-white/10 pb-4">Investment GPS</h3>
-              
-              <div className="space-y-8">
-                {/* TOFU Bar */}
-                {funnel?.tofu?.enabled && (
-                  <div>
-                    <div className="flex justify-between items-end mb-2">
-                      <span className="text-xs font-bold text-slate-200 uppercase tracking-widest">TOFU</span>
-                      <span className="text-base text-emerald-400">{sym} {(budget * funnel.tofu.budget_pct / 100).toLocaleString()} ({funnel.tofu.budget_pct}%)</span>
-                    </div>
-                    <div className="w-full bg-slate-800 rounded-full h-2 mb-2">
-                      <div className="bg-emerald-400 h-2 rounded-full" style={{ width: `${funnel.tofu.budget_pct}%` }}></div>
-                    </div>
-                    <p className="text-sm text-slate-400">"Para encher o topo do funil"</p>
-                  </div>
-                )}
-                
-                {/* MOFU Bar */}
-                {funnel?.mofu?.enabled && (
-                  <div>
-                    <div className="flex justify-between items-end mb-2">
-                      <span className="text-xs font-bold text-slate-200 uppercase tracking-widest">MOFU</span>
-                      <span className="text-base text-emerald-400">{sym} {(budget * funnel.mofu.budget_pct / 100).toLocaleString()} ({funnel.mofu.budget_pct}%)</span>
-                    </div>
-                    <div className="w-full bg-slate-800 rounded-full h-2 mb-2">
-                      <div className="bg-emerald-400 h-2 rounded-full opacity-70" style={{ width: `${funnel.mofu.budget_pct}%` }}></div>
-                    </div>
-                    <p className="text-sm text-slate-400">"Para manter o interesse"</p>
-                  </div>
-                )}
-                
-                {/* BOFU Bar */}
-                {funnel?.bofu?.enabled && (
-                  <div>
-                    <div className="flex justify-between items-end mb-2">
-                      <span className="text-xs font-bold text-slate-200 uppercase tracking-widest">BOFU</span>
-                      <span className="text-base text-emerald-400">{sym} {(budget * funnel.bofu.budget_pct / 100).toLocaleString()} ({funnel.bofu.budget_pct}%)</span>
-                    </div>
-                    <div className="w-full bg-slate-800 rounded-full h-2 mb-2">
-                      <div className="bg-emerald-400 h-2 rounded-full opacity-40" style={{ width: `${funnel.bofu.budget_pct}%` }}></div>
-                    </div>
-                    <p className="text-sm text-slate-400">"Para fechar a venda"</p>
-                  </div>
-                )}
-              </div>
+            <div className="grid grid-cols-2 gap-8">
+              <TechBadge icon={MessageSquare} label="Atendimento" value="CRM Integrado" />
+              <TechBadge icon={Calendar} label="Duração" value={`${plan.days || 30} Dias`} />
+              <TechBadge icon={ShieldCheck} label="Tracking" value="GTM + Conversions API" />
+              <TechBadge icon={Globe} label="Region" value="Global/Local" />
             </div>
           </div>
         </section>
 
       </main>
 
-      {/* Footer */}
-      <footer className="w-full py-12 px-6 md:px-12 flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto bg-[#031427] border-t border-white/10 mt-16">
-        <div className="text-sm font-bold text-slate-200 uppercase tracking-widest mb-4 md:mb-0">Strategic Plan by Adexra</div>
-        <div className="flex space-x-8 text-xs font-bold uppercase tracking-widest text-slate-500">
-          <span className="hover:text-emerald-400 transition-colors cursor-pointer text-emerald-500">Privacy Policy</span>
-          <span className="hover:text-emerald-400 transition-colors cursor-pointer text-emerald-500">Advisory Terms</span>
-          <span className="hover:text-emerald-400 transition-colors cursor-pointer text-emerald-500">Contact Partner</span>
-        </div>
+      <footer className="py-20 border-t border-white/5 bg-black/20 text-center">
+        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.4em]">
+          ADEXRA ESTRATÉGIA PROPRIETÁRIA © 2026
+        </p>
       </footer>
+    </div>
+  );
+}
+
+// Visual Helpers
+
+function StatBlock({ icon: Icon, label, value }) {
+  return (
+    <div className="p-10 flex flex-col items-center text-center group hover:bg-white/5 transition-colors">
+      <Icon className="h-5 w-5 text-indigo-500 mb-6 group-hover:scale-110 transition-transform" />
+      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">{label}</span>
+      <span className="text-3xl font-serif text-white">{value}</span>
+    </div>
+  );
+}
+
+function JourneyPhase({ title, subtitle, description, budget, pct, children, reverse = false }) {
+  return (
+    <div className={cn(
+      "flex flex-col md:flex-row gap-16 items-center",
+      reverse && "md:flex-row-reverse"
+    )}>
+      <div className="flex-1 space-y-8">
+        <div className="space-y-4">
+          <h2 className="text-3xl md:text-4xl font-serif text-white">{title}</h2>
+          <p className="text-indigo-400 font-serif italic text-lg">{subtitle}</p>
+          <p className="text-slate-500 leading-relaxed text-sm max-w-md">{description}</p>
+        </div>
+        
+        <div className="pt-8 flex items-center gap-10 border-t border-white/5">
+          <div>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Budget Alocado</div>
+            <div className="text-xl font-serif text-white">{budget}</div>
+          </div>
+          <div className="flex-1 max-w-[120px]">
+             <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-2">
+               <span>Intensidade</span>
+               <span>{pct}%</span>
+             </div>
+             <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${pct}%` }}
+                  className="h-full bg-indigo-500" 
+                />
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 w-full relative">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8 }}
+          className="relative z-10"
+        >
+          {children}
+        </motion.div>
+        {/* Decorative elements */}
+        <div className="absolute -top-10 -right-10 h-40 w-40 bg-indigo-500/10 blur-[100px] rounded-full" />
+        <div className="absolute -bottom-10 -left-10 h-40 w-40 bg-indigo-500/5 blur-[80px] rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+function TechBadge({ icon: Icon, label, value }) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+        <Icon className="h-3 w-3" /> {label}
+      </div>
+      <div className="text-sm font-medium text-slate-300">{value}</div>
     </div>
   );
 }
