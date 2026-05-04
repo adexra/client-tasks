@@ -136,6 +136,7 @@ const DEFAULT = {
   name: '', client_id: '', currency: 'BRL', total_budget: '', days: 30, start_date: '',
   target_kpi: { type: 'CPA', value: '' },
   mediums: { google: true, meta: false, tiktok: false, linkedin: false },
+  keywords: { primary: '', secondary: '', negative: '' },
   funnel: {
     tofu: { enabled: true, focus: 'Brand Awareness / Traffic', audience: '', keywords: '', budget_pct: 40 },
     mofu: { enabled: true, focus: 'Consideration / Engagement', remarketing_logic: '', budget_pct: 30 },
@@ -189,8 +190,10 @@ export default function AdPlanning() {
     setSaving(true);
     const { data, error } = await supabase.from('ad_plans').insert([{
       name: form.name, client_id: form.client_id || null, currency: form.currency,
-      total_budget: budget, days, start_date: form.start_date || null,
+      total_budget: Math.round(budget * 100) / 100,
+      days, start_date: form.start_date || null,
       target_kpi: form.target_kpi, funnel: form.funnel, mediums: form.mediums,
+      keywords: form.keywords,
       conversion: form.conversion, audience: form.audience, creative: form.creative,
     }]).select('id').single();
     setSaving(false);
@@ -199,6 +202,11 @@ export default function AdPlanning() {
     loadPlans();
     setTab('plans');
     copyLink(data.id);
+  };
+
+  const toggleActive = async (id, current) => {
+    await supabase.from('ad_plans').update({ is_active: !current }).eq('id', id);
+    loadPlans();
   };
 
   const copyLink = (id) => {
@@ -250,13 +258,26 @@ export default function AdPlanning() {
           )}
           {plans.map(p => (
             <div key={p.id} className="surface-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <p className="text-base font-semibold text-ink-primary">{p.name}</p>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <div className={cn('h-2 w-2 rounded-full', p.is_active ? 'bg-emerald-500' : 'bg-neutral-300')} />
+                  <p className="text-base font-semibold text-ink-primary">{p.name}</p>
+                </div>
                 <p className="text-[10px] text-neutral-400 font-medium">
                   {SYM[p.currency] || 'R$'} {parseFloat(p.total_budget).toLocaleString()} · {p.days} days · Created {new Date(p.created_at).toLocaleDateString('pt-BR')}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => toggleActive(p.id, p.is_active)}
+                  title={p.is_active ? 'Link is active — click to deactivate' : 'Link is inactive — click to activate'}
+                  className={cn('text-[10px] font-bold px-3 py-2 rounded-lg border transition-all',
+                    p.is_active
+                      ? 'text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
+                      : 'text-neutral-400 border-neutral-200 bg-neutral-50 hover:bg-neutral-100'
+                  )}>
+                  {p.is_active ? 'Link Active' : 'Link Off'}
+                </button>
                 <button onClick={() => copyLink(p.id)}
                   className="flex items-center gap-2 text-[10px] font-bold text-neutral-500 hover:text-ink-primary border border-border-light rounded-lg px-3 py-2 transition-all hover:border-neutral-300">
                   {copiedId === p.id ? <><Check className="h-3.5 w-3.5 text-emerald-500" />Copied!</> : <><Copy className="h-3.5 w-3.5" />Copy Link</>}
@@ -352,6 +373,41 @@ export default function AdPlanning() {
             </div>
 
 
+            {/* A3: Keywords */}
+            <div className="surface-card p-8 space-y-6">
+              <div>
+                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Section A3</p>
+                <h3 className="text-xl font-serif text-ink-primary mt-1">Campaign Keywords</h3>
+                <p className="text-xs text-neutral-400 mt-1">One keyword per line, or comma-separated.</p>
+              </div>
+              <div className="space-y-5">
+                <F label="🎯 Primary Keywords — High intent, high bid">
+                  <textarea
+                    value={form.keywords.primary}
+                    onChange={e => set('keywords.primary', e.target.value)}
+                    rows={3} className={ic + ' resize-none font-mono text-xs'}
+                    placeholder="comprar apartamento sp&#10;imovel alto padrao sao paulo&#10;apartamento 3 quartos zona sul"
+                  />
+                </F>
+                <F label="Secondary Keywords — Supporting intent, broader reach">
+                  <textarea
+                    value={form.keywords.secondary}
+                    onChange={e => set('keywords.secondary', e.target.value)}
+                    rows={3} className={ic + ' resize-none font-mono text-xs'}
+                    placeholder="imoveis sp&#10;apartamentos a venda&#10;construtora sp"
+                  />
+                </F>
+                <F label="🚫 Negative Keywords — Exclude irrelevant traffic">
+                  <textarea
+                    value={form.keywords.negative}
+                    onChange={e => set('keywords.negative', e.target.value)}
+                    rows={2} className={ic + ' resize-none font-mono text-xs'}
+                    placeholder="gratis, aluguel, curso, emprego"
+                  />
+                </F>
+              </div>
+            </div>
+
             <div className="space-y-3">
               <div>
                 <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Section B</p>
@@ -444,9 +500,14 @@ export default function AdPlanning() {
               </div>
             </div>
 
-            <button onClick={handleSave} disabled={saving}
-              className="w-full btn-minimal btn-primary h-16 flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-black/5">
-              {saving ? 'Saving...' : 'Save Plan & Generate Share Link'}
+            <button onClick={handleSave} disabled={saving || totalPct !== 100}
+              className={cn(
+                'w-full h-16 flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-black/5 rounded-2xl transition-all',
+                totalPct === 100 && !saving
+                  ? 'btn-minimal btn-primary cursor-pointer'
+                  : 'bg-neutral-100 text-neutral-300 cursor-not-allowed'
+              )}>
+              {saving ? 'Saving...' : totalPct !== 100 ? `Allocate remaining ${100 - totalPct}% before saving` : 'Save Plan & Generate Share Link'}
             </button>
           </div>
 

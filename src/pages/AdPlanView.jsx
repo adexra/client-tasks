@@ -64,8 +64,17 @@ export default function AdPlanView() {
 
   const activeFunnel = FUNNEL_CFG.filter(f => funnel[f.key]?.enabled);
   const med = plan.mediums || {};
+  const kws = plan.keywords || {};
   const PLATFORM_LABELS = { google: 'Google Ads', meta: 'Meta Ads', tiktok: 'TikTok Ads', linkedin: 'LinkedIn Ads' };
   const activeMediums = Object.entries(med).filter(([, v]) => v).map(([k]) => PLATFORM_LABELS[k] || k);
+
+  if (plan.is_active === false) return (
+    <div style={{ ...s.page, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, textAlign: 'center' }}>
+      <p style={{ ...s.serif, fontSize: 28, color: '#F4F4F6' }}>Adexra.</p>
+      <p style={{ ...s.label, marginTop: 8 }}>This plan is no longer available</p>
+      <p style={{ color: '#6B7080', fontSize: 13, maxWidth: 320, lineHeight: 1.6 }}>The campaign brief you’re looking for has been deactivated. Please contact your account manager.</p>
+    </div>
+  );
 
   return (
     <div style={s.page}>
@@ -123,54 +132,92 @@ export default function AdPlanView() {
         )}
       </div>
 
-      {/* Funnel Architecture */}
+      {/* Visual Funnel */}
       {activeFunnel.length > 0 && (
         <div style={s.section}>
           <p style={{ ...s.label, marginBottom: 8 }}>Funnel Architecture</p>
-          <p style={{ ...s.serif, fontSize: 32, marginBottom: 32, color: '#F4F4F6' }}>Campaign Flow</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          <p style={{ ...s.serif, fontSize: 32, marginBottom: 40, color: '#F4F4F6' }}>Campaign Flow</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
             {activeFunnel.map((fc, i) => {
               const stage = funnel[fc.key];
               const stageBudget = plan.total_budget * stage.budget_pct / 100;
               const stageDaily = daily * stage.budget_pct / 100;
+              // Funnel widths: TOFU=100%, MOFU=78%, BOFU=56% (or based on index)
+              const widths = ['100%', '78%', '56%'];
+              const enabledIdx = activeFunnel.indexOf(fc);
+              const width = widths[Math.min(enabledIdx, 2)];
               return (
-                <div key={fc.key} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
-                  {/* Connector line */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 32, flexShrink: 0 }}>
-                    <div style={{ width: 2, height: i === 0 ? 24 : 0, background: 'transparent' }} />
-                    <div style={{ width: 12, height: 12, borderRadius: '50%', background: fc.accent, flexShrink: 0 }} />
-                    {i < activeFunnel.length - 1 && <div style={{ width: 2, flex: 1, minHeight: 24, background: `linear-gradient(${fc.accent}, ${activeFunnel[i+1].accent})`, opacity: 0.4 }} />}
-                  </div>
-                  <div style={{ flex: 1, paddingLeft: 16, paddingBottom: i < activeFunnel.length - 1 ? 24 : 0 }}>
-                    <div style={{ background: fc.bg, border: `1px solid ${fc.border}`, borderRadius: 14, padding: '20px 24px', marginBottom: i < activeFunnel.length - 1 ? 0 : 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-                        <div>
-                          <p style={{ ...s.label, color: fc.accent, marginBottom: 4 }}>{fc.sub}</p>
-                          <p style={{ fontSize: 16, fontWeight: 600, color: '#F4F4F6' }}>{stage.focus}</p>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <p style={{ ...s.serif, fontSize: 22, color: fc.accent }}>{money(stageBudget, sym)}</p>
-                          <p style={{ ...s.label, marginTop: 2 }}>{money(stageDaily, sym)}/day · {stage.budget_pct}%</p>
-                        </div>
+                <div key={fc.key} style={{ width, transition: 'width 0.4s ease', marginBottom: i < activeFunnel.length - 1 ? 0 : 0 }}>
+                  {/* Connector arrow */}
+                  {i > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'center', height: 24, alignItems: 'center' }}>
+                      <div style={{ width: 0, height: 0, borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderTop: `10px solid ${activeFunnel[i-1].accent}`, opacity: 0.5 }} />
+                    </div>
+                  )}
+                  <div style={{ background: fc.bg, border: `1px solid ${fc.border}`, borderTop: `2px solid ${fc.accent}`, borderRadius: 14, padding: '24px 28px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+                      <div>
+                        <p style={{ ...s.label, color: fc.accent, marginBottom: 4 }}>{fc.sub}</p>
+                        <p style={{ fontSize: 16, fontWeight: 600, color: '#F4F4F6', marginBottom: 8 }}>{stage.focus}</p>
+                        {fc.key === 'tofu' && stage.audience && <p style={{ fontSize: 12, color: '#9CA3AF' }}>Audience: {stage.audience}</p>}
+                        {fc.key === 'mofu' && stage.remarketing_logic && <p style={{ fontSize: 12, color: '#9CA3AF' }}>{stage.remarketing_logic}</p>}
+                        {fc.key === 'bofu' && stage.conversion_flow && <p style={{ fontSize: 12, color: '#9CA3AF' }}>{stage.conversion_flow}</p>}
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 12 }}>
-                        {fc.key === 'tofu' && <>
-                          {stage.audience && <div><p style={s.label}>Audience</p><p style={{ fontSize: 13, color: '#9CA3AF', marginTop: 4 }}>{stage.audience}</p></div>}
-                          {stage.keywords && <div><p style={s.label}>Keywords</p><p style={{ fontSize: 13, color: '#9CA3AF', marginTop: 4 }}>{stage.keywords}</p></div>}
-                        </>}
-                        {fc.key === 'mofu' && stage.remarketing_logic && (
-                          <div><p style={s.label}>Remarketing Logic</p><p style={{ fontSize: 13, color: '#9CA3AF', marginTop: 4 }}>{stage.remarketing_logic}</p></div>
-                        )}
-                        {fc.key === 'bofu' && <>
-                          {stage.conversion_flow && <div><p style={s.label}>Conversion Flow</p><p style={{ fontSize: 13, color: '#9CA3AF', marginTop: 4 }}>{stage.conversion_flow}</p></div>}
-                          {stage.keywords && <div><p style={s.label}>High-Intent Keywords</p><p style={{ fontSize: 13, color: '#9CA3AF', marginTop: 4 }}>{stage.keywords}</p></div>}
-                        </>}
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <p style={{ ...s.serif, fontSize: 24, color: fc.accent }}>{money(stageBudget, sym)}</p>
+                        <p style={{ ...s.label, marginTop: 4 }}>{money(stageDaily, sym)}/day &middot; {stage.budget_pct}%</p>
                       </div>
                     </div>
                   </div>
                 </div>
               );
             })}
+            {/* Conversion point */}
+            <div style={{ marginTop: 16, textAlign: 'center' }}>
+              <div style={{ width: 0, height: 0, borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderTop: '10px solid rgba(52,211,153,0.5)', margin: '0 auto 8px' }} />
+              <span style={{ ...s.label, color: '#34d399' }}>{conv.goal || 'Conversion'} → {conv.tracking || 'Tracking'}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Keywords */}
+      {(kws.primary || kws.secondary || kws.negative) && (
+        <div style={s.section}>
+          <div style={s.card}>
+            <p style={{ ...s.label, marginBottom: 20 }}>Campaign Keywords</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: 20 }}>
+              {kws.primary && (
+                <div>
+                  <p style={{ ...s.label, color: '#60a5fa', marginBottom: 8 }}>🎯 Primary Keywords</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {kws.primary.split(/[,\n]+/).map(k => k.trim()).filter(Boolean).map((k, i) => (
+                      <span key={i} style={{ fontSize: 11, fontWeight: 600, background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', color: '#93c5fd', borderRadius: 6, padding: '4px 10px', fontFamily: 'monospace' }}>{k}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {kws.secondary && (
+                <div>
+                  <p style={{ ...s.label, color: '#a78bfa', marginBottom: 8 }}>Secondary Keywords</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {kws.secondary.split(/[,\n]+/).map(k => k.trim()).filter(Boolean).map((k, i) => (
+                      <span key={i} style={{ fontSize: 11, fontWeight: 600, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)', color: '#c4b5fd', borderRadius: 6, padding: '4px 10px', fontFamily: 'monospace' }}>{k}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {kws.negative && (
+                <div>
+                  <p style={{ ...s.label, color: '#f87171', marginBottom: 8 }}>🚫 Negative Keywords</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {kws.negative.split(/[,\n]+/).map(k => k.trim()).filter(Boolean).map((k, i) => (
+                      <span key={i} style={{ fontSize: 11, fontWeight: 600, background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', color: '#fca5a5', borderRadius: 6, padding: '4px 10px', fontFamily: 'monospace' }}>{k}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
