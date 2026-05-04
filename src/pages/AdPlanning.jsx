@@ -221,7 +221,22 @@ export default function AdPlanning() {
     onPctChange: (v) => setForm(f => ({ ...f, funnel: smartBalance(f.funnel, stage, v) })),
     onUnlock: () => setForm(f => ({ ...f, funnel: { ...f.funnel, [stage]: { ...f.funnel[stage], locked: false } } })),
     onFieldChange: (field, v) => setForm(f => ({ ...f, funnel: { ...f.funnel, [stage]: { ...f.funnel[stage], [field]: v } } })),
-    onPlatformToggle: (plat) => setForm(f => ({ ...f, funnel: { ...f.funnel, [stage]: { ...f.funnel[stage], platforms: { ...f.funnel[stage].platforms, [plat]: !f.funnel[stage].platforms[plat] } } } })),
+    onPlatformToggle: (plat) => setForm(f => {
+      const stagePlats = f.funnel[stage].platforms || { google: false, meta: false, tiktok: false, linkedin: false };
+      return { 
+        ...f, 
+        funnel: { 
+          ...f.funnel, 
+          [stage]: { 
+            ...f.funnel[stage], 
+            platforms: { 
+              ...stagePlats, 
+              [plat]: !stagePlats[plat] 
+            } 
+          } 
+        } 
+      };
+    }),
   });
 
   useEffect(() => {

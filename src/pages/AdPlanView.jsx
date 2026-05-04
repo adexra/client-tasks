@@ -77,10 +77,16 @@ export default function AdPlanView() {
     ];
 
     stagesInfo.forEach(s => {
-      if (funnel?.[s.id]?.enabled && funnel[s.id].platforms) {
-        Object.entries(funnel[s.id].platforms).forEach(([k, v]) => {
-          if (v) allActivePlats.add(k);
-        });
+      if (funnel?.[s.id]?.enabled) {
+        if (funnel[s.id].platforms) {
+          Object.entries(funnel[s.id].platforms).forEach(([k, v]) => {
+            if (v) allActivePlats.add(k);
+          });
+        } else if (mediums) {
+          Object.entries(mediums).forEach(([k, v]) => {
+            if (v) allActivePlats.add(k);
+          });
+        }
       }
     });
 
@@ -124,6 +130,18 @@ export default function AdPlanView() {
         // Wire this stage's active platforms directly to it
         if (stageData.platforms) {
           Object.entries(stageData.platforms).forEach(([p, isActive]) => {
+            if (isActive) {
+              newEdges.push({
+                id: `e-plat-${p}-${id}`,
+                source: `plat-${p}`,
+                target: `stage-${id}`,
+                type: 'animatedPipe',
+                data: { pct: stageData.budget_pct },
+              });
+            }
+          });
+        } else if (!prevActiveStageId && mediums) {
+          Object.entries(mediums).forEach(([p, isActive]) => {
             if (isActive) {
               newEdges.push({
                 id: `e-plat-${p}-${id}`,
