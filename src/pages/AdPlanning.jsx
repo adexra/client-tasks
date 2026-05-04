@@ -123,7 +123,7 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
             <F label="Remarketing Logic"><textarea value={s.remarketing_logic} onChange={e => onFieldChange('remarketing_logic', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="e.g. Visited landing page but did not convert..." /></F>
           </>}
           {stage === 'bofu' && <>
-            <F label="Conversion Flow Path"><textarea value={s.conversion_flow} onChange={e => onFieldChange('conversion_flow', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Ad → VSL → Lead Form → Thank You Page" /></F>
+            <F label="Conversion Flow Path"><textarea value={s.conversion_flow} onChange={e => onFieldChange('conversion_flow', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Ex: Pesquisa Google → Página do Produto → Compra → Obrigado → Tracking" /></F>
             <F label="High-Intent Keywords"><textarea value={s.keywords} onChange={e => onFieldChange('keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Buy now, best price, hire now, compare..." /></F>
           </>}
         </div>
@@ -396,7 +396,7 @@ export default function AdPlanning() {
                   </select>
                 </F>
                 <F label="Conversion Flow Path">
-                  <input value={form.conversion.flow} onChange={e => set('conversion.flow', e.target.value)} className={ic} placeholder="Ad → VSL → Form → Thank You" />
+                  <input value={form.conversion.flow} onChange={e => set('conversion.flow', e.target.value)} className={ic} placeholder="Ex: Pesquisa Google → Página do Produto → Compra → Obrigado → Tracking" />
                 </F>
               </div>
             </div>
