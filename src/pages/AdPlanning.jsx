@@ -16,6 +16,53 @@ function setNested(obj, path, val) {
   return next;
 }
 
+const STAGES = ['tofu', 'mofu', 'bofu'];
+
+// When one stage's % changes, redistribute the delta to others proportionally
+function autoBalance(funnel, changedStage, newPct) {
+  const f = JSON.parse(JSON.stringify(funnel));
+  const clamped = Math.max(0, Math.min(100, Math.round(newPct)));
+  const others = STAGES.filter(s => s !== changedStage && f[s].enabled);
+  if (others.length === 0) { f[changedStage].budget_pct = 100; return f; }
+  const remaining = 100 - clamped;
+  const othersTotal = others.reduce((sum, s) => sum + f[s].budget_pct, 0);
+  let distributed = 0;
+  others.forEach((s, i) => {
+    const share = i === others.length - 1
+      ? remaining - distributed
+      : othersTotal > 0
+        ? Math.round(remaining * f[s].budget_pct / othersTotal)
+        : Math.round(remaining / others.length);
+    f[s].budget_pct = Math.max(0, share);
+    distributed += f[s].budget_pct;
+  });
+  f[changedStage].budget_pct = clamped;
+  return f;
+}
+
+// When a stage is toggled, normalize all enabled stages to sum to 100
+function toggleStage(funnel, stage) {
+  const f = JSON.parse(JSON.stringify(funnel));
+  const wouldDisable = f[stage].enabled;
+  const enabledCount = STAGES.filter(s => f[s].enabled).length;
+  if (wouldDisable && enabledCount === 1) return f; // keep at least one
+  f[stage].enabled = !f[stage].enabled;
+  const enabled = STAGES.filter(s => f[s].enabled);
+  const total = enabled.reduce((sum, s) => sum + f[s].budget_pct, 0);
+  if (total === 0) {
+    const equal = Math.floor(100 / enabled.length);
+    enabled.forEach((s, i) => { f[s].budget_pct = i === enabled.length - 1 ? 100 - equal * (enabled.length - 1) : equal; });
+  } else {
+    let distributed = 0;
+    enabled.forEach((s, i) => {
+      const share = i === enabled.length - 1 ? 100 - distributed : Math.round(f[s].budget_pct * 100 / total);
+      f[s].budget_pct = Math.max(0, share);
+      distributed += f[s].budget_pct;
+    });
+  }
+  return f;
+}
+
 const F = ({ label, children }) => (
   <div className="space-y-1.5">
     <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{label}</p>
@@ -71,6 +118,7 @@ export default function AdPlanning() {
 
   const handleSave = async () => {
     if (!form.name.trim()) return toast.error('Plan name is required');
+    // Auto-balance should keep it at 100, but guard anyway
     if (totalPct !== 100) return toast.error('Funnel budget must sum to exactly 100%');
     setSaving(true);
     const { data, error } = await supabase.from('ad_plans').insert([{
@@ -115,13 +163,13 @@ export default function AdPlanning() {
             <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">{label}</p>
             <p className="text-sm font-semibold text-ink-primary mt-0.5">{s.focus}</p>
           </div>
-          <Toggle checked={s.enabled} onChange={() => set(`funnel.${stage}.enabled`, !s.enabled)} />
+          <Toggle checked={s.enabled} onChange={() => setForm(f => ({ ...f, funnel: toggleStage(f.funnel, stage) }))} />
         </div>
         {s.enabled && (
           <div className="space-y-5">
             <div className="flex items-center gap-3">
               <input type="number" min={0} max={100} value={s.budget_pct}
-                onChange={e => set(`funnel.${stage}.budget_pct`, +e.target.value)}
+                onChange={e => setForm(f => ({ ...f, funnel: autoBalance(f.funnel, stage, +e.target.value) }))}
                 className="w-20 bg-white border border-neutral-200 rounded-xl px-3 py-2.5 text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-neutral-300" />
               <div className="text-xs text-neutral-400 font-medium leading-relaxed">
                 <span>% of budget</span><br />
