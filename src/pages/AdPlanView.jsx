@@ -1,35 +1,21 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ChevronLeft, Target, Calendar, DollarSign, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
-
-import {
-  ReactFlow,
-  Controls,
-  Background,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-
-import PlatformNode from '../components/flow/PlatformNode';
-import ClusterNode from '../components/flow/ClusterNode';
-import ProjectionNode from '../components/flow/ProjectionNode';
-import AnimatedPipeEdge from '../components/flow/AnimatedPipeEdge';
+import { 
+  ChevronLeft, ArrowDown, Target, Activity, Settings, Clock, 
+  BarChart2, Zap, LayoutTemplate, Share2, 
+  ChevronRight, Database, Code
+} from 'lucide-react';
 
 const SYM = { BRL: 'R$', USD: '$', EUR: '€' };
 
-const nodeTypes = {
-  platform: PlatformNode,
-  cluster: ClusterNode,
-  projection: ProjectionNode,
-};
-
-const edgeTypes = {
-  animatedPipe: AnimatedPipeEdge,
+const PLATFORM_ICONS = {
+  google: 'Google Ads',
+  meta: 'Meta Ads',
+  tiktok: 'TikTok Ads',
+  linkedin: 'LinkedIn Ads'
 };
 
 export default function AdPlanView() {
@@ -37,351 +23,382 @@ export default function AdPlanView() {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedNodeData, setSelectedNodeData] = useState(null);
-
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [showRevOps, setShowRevOps] = useState(false);
 
   useEffect(() => {
     supabase.from('ad_plans').select('*, clients(name)').eq('id', id).single()
       .then(({ data, error }) => {
         if (error || !data) setError('Plan not found');
         else if (!data.is_active) setError('Plan is deactivated');
-        else {
-          setPlan(data);
-          buildMap(data);
-        }
+        else setPlan(data);
+        
         setLoading(false);
       });
   }, [id]);
 
-  const onNodeClick = useCallback((event, node) => {
-    if (node.type === 'cluster') {
-      setSelectedNodeData(node.data);
-    } else {
-      setSelectedNodeData(null);
-    }
-  }, []);
-
-  const buildMap = (data) => {
-    const { mediums, funnel, currency, total_budget, target_kpi } = data;
-    const sym = SYM[currency] || 'R$';
-    const newNodes = [];
-    const newEdges = [];
-
-    // Find all unique active platforms across all stages
-    const allActivePlats = new Set();
-    const stagesInfo = [
-      { id: 'tofu', col: 1, y: 150 },
-      { id: 'mofu', col: 2, y: 150 },
-      { id: 'bofu', col: 3, y: 150 },
-    ];
-
-    stagesInfo.forEach(s => {
-      if (funnel?.[s.id]?.enabled) {
-        if (funnel[s.id].platforms) {
-          Object.entries(funnel[s.id].platforms).forEach(([k, v]) => {
-            if (v) allActivePlats.add(k);
-          });
-        } else if (mediums) {
-          Object.entries(mediums).forEach(([k, v]) => {
-            if (v) allActivePlats.add(k);
-          });
-        }
-      }
-    });
-
-    // 1. Platforms (Col 0)
-    const activePlatforms = Array.from(allActivePlats);
-    const startY = 150;
-    const gapY = 80;
-
-    activePlatforms.forEach((p, idx) => {
-      newNodes.push({
-        id: `plat-${p}`,
-        type: 'platform',
-        position: { x: 50, y: startY + (idx * gapY) },
-        data: { platform: p, label: p },
-      });
-    });
-
-    // 2. Funnel Stages (Cols 1, 2, 3)
-    let lastActiveStage = null;
-    let prevActiveStageId = null;
-
-    stagesInfo.forEach(({ id, col, y }) => {
-      const stageData = funnel?.[id];
-      if (stageData?.enabled) {
-        lastActiveStage = id;
-        newNodes.push({
-          id: `stage-${id}`,
-          type: 'cluster',
-          position: { x: col * 350, y },
-          data: {
-            stage: id,
-            focus: stageData.focus,
-            pct: stageData.budget_pct,
-            keywords: stageData.keywords,
-            audience: stageData.audience,
-            remarketing_logic: stageData.remarketing_logic,
-            conversion_flow: stageData.conversion_flow,
-          },
-        });
-
-        // Wire this stage's active platforms directly to it
-        if (stageData.platforms) {
-          Object.entries(stageData.platforms).forEach(([p, isActive]) => {
-            if (isActive) {
-              newEdges.push({
-                id: `e-plat-${p}-${id}`,
-                source: `plat-${p}`,
-                target: `stage-${id}`,
-                type: 'animatedPipe',
-                data: { pct: stageData.budget_pct },
-              });
-            }
-          });
-        } else if (!prevActiveStageId && mediums) {
-          Object.entries(mediums).forEach(([p, isActive]) => {
-            if (isActive) {
-              newEdges.push({
-                id: `e-plat-${p}-${id}`,
-                source: `plat-${p}`,
-                target: `stage-${id}`,
-                type: 'animatedPipe',
-                data: { pct: stageData.budget_pct },
-              });
-            }
-          });
-        }
-
-        // Connect sequential stages
-        if (prevActiveStageId) {
-          newEdges.push({
-            id: `e-${prevActiveStageId}-${id}`,
-            source: `stage-${prevActiveStageId}`,
-            target: `stage-${id}`,
-            type: 'animatedPipe',
-            data: { pct: stageData.budget_pct },
-          });
-        }
-        
-        prevActiveStageId = id;
-      }
-    });
-
-    // 3. Projection Node (Col 4)
-    if (lastActiveStage) {
-      const bofuPct = funnel?.bofu?.budget_pct || 0;
-      const bofuBudget = total_budget * (bofuPct / 100);
-      const kpiVal = parseFloat(target_kpi?.value) || 0;
-      
-      let resText = 'Pending KPI setup';
-      if (kpiVal > 0) {
-        if (target_kpi.type === 'CPA') {
-          resText = Math.floor(bofuBudget / kpiVal) + ' Conversions';
-        } else if (target_kpi.type === 'ROAS') {
-          resText = sym + ' ' + (bofuBudget * kpiVal).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-        }
-      }
-
-      newNodes.push({
-        id: 'projection',
-        type: 'projection',
-        position: { x: 4 * 350, y: 150 },
-        data: { kpi: target_kpi?.type || 'CPA', result: resText, sym },
-      });
-
-      newEdges.push({
-        id: `e-${lastActiveStage}-proj`,
-        source: `stage-${lastActiveStage}`,
-        target: 'projection',
-        type: 'animatedPipe',
-        data: { pct: 100 },
-      });
-    }
-
-    setNodes(newNodes);
-    setEdges(newEdges);
-  };
-
-  if (loading) return <div className="min-h-screen bg-[#0B0D17] flex items-center justify-center"><div className="h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"/></div>;
+  if (loading) return <div className="min-h-screen bg-[#06080D] flex items-center justify-center"><div className="h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>;
   if (error) return (
-    <div className="min-h-screen bg-[#0B0D17] flex flex-col items-center justify-center p-6 text-center">
+    <div className="min-h-screen bg-[#06080D] flex flex-col items-center justify-center p-6 text-center text-white">
       <div className="h-16 w-16 bg-neutral-900 rounded-full flex items-center justify-center mb-6">
-        <X className="h-8 w-8 text-neutral-500" />
+        <Target className="h-8 w-8 text-neutral-600" />
       </div>
-      <h1 className="text-2xl font-serif text-white mb-2">{error}</h1>
-      <Link to="/ads-planning" className="text-indigo-400 hover:text-indigo-300 font-medium">Return to Dashboard</Link>
+      <h2 className="text-2xl font-serif mb-2">Unavailable</h2>
+      <p className="text-neutral-500 mb-8 max-w-sm">{error}</p>
+      <Link to="/" className="btn-minimal btn-primary">Return to Dashboard</Link>
     </div>
   );
 
-  const sym = SYM[plan.currency] || 'R$';
+  const { name, client_id, clients, currency, total_budget, days, target_kpi, funnel, mediums, conversion } = plan;
+  const sym = SYM[currency] || 'R$';
+  const kpiVal = parseFloat(target_kpi?.value) || 0;
+  
+  // Calculations
+  const bofuPct = funnel?.bofu?.budget_pct || 0;
+  const bofuBudget = total_budget * (bofuPct / 100);
+  
+  let projValue = '--';
+  let projLabel = 'Estimativa de Volume';
+  if (kpiVal > 0) {
+    if (target_kpi.type === 'CPA' || target_kpi.type === 'CPL' || target_kpi.type === 'Leads') {
+      projValue = Math.floor(bofuBudget / kpiVal).toLocaleString();
+      projLabel = `Estimativa de ${target_kpi.type === 'CPA' ? 'Conversões' : 'Leads'}`;
+    } else if (target_kpi.type === 'ROAS') {
+      projValue = `${sym} ${(bofuBudget * kpiVal).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+      projLabel = 'Receita Estimada';
+    }
+  }
+
+  const clientName = clients?.name || name;
+
+  // RevOps Parsing
+  // Check if string is stored in BOFU or global conversion
+  const rawFlowString = funnel?.bofu?.conversion_flow || conversion?.flow || "Ad > Landing Page > Lead > CRM";
+  const flowSteps = rawFlowString.split('>').map(s => s.trim()).filter(Boolean);
+
+  // Active platforms helper
+  const getActivePlatforms = (stageId) => {
+    const stagePlats = funnel?.[stageId]?.platforms;
+    if (stagePlats) {
+      return Object.entries(stagePlats).filter(([_, v]) => v).map(([k]) => k);
+    }
+    if (mediums) {
+      return Object.entries(mediums).filter(([_, v]) => v).map(([k]) => k);
+    }
+    return [];
+  };
 
   return (
-    <div className="h-screen w-screen bg-[#0B0D17] overflow-hidden flex flex-col relative font-sans text-white">
+    <div className="min-h-screen bg-[#06080D] text-white font-sans selection:bg-indigo-500/30">
       
-      {/* Top Bar: Command Center */}
-      <div className="absolute top-0 left-0 w-full z-20 bg-[#0B0D17]/80 backdrop-blur-xl border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/ads-planning" className="p-2 -ml-2 rounded-lg hover:bg-white/5 transition-colors text-neutral-400 hover:text-white">
-            <ChevronLeft className="h-5 w-5" />
-          </Link>
-          <div>
-            <h1 className="text-sm font-bold tracking-widest uppercase text-neutral-400">{plan.clients?.name || 'Unknown Client'}</h1>
-            <p className="text-lg font-serif text-white">{plan.name}</p>
+      {/* Top Nav */}
+      <nav className="border-b border-white/5 bg-[#0A0C14] sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/ad-planning" className="p-2 -ml-2 text-neutral-500 hover:text-white transition-colors">
+              <ChevronLeft className="h-5 w-5" />
+            </Link>
+            <div className="h-4 w-px bg-white/10" />
+            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-neutral-400">Adexra Executive Briefing</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live Plan
+            </span>
           </div>
         </div>
+      </nav>
 
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400"><DollarSign className="h-4 w-4" /></div>
-            <div>
-              <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Global Budget</p>
-              <p className="text-sm font-mono text-white">{sym} {plan.total_budget?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400"><Calendar className="h-4 w-4" /></div>
-            <div>
-              <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Duration</p>
-              <p className="text-sm font-mono text-white">{plan.days} Days</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-pink-500/10 rounded-lg text-pink-400"><Target className="h-4 w-4" /></div>
-            <div>
-              <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Target {plan.target_kpi?.type}</p>
-              <p className="text-sm font-mono text-white">
-                {plan.target_kpi?.type === 'CPA' ? sym : ''} {plan.target_kpi?.value} {plan.target_kpi?.type === 'ROAS' ? 'x' : ''}
+      <main className="max-w-4xl mx-auto px-6 pt-20 pb-32">
+        
+        {/* 1. The Boardroom View (Hero) */}
+        <section className="mb-24 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif text-white tracking-tight leading-tight mb-12">
+            Plano de Aceleração para <br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
+              {clientName}
+            </span>
+          </h1>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 backdrop-blur-xl">
+              <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <DollarSign className="h-3.5 w-3.5" /> Investimento
               </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Canvas Area */}
-      <div className="flex-1 w-full h-full relative" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(11, 13, 23, 1) 0%, rgba(5, 6, 12, 1) 100%)' }}>
-        {/* Custom Blueprint Grid overlay */}
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-20" style={{ backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodeClick={onNodeClick}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          fitView
-          minZoom={0.1}
-          maxZoom={1.5}
-          proOptions={{ hideAttribution: true }}
-          className="z-10"
-        >
-          <Background color="#ffffff" gap={120} size={2} opacity={0.03} />
-          <Controls className="!bg-[#141523] !border-white/10 !fill-white shadow-2xl rounded-xl overflow-hidden" />
-          <MiniMap 
-            className="!bg-[#0B0D17]/90 !border !border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl"
-            maskColor="rgba(0, 0, 0, 0.7)"
-            nodeColor={(node) => {
-              if (node.type === 'cluster') return 'rgba(99, 102, 241, 0.8)';
-              if (node.type === 'projection') return 'rgba(16, 185, 129, 0.8)';
-              return 'rgba(255, 255, 255, 0.5)';
-            }}
-          />
-        </ReactFlow>
-
-        {/* Floating Legend */}
-        <div className="absolute top-24 left-6 z-20 bg-[#141523]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
-          <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3">Map Legend</p>
-          <div className="space-y-2 text-xs text-neutral-300">
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full border border-white/30" /> Traffic Source</div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 bg-indigo-500/80 rounded-sm" /> Funnel Stage</div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 bg-emerald-500/80 rounded-sm" /> Projected ROI</div>
-            <div className="flex items-center gap-2"><div className="w-4 h-0.5 border-t-2 border-dashed border-white/50" /> Budget Flow</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Slide-out Side Panel */}
-      <AnimatePresence>
-        {selectedNodeData && (
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute top-24 right-6 bottom-24 w-80 bg-[#141523]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-6 z-30 overflow-y-auto flex flex-col"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-indigo-400">
-                {selectedNodeData.stage} Details
-              </h3>
-              <button onClick={() => setSelectedNodeData(null)} className="text-neutral-500 hover:text-white transition-colors">
-                <X className="h-4 w-4" />
-              </button>
+              <p className="text-3xl font-serif text-white">{sym} {total_budget.toLocaleString()}</p>
             </div>
             
-            <div className="space-y-6">
-              <div>
-                <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">Focus</p>
-                <p className="text-sm font-medium">{selectedNodeData.focus}</p>
-              </div>
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 backdrop-blur-xl">
+              <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5" /> Prazo
+              </p>
+              <p className="text-3xl font-serif text-white">{days} Dias</p>
+            </div>
 
-              {selectedNodeData.audience && (
-                <div>
-                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">Audience Targeting</p>
-                  <p className="text-sm font-medium">{selectedNodeData.audience}</p>
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 backdrop-blur-xl">
+              <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Target className="h-3.5 w-3.5" /> Alvo de Aquisição
+              </p>
+              <p className="text-3xl font-serif text-white">{sym} {kpiVal} <span className="text-sm text-neutral-500 font-sans">{target_kpi.type}</span></p>
+            </div>
+
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 backdrop-blur-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full" />
+              <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-4 flex items-center gap-2 relative">
+                <Activity className="h-3.5 w-3.5" /> {projLabel}
+              </p>
+              <p className="text-3xl font-serif text-emerald-400 relative">{projValue}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 2. Cachoeira de Conversão */}
+        <section className="mb-24">
+          <div className="mb-12">
+            <h2 className="text-2xl font-serif text-white mb-2">Estrutura de Campanha</h2>
+            <p className="text-neutral-500 text-sm">O fluxo financeiro desenhado para transformar desconhecidos em receita previsível.</p>
+          </div>
+
+          <div className="relative border-l border-white/10 ml-4 md:ml-8 space-y-16 py-8">
+            
+            {/* Phase 1 */}
+            {funnel?.tofu?.enabled && (
+              <div className="relative pl-8 md:pl-16">
+                <div className="absolute -left-3 top-0 h-6 w-6 rounded-full bg-[#0A0C14] border-4 border-[#06080D] flex items-center justify-center">
+                  <div className="h-2 w-2 rounded-full bg-cyan-400" />
                 </div>
-              )}
+                
+                <div className="space-y-4">
+                  <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Fase 1</span>
+                  <h3 className="text-2xl font-serif text-white">Aquisição de Mercado</h3>
+                  <p className="text-neutral-400 text-sm">Comprando atenção e volume de buscas de quem já procura pela solução.</p>
+                  
+                  <div className="flex flex-col gap-2 mt-6">
+                    <div className="flex justify-between items-end">
+                      <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Alocação de Verba</span>
+                      <span className="text-sm font-bold text-white">{funnel.tofu.budget_pct}% do Investimento</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-cyan-400 rounded-full" style={{ width: `${funnel.tofu.budget_pct}%` }} />
+                    </div>
+                  </div>
 
-              {selectedNodeData.remarketing_logic && (
-                <div>
-                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">Remarketing Logic</p>
-                  <p className="text-sm font-medium">{selectedNodeData.remarketing_logic}</p>
-                </div>
-              )}
-
-              {selectedNodeData.conversion_flow && (
-                <div>
-                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">Conversion Path</p>
-                  <p className="text-sm font-medium">{selectedNodeData.conversion_flow}</p>
-                </div>
-              )}
-
-              {selectedNodeData.keywords && (
-                <div>
-                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-2">Target Keywords</p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedNodeData.keywords.split(',').map((kw, i) => (
-                      <span key={i} className="text-xs font-mono text-neutral-300 bg-white/5 px-2 py-1 rounded border border-white/10">
-                        {kw.trim()}
-                      </span>
-                    ))}
+                  <div className="bg-white/[0.02] border border-white/5 rounded-xl p-6 mt-6 space-y-6">
+                    {/* Platforms */}
+                    <div className="flex flex-wrap gap-2">
+                      {getActivePlatforms('tofu').map(p => (
+                        <span key={p} className="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] font-bold text-white uppercase tracking-widest border border-white/5">
+                          {PLATFORM_ICONS[p] || p}
+                        </span>
+                      ))}
+                    </div>
+                    {/* Keywords/Audience */}
+                    {(funnel.tofu.keywords || funnel.tofu.audience) && (
+                      <div className="pt-4 border-t border-white/5">
+                        <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3">Segmentação Alvo</p>
+                        <p className="text-sm text-neutral-300 italic font-serif opacity-80 border-l-2 border-cyan-400/30 pl-4">
+                          {funnel.tofu.keywords || funnel.tofu.audience}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </div>
+            )}
 
-      {/* Bottom Timeline */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 bg-[#141523]/80 backdrop-blur-xl border border-white/10 rounded-full px-8 py-3 flex items-center gap-8 shadow-2xl">
-        {['Setup', 'Learning', 'Scaling'].map((step, i, arr) => (
-          <div key={step} className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className={cn("h-2 w-2 rounded-full", i === 0 ? "bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" : "bg-neutral-700")} />
-              <span className={cn("text-[10px] font-bold uppercase tracking-widest", i === 0 ? "text-indigo-400" : "text-neutral-500")}>
-                {step}
-              </span>
-            </div>
-            {i < arr.length - 1 && <div className="w-12 h-px bg-neutral-800" />}
+            {/* Phase 2 */}
+            {funnel?.mofu?.enabled && (
+              <div className="relative pl-8 md:pl-16">
+                <div className="absolute -left-3 top-0 h-6 w-6 rounded-full bg-[#0A0C14] border-4 border-[#06080D] flex items-center justify-center">
+                  <div className="h-2 w-2 rounded-full bg-indigo-400" />
+                </div>
+                
+                <div className="space-y-4">
+                  <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Fase 2</span>
+                  <h3 className="text-2xl font-serif text-white">Filtro de Intenção</h3>
+                  <p className="text-neutral-400 text-sm">Apenas quem demonstrou interesse real avança na jornada.</p>
+                  
+                  <div className="flex flex-col gap-2 mt-6">
+                    <div className="flex justify-between items-end">
+                      <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Alocação de Verba</span>
+                      <span className="text-sm font-bold text-white">{funnel.mofu.budget_pct}% do Investimento</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${funnel.mofu.budget_pct}%` }} />
+                    </div>
+                  </div>
+
+                  {funnel.mofu.remarketing_logic && (
+                    <div className="bg-white/[0.02] border border-white/5 rounded-xl p-6 mt-6">
+                      <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3">Lógica de Remarketing</p>
+                      <p className="text-sm text-neutral-300 italic font-serif opacity-80 border-l-2 border-indigo-400/30 pl-4">
+                        "{funnel.mofu.remarketing_logic}"
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Phase 3 */}
+            {funnel?.bofu?.enabled && (
+              <div className="relative pl-8 md:pl-16">
+                <div className="absolute -left-3 top-0 h-6 w-6 rounded-full bg-[#0A0C14] border-4 border-[#06080D] flex items-center justify-center">
+                  <div className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.5)]" />
+                </div>
+                
+                <div className="space-y-4">
+                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Fase 3</span>
+                  <h3 className="text-2xl font-serif text-white">Captura de Demanda</h3>
+                  <p className="text-neutral-400 text-sm">Conversão direta e fechamento de vendas focada em ROI.</p>
+                  
+                  <div className="flex flex-col gap-2 mt-6">
+                    <div className="flex justify-between items-end">
+                      <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Alocação de Verba</span>
+                      <span className="text-sm font-bold text-white">{funnel.bofu.budget_pct}% do Investimento</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-400 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]" style={{ width: `${funnel.bofu.budget_pct}%` }} />
+                    </div>
+                  </div>
+
+                  {funnel.bofu.keywords && (
+                    <div className="bg-white/[0.02] border border-white/5 rounded-xl p-6 mt-6 overflow-hidden relative">
+                      {/* Subtle gradient background effect for high intent */}
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl rounded-full" />
+                      
+                      <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest mb-3 relative">Termos de Alta Intenção (Fundo de Funil)</p>
+                      <div className="space-y-2 relative">
+                        {funnel.bofu.keywords.split('\n').filter(Boolean).map((kw, i) => (
+                          <div key={i} className="text-sm text-white font-mono bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md inline-block mr-2 mb-2">
+                            {kw}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
           </div>
-        ))}
-      </div>
+        </section>
 
+        {/* 3. O Motor Oculto (RevOps) */}
+        <section className="mb-24">
+          <button 
+            onClick={() => setShowRevOps(!showRevOps)}
+            className="w-full flex items-center justify-between p-6 bg-white/[0.02] border border-white/10 hover:bg-white/[0.04] transition-colors rounded-2xl group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-xl bg-neutral-900 border border-white/5 flex items-center justify-center">
+                <Settings className="h-5 w-5 text-neutral-400 group-hover:text-white transition-colors" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-base font-bold text-white">Ver Infraestrutura Técnica</h3>
+                <p className="text-xs text-neutral-500">RevOps, Rastreamento e Conversão</p>
+              </div>
+            </div>
+            <ChevronRight className={cn("h-5 w-5 text-neutral-500 transition-transform duration-300", showRevOps && "rotate-90")} />
+          </button>
+
+          <AnimatePresence>
+            {showRevOps && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="p-8 border border-t-0 border-white/10 rounded-b-2xl bg-black/40 space-y-10">
+                  
+                  {/* Setup */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div>
+                      <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <Code className="h-3.5 w-3.5" /> Stack de Rastreamento
+                      </p>
+                      <p className="text-sm text-neutral-300">{conversion?.tracking || 'Google Analytics 4 + Google Tag Manager via Server-Side'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <Database className="h-3.5 w-3.5" /> Modelo de Atribuição
+                      </p>
+                      <p className="text-sm text-neutral-300">{conversion?.attribution || 'Data-Driven (Algorítmico)'}</p>
+                    </div>
+                  </div>
+
+                  {/* Flow Steps */}
+                  <div>
+                    <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                      <Zap className="h-3.5 w-3.5" /> Caminho do Lead (Pipeline de Dados)
+                    </p>
+                    
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-0">
+                      {flowSteps.map((step, idx) => (
+                        <div key={idx} className="flex items-center flex-1 w-full sm:w-auto group">
+                          <div className="bg-[#141523] border border-white/10 px-4 py-3 rounded-xl text-xs font-bold text-white whitespace-nowrap shadow-xl">
+                            {step}
+                          </div>
+                          {idx < flowSteps.length - 1 && (
+                            <div className="flex-1 min-w-[20px] h-px bg-white/10 mx-2 sm:mx-0 sm:flex-1 hidden sm:block relative">
+                              <ChevronRight className="h-3 w-3 text-neutral-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/40 rounded-full" />
+                            </div>
+                          )}
+                          {idx < flowSteps.length - 1 && (
+                            <ArrowDown className="h-4 w-4 text-neutral-600 mx-auto my-2 sm:hidden" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
+
+        {/* 4. A Linha do Tempo de Retorno */}
+        <section>
+          <div className="mb-10 text-center">
+            <h2 className="text-2xl font-serif text-white mb-2">Cronograma Operacional</h2>
+            <p className="text-neutral-500 text-sm">Gestão de expectativas e maturação do algoritmo nos primeiros 30 dias.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-neutral-700" />
+              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Dias 1 a 3</p>
+              <h4 className="text-lg font-bold text-white mb-2">Setup Técnico</h4>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Integração de tags, configuração de conversões no GA4 e revisão final de criativos antes do lançamento.
+              </p>
+            </div>
+
+            <div className="bg-white/[0.02] border border-indigo-500/20 p-6 rounded-2xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+              <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Dias 4 a 14</p>
+              <h4 className="text-lg font-bold text-white mb-2">Aprendizado de Máquina</h4>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Fase de exploração do algoritmo. O CPA pode oscilar enquanto as plataformas mapeiam os compradores ideais.
+              </p>
+            </div>
+
+            <div className="bg-white/[0.02] border border-emerald-500/20 p-6 rounded-2xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+              <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1">Dias 15 a 30</p>
+              <h4 className="text-lg font-bold text-white mb-2">Otimização e Estabilização</h4>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Corte de anúncios perdedores, estabilização do Custo por Aquisição e início da previsibilidade de ROI.
+              </p>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
     </div>
   );
 }
