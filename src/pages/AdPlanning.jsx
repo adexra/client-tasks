@@ -214,6 +214,7 @@ export default function AdPlanning() {
   const [clients, setClients] = useState([]);
   const [saving, setSaving] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   const makeFunnelHandlers = (stage) => ({
     onToggle: () => setForm(f => ({ ...f, funnel: toggleStage(f.funnel, stage) })),
@@ -249,17 +250,29 @@ export default function AdPlanning() {
     if (!form.name.trim()) return toast.error('Plan name is required');
     if (totalPct !== 100) return toast.error('Funnel budget must sum to exactly 100%');
     setSaving(true);
-    const { data, error } = await supabase.from('ad_plans').insert([{
+    
+    const payload = {
       name: form.name, client_id: form.client_id || null, currency: form.currency,
       total_budget: Math.round(budget * 100) / 100,
       days, start_date: form.start_date || null,
       target_kpi: form.target_kpi, funnel: form.funnel, mediums: form.mediums,
       keywords: form.keywords,
       conversion: form.conversion, audience: form.audience, creative: form.creative,
-    }]).select('id').single();
+    };
+
+    let data, error;
+    if (editingId) {
+      const res = await supabase.from('ad_plans').update(payload).eq('id', editingId).select('id').single();
+      data = res.data; error = res.error;
+    } else {
+      const res = await supabase.from('ad_plans').insert([payload]).select('id').single();
+      data = res.data; error = res.error;
+    }
+
     setSaving(false);
     if (error) return toast.error('Failed to save: ' + error.message);
-    toast.success('Plan saved! Link copied to clipboard.');
+    toast.success(editingId ? 'Plan updated! Link copied to clipboard.' : 'Plan saved! Link copied to clipboard.');
+    setEditingId(null);
     loadPlans();
     setTab('plans');
     copyLink(data.id);
@@ -283,6 +296,18 @@ export default function AdPlanning() {
     loadPlans();
   };
 
+  const handleEdit = (plan) => {
+    setForm(plan);
+    setEditingId(plan.id);
+    setTab('builder');
+  };
+
+  const handleCreateNew = () => {
+    setForm(DEFAULT);
+    setEditingId(null);
+    setTab('builder');
+  };
+
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-24">
@@ -298,13 +323,23 @@ export default function AdPlanning() {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border-light">
-        {[{ id: 'builder', label: 'New Plan' }, { id: 'plans', label: `Saved Plans (${plans.length})` }].map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
+        <button onClick={handleCreateNew}
+          className={cn('px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 -mb-px transition-all',
+            tab === 'builder' && !editingId ? 'border-ink-charcoal text-ink-primary' : 'border-transparent text-neutral-400 hover:text-neutral-600')}>
+          New Plan
+        </button>
+        {editingId && (
+          <button onClick={() => setTab('builder')}
             className={cn('px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 -mb-px transition-all',
-              tab === t.id ? 'border-ink-charcoal text-ink-primary' : 'border-transparent text-neutral-400 hover:text-neutral-600')}>
-            {t.label}
+              tab === 'builder' && editingId ? 'border-amber-500 text-amber-600' : 'border-transparent text-amber-400 hover:text-amber-500')}>
+            Edit Plan
           </button>
-        ))}
+        )}
+        <button onClick={() => setTab('plans')}
+          className={cn('px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 -mb-px transition-all',
+            tab === 'plans' ? 'border-ink-charcoal text-ink-primary' : 'border-transparent text-neutral-400 hover:text-neutral-600')}>
+          Saved Plans ({plans.length})
+        </button>
       </div>
 
       {/* Saved Plans Tab */}
@@ -342,6 +377,9 @@ export default function AdPlanning() {
                 <button onClick={() => copyLink(p.id)}
                   className="flex items-center gap-2 text-[10px] font-bold text-neutral-500 hover:text-ink-primary border border-border-light rounded-lg px-3 py-2 transition-all hover:border-neutral-300">
                   {copiedId === p.id ? <><Check className="h-3.5 w-3.5 text-emerald-500" />Copied!</> : <><Copy className="h-3.5 w-3.5" />Copy Link</>}
+                </button>
+                <button onClick={() => handleEdit(p)} className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-indigo-500 hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-all">
+                  Edit
                 </button>
                 <a href={`/plan/${p.id}`} target="_blank" rel="noreferrer"
                   className="p-2 text-neutral-400 hover:text-ink-primary border border-border-light rounded-lg transition-all hover:border-neutral-300">
@@ -559,10 +597,10 @@ export default function AdPlanning() {
               className={cn(
                 'w-full h-16 flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-black/5 rounded-2xl transition-all',
                 totalPct === 100 && !saving
-                  ? 'btn-minimal btn-primary cursor-pointer'
+                  ? (editingId ? 'bg-amber-400 hover:bg-amber-500 text-ink-charcoal cursor-pointer' : 'btn-minimal btn-primary cursor-pointer')
                   : 'bg-neutral-100 text-neutral-300 cursor-not-allowed'
               )}>
-              {saving ? 'Saving...' : totalPct !== 100 ? `Allocate remaining ${100 - totalPct}% before saving` : 'Save Plan & Generate Share Link'}
+              {saving ? 'Saving...' : totalPct !== 100 ? `Allocate remaining ${100 - totalPct}% before saving` : (editingId ? 'Update Plan & Keep Link Active' : 'Save Plan & Generate Share Link')}
             </button>
           </div>
 
