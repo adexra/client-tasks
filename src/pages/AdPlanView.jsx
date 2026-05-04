@@ -6,7 +6,7 @@ import { cn } from '../lib/utils';
 import { 
   ChevronLeft, Target, Globe, Search, ArrowRight, 
   MessageSquare, MousePointer2, ShieldCheck, Zap,
-  TrendingUp, Calendar, Wallet, ExternalLink
+  TrendingUp, Calendar, Wallet, Database, Fingerprint, RefreshCcw, Network
 } from 'lucide-react';
 
 const SYM = { BRL: 'R$', USD: '$', EUR: '€' };
@@ -43,7 +43,7 @@ export default function AdPlanView() {
     
     let projection = '--';
     if (kpiVal > 0) {
-      if (type === 'CPA' || type === 'CPL') {
+      if (type === 'CPA' || type === 'CPL' || type === 'Leads') {
         projection = Math.floor(focusBudget / kpiVal).toLocaleString('pt-BR');
       } else if (type === 'ROAS') {
         projection = `${sym} ${(focusBudget * kpiVal).toLocaleString('pt-BR')}`;
@@ -94,16 +94,16 @@ export default function AdPlanView() {
             className="flex flex-col items-center text-center space-y-6"
           >
             <span className="px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">
-              Planejamento Estratégico de Performance
+              Ecossistema de Receita
             </span>
             <h1 className="text-5xl md:text-7xl font-serif text-white tracking-tight leading-tight max-w-4xl">
               Dominando a jornada de <span className="italic text-indigo-400">{plan.clients?.name || plan.name}</span>
             </h1>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5 border border-white/10 rounded-3xl mt-16 overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5 border border-white/10 rounded-[2rem] mt-16 overflow-hidden">
             <StatBlock icon={Wallet} label="Investimento Planejado" value={`${stats.sym} ${stats.budget.toLocaleString('pt-BR')}`} />
-            <StatBlock icon={Target} label={`Meta de ${stats.type}`} value={`${stats.type === 'CPA' ? stats.sym : ''} ${plan.target_kpi?.value || 0}${stats.type === 'ROAS' ? 'x' : ''}`} />
+            <StatBlock icon={Target} label={`Meta de ${stats.type === 'Leads' ? 'Aquisição' : stats.type}`} value={`${stats.type === 'CPA' ? stats.sym : ''} ${plan.target_kpi?.value || 0}${stats.type === 'ROAS' ? 'x' : ''}`} />
             <StatBlock icon={TrendingUp} label="Volume Estimado" value={stats.projection} />
           </div>
         </header>
@@ -111,93 +111,120 @@ export default function AdPlanView() {
         {/* The Strategy Breakdown - Visual & Tangible */}
         <section className="space-y-32">
           
-          {/* Phase 1: Awareness -> Tangible Ad Mockup */}
+          {/* Phase 1: Awareness */}
           {plan.funnel?.tofu?.enabled && (
             <JourneyPhase 
               title="1. Descoberta & Alcance"
-              subtitle="Onde criamos o primeiro impacto e despertamos o desejo."
-              description="Nesta etapa, focamos em audiências que ainda não conhecem sua solução, utilizando segmentação por intenção e comportamento."
+              subtitle="Onde criamos o primeiro impacto e capturamos a atenção."
+              description="Focamos em audiências que estão na fase inicial de busca, interceptando a demanda com posicionamento premium."
               budget={`${stats.sym} ${(stats.budget * plan.funnel.tofu.budget_pct / 100).toLocaleString('pt-BR')}`}
               pct={plan.funnel.tofu.budget_pct}
-              platform={Object.keys(plan.mediums || {}).find(k => plan.mediums[k]) || 'google'}
             >
-              {/* Ad Mockup Wireframe */}
-              <div className="w-full aspect-video bg-slate-900/50 rounded-2xl border border-white/10 p-6 relative overflow-hidden group">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="h-8 w-8 rounded-full bg-slate-800" />
+              {/* Ad/Campaign Representation Block */}
+              <div className="w-full bg-slate-900/50 rounded-[2rem] border border-white/10 p-8 relative overflow-hidden group">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                    <Globe className="h-5 w-5 text-indigo-400" />
+                  </div>
                   <div className="space-y-1">
-                    <div className="h-2 w-24 bg-slate-800 rounded" />
-                    <div className="h-1.5 w-16 bg-slate-800/50 rounded" />
+                    <div className="text-sm font-bold text-white tracking-widest uppercase">Aquisição Ativa</div>
+                    <div className="text-xs text-slate-500">Google / Meta / LinkedIn</div>
                   </div>
                 </div>
-                <div className="aspect-[16/7] bg-indigo-500/10 rounded-xl border border-indigo-500/20 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">Visual Criativo Premium</span>
-                </div>
-                <div className="mt-4 space-y-2">
-                  <div className="h-3 w-full bg-slate-800 rounded" />
-                  <div className="h-3 w-2/3 bg-slate-800 rounded" />
+                
+                <div className="space-y-4">
+                  {(plan.funnel.tofu.keywords || plan.funnel.tofu.audience)?.split(/[,|\n]+/).filter(Boolean).slice(0, 4).map((kw, i) => (
+                    <div key={i} className="px-4 py-3 bg-slate-800/50 border border-white/5 rounded-xl flex items-center justify-between">
+                      <span className="text-sm text-slate-300">{kw.trim()}</span>
+                      <Search className="h-4 w-4 text-slate-600" />
+                    </div>
+                  ))}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#020617] to-transparent opacity-0 group-hover:opacity-10 transition-opacity" />
               </div>
             </JourneyPhase>
           )}
 
-          {/* Phase 2: Intent -> The Logic */}
+          {/* Phase 2: Intent -> Safety Net & Drop-off */}
           {plan.funnel?.mofu?.enabled && (
             <JourneyPhase 
-              title="2. Consideração & Autoridade"
-              subtitle="Re-impactando quem demonstrou interesse real."
-              description={plan.funnel.mofu.remarketing_logic || "Estratégia de remarketing para quebrar objeções e reforçar os diferenciais da marca."}
+              title="2. Filtro & Retenção"
+              subtitle="A rede de segurança que impede a evasão de lucro."
+              description="A maioria das campanhas perde leads aqui. Nós implementamos um protocolo de resgate contínuo para quem acessou mas não converteu."
               budget={`${stats.sym} ${(stats.budget * plan.funnel.mofu.budget_pct / 100).toLocaleString('pt-BR')}`}
               pct={plan.funnel.mofu.budget_pct}
               reverse
             >
-              <div className="space-y-4">
-                <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                  <div className="flex items-center gap-3 mb-4">
-                    <ShieldCheck className="h-5 w-5 text-indigo-400" />
-                    <span className="text-sm font-bold text-white uppercase tracking-widest">Protocolo de Confiança</span>
+              {/* Drop-off & Rescue Diagram */}
+              <div className="bg-slate-900/30 border border-white/5 rounded-[2rem] p-8 relative">
+                
+                <div className="flex justify-between items-center bg-slate-800/50 rounded-2xl p-4 border border-white/10 relative z-10">
+                  <div className="text-center px-4">
+                    <MousePointer2 className="h-5 w-5 text-slate-400 mx-auto mb-2" />
+                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Tráfego Frio</span>
                   </div>
-                  <p className="text-sm leading-relaxed opacity-60 italic">
-                    "O usuário que visitou o site nos últimos 7 dias verá anúncios focados em prova social e cases de sucesso."
-                  </p>
+                  <ArrowRight className="text-slate-600" />
+                  <div className="text-center px-4">
+                    <Globe className="h-5 w-5 text-indigo-400 mx-auto mb-2" />
+                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Sua Página</span>
+                  </div>
                 </div>
-                <div className="flex justify-center">
-                  <ArrowRight className="h-6 w-6 text-slate-700 rotate-90" />
+
+                {/* Drop-off path */}
+                <div className="flex justify-center mt-2 relative z-0">
+                  <div className="h-12 border-r-2 border-dashed border-rose-500/30" />
                 </div>
-                <div className="p-6 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
-                  <span className="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">Trigger de Retenção Ativo</span>
+                
+                <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-4 text-center mx-auto max-w-[200px] mb-2 relative z-10">
+                  <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">Leads Evadidos (Drop-off)</span>
                 </div>
+
+                {/* Rescue Path */}
+                <div className="flex justify-between items-start mt-4 px-4 relative z-10">
+                  <div className="flex-1 flex justify-center -mt-6">
+                     <div className="w-full h-16 border-l-2 border-b-2 border-indigo-500/40 rounded-bl-[2rem]" />
+                  </div>
+                  <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-2xl p-6 w-[240px] text-center shadow-[0_0_30px_rgba(99,102,241,0.15)] backdrop-blur-md relative z-20">
+                    <RefreshCcw className="h-6 w-6 text-indigo-400 mx-auto mb-3" />
+                    <span className="text-xs font-bold text-white uppercase tracking-widest block mb-2">Protocolo de Recuperação</span>
+                    <span className="text-[10px] text-indigo-300 italic">Remarketing Automático</span>
+                  </div>
+                </div>
+
               </div>
             </JourneyPhase>
           )}
 
-          {/* Phase 3: Conversion -> The Result */}
+          {/* Phase 3: Conversion */}
           {plan.funnel?.bofu?.enabled && (
             <JourneyPhase 
-              title="3. Decisão & Aquisição"
-              subtitle="O momento da conversão final e fechamento."
-              description="Foco total em fundo de funil, capturando a demanda de quem está pronto para comprar agora."
+              title="3. Decisão & Fechamento"
+              subtitle="Capturando a demanda pronta para comprar."
+              description="O estágio final onde convertemos a intenção validada em reuniões ou vendas diretas através de alta performance."
               budget={`${stats.sym} ${(stats.budget * plan.funnel.bofu.budget_pct / 100).toLocaleString('pt-BR')}`}
               pct={plan.funnel.bofu.budget_pct}
-              platform="search"
             >
-              <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-8 space-y-6">
+              <div className="bg-slate-900/50 border border-white/10 rounded-[2rem] p-8 space-y-6">
                 <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 tracking-widest uppercase">
-                  <Search className="h-3 w-3" /> Google Search Preview
+                  <Target className="h-3 w-3 text-indigo-400" /> Fluxo de Conversão
                 </div>
-                <div className="space-y-1">
-                  <div className="text-indigo-400 text-lg font-serif">Melhor {plan.name} em 2026</div>
-                  <div className="text-emerald-500/80 text-xs italic">https://seusite.com.br/conversao</div>
+                
+                <div className="bg-slate-800/40 rounded-xl p-4 border border-white/5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white uppercase tracking-widest">Volume de Alta Intenção</span>
+                    <TrendingUp className="h-4 w-4 text-indigo-400" />
+                  </div>
+                  <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden">
+                    <motion.div initial={{width: 0}} whileInView={{width: '100%'}} transition={{duration: 1.5}} className="h-full bg-gradient-to-r from-indigo-500 to-indigo-300" />
+                  </div>
                 </div>
-                <div className="h-2 w-full bg-slate-800 rounded" />
-                <div className="h-2 w-3/4 bg-slate-800 rounded" />
+
                 <div className="pt-4 border-t border-white/5 flex justify-between items-center">
                    <div className="flex items-center gap-2">
-                     <MousePointer2 className="h-4 w-4 text-indigo-400" />
-                     <span className="text-xs font-bold text-white uppercase tracking-widest italic">Action Required</span>
+                     <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                     <span className="text-xs font-bold text-white uppercase tracking-widest">Conversão Segura</span>
                    </div>
-                   <div className="px-4 py-2 bg-indigo-500 rounded text-xs font-bold text-white">COMPRAR AGORA</div>
+                   <div className="px-4 py-2 bg-indigo-500 rounded-xl text-xs font-bold text-white shadow-[0_0_20px_rgba(99,102,241,0.4)]">ACIONAR VENDA</div>
                 </div>
               </div>
             </JourneyPhase>
@@ -205,27 +232,42 @@ export default function AdPlanView() {
 
         </section>
 
-        {/* Technical Governance - Low key but authoritative */}
+        {/* Infraestrutura Invisível (Tracking) */}
         <section className="mt-40 pt-20 border-t border-white/10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
-            <div className="space-y-6">
-              <h3 className="text-2xl font-serif text-white italic">Infraestrutura RevOps</h3>
-              <p className="text-sm leading-relaxed text-slate-500">
-                Não apenas anúncios, mas um ecossistema. Integramos sua mídia com o CRM e ferramentas de automação para garantir que nenhum lead seja desperdiçado.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-8">
-              <TechBadge icon={MessageSquare} label="Atendimento" value="CRM Integrado" />
-              <TechBadge icon={Calendar} label="Duração" value={`${plan.days || 30} Dias`} />
-              <TechBadge icon={ShieldCheck} label="Tracking" value="GTM + Conversions API" />
-              <TechBadge icon={Globe} label="Region" value="Global/Local" />
-            </div>
+          <div className="text-center mb-16">
+            <span className="px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-6 inline-block">
+              Governança Técnica
+            </span>
+            <h2 className="text-4xl md:text-5xl font-serif text-white tracking-tight">
+              Inteligência de Rastreamento
+            </h2>
+            <p className="text-slate-400 mt-4 max-w-2xl mx-auto leading-relaxed">
+              Seu investimento não pode depender da sorte. Implementamos uma infraestrutura invisível que blinda os dados da sua operação contra AdBlockers e atualizações do iOS, garantindo que toda conversão seja computada e otimizada pelo algoritmo.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <TrackingBadge 
+              icon={Network} 
+              title="Server-Side Tracking" 
+              desc="Em vez de depender do navegador do usuário, o disparo da conversão acontece diretamente no nosso servidor em nuvem. Anti-bloqueio e resiliente." 
+            />
+            <TrackingBadge 
+              icon={Database} 
+              title="Conversions API (CAPI)" 
+              desc="Conexão de dados primários direta com a Meta e Google. Nós enviamos o dado de compra com qualidade máxima, alimentando a inteligência da plataforma." 
+            />
+            <TrackingBadge 
+              icon={Fingerprint} 
+              title="Identity Fingerprinting" 
+              desc="Mesmo sem cookies de terceiros, utilizamos parâmetros avançados (GCLID/FBCLID e hashed data) para identificar leads através de múltiplos dispositivos." 
+            />
           </div>
         </section>
 
       </main>
 
-      <footer className="py-20 border-t border-white/5 bg-black/20 text-center">
+      <footer className="py-20 border-t border-white/5 bg-black/40 text-center">
         <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.4em]">
           ADEXRA ESTRATÉGIA PROPRIETÁRIA © 2026
         </p>
@@ -249,8 +291,8 @@ function StatBlock({ icon: Icon, label, value }) {
 function JourneyPhase({ title, subtitle, description, budget, pct, children, reverse = false }) {
   return (
     <div className={cn(
-      "flex flex-col md:flex-row gap-16 items-center",
-      reverse && "md:flex-row-reverse"
+      "flex flex-col lg:flex-row gap-16 items-center",
+      reverse && "lg:flex-row-reverse"
     )}>
       <div className="flex-1 space-y-8">
         <div className="space-y-4">
@@ -297,13 +339,14 @@ function JourneyPhase({ title, subtitle, description, budget, pct, children, rev
   );
 }
 
-function TechBadge({ icon: Icon, label, value }) {
+function TrackingBadge({ icon: Icon, title, desc }) {
   return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-        <Icon className="h-3 w-3" /> {label}
+    <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 hover:bg-white/10 transition-colors group h-full">
+      <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+        <Icon className="h-6 w-6 text-indigo-400" />
       </div>
-      <div className="text-sm font-medium text-slate-300">{value}</div>
+      <h3 className="text-lg font-serif text-white mb-3">{title}</h3>
+      <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
     </div>
   );
 }
