@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { 
   ChevronLeft, ArrowDown, Target, Activity, Settings, Clock, 
-  BarChart2, Zap, LayoutTemplate, Share2, 
+  BarChart2, Zap, LayoutTemplate, Share2, DollarSign,
   ChevronRight, Database, Code
 } from 'lucide-react';
 
