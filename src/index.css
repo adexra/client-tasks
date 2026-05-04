@@ -99,3 +99,12 @@
   text-shadow: none !important;
   background-image: none !important;
 }
+
+@keyframes flowAnimation {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { cn } from '../lib/utils';
-import { Megaphone, Copy, ExternalLink, Trash2, Check, AlertTriangle } from 'lucide-react';
+import { Megaphone, Copy, ExternalLink, Trash2, Check, AlertTriangle, Lock, LockOpen } from 'lucide-react';
 
 const SYM = { BRL: 'R$', USD: '$', EUR: '€' };
 const money = (n, sym) => `${sym} ${(parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -24,35 +24,58 @@ const PLATFORMS = [
   { key: 'linkedin', label: 'LinkedIn Ads', color: 'bg-sky-600' },
 ];
 
-// When one stage's % changes, redistribute the delta to others proportionally
-function autoBalance(funnel, changedStage, newPct) {
+// Smart lock-order balance:
+// The changed stage locks in. Only UNLOCKED stages absorb the remainder.
+// If all are locked, the changed stage is clamped to what's available.
+function smartBalance(funnel, changedStage, newPct) {
   const f = JSON.parse(JSON.stringify(funnel));
-  const clamped = Math.max(0, Math.min(100, Math.round(newPct)));
-  const others = STAGES.filter(s => s !== changedStage && f[s].enabled);
-  if (others.length === 0) { f[changedStage].budget_pct = 100; return f; }
-  const remaining = 100 - clamped;
-  const othersTotal = others.reduce((sum, s) => sum + f[s].budget_pct, 0);
+  const enabled = STAGES.filter(s => f[s].enabled);
+
+  // Lock the changed stage
+  f[changedStage].locked = true;
+
+  // Other stages that are already locked (not the one being changed)
+  const otherLocked = enabled.filter(s => s !== changedStage && f[s].locked);
+  const unlocked = enabled.filter(s => s !== changedStage && !f[s].locked);
+
+  // How much budget the other locked stages consume
+  const otherLockedTotal = otherLocked.reduce((sum, s) => sum + f[s].budget_pct, 0);
+
+  // Clamp the new value so we can't exceed what's left after other locked stages
+  const available = 100 - otherLockedTotal;
+  const clamped = Math.min(Math.max(0, Math.round(newPct)), available);
+  f[changedStage].budget_pct = clamped;
+
+  const remaining = available - clamped;
+
+  if (unlocked.length === 0) return f; // all locked — just take the clamped value
+
+  // Distribute remainder to unlocked stages proportionally
+  const unlockedTotal = unlocked.reduce((sum, s) => sum + f[s].budget_pct, 0);
   let distributed = 0;
-  others.forEach((s, i) => {
-    const share = i === others.length - 1
+  unlocked.forEach((s, i) => {
+    const isLast = i === unlocked.length - 1;
+    const share = isLast
       ? remaining - distributed
-      : othersTotal > 0
-        ? Math.round(remaining * f[s].budget_pct / othersTotal)
-        : Math.round(remaining / others.length);
+      : unlockedTotal > 0
+        ? Math.round(remaining * f[s].budget_pct / unlockedTotal)
+        : Math.round(remaining / unlocked.length);
     f[s].budget_pct = Math.max(0, share);
     distributed += f[s].budget_pct;
   });
-  f[changedStage].budget_pct = clamped;
+
   return f;
 }
 
-// When a stage is toggled, normalize all enabled stages to sum to 100
+// When a stage is toggled on/off, reset ALL locks and redistribute evenly
 function toggleStage(funnel, stage) {
   const f = JSON.parse(JSON.stringify(funnel));
   const wouldDisable = f[stage].enabled;
   const enabledCount = STAGES.filter(s => f[s].enabled).length;
-  if (wouldDisable && enabledCount === 1) return f; // keep at least one
+  if (wouldDisable && enabledCount === 1) return f;
   f[stage].enabled = !f[stage].enabled;
+  // Reset all locks so the user starts fresh
+  STAGES.forEach(s => { f[s].locked = false; });
   const enabled = STAGES.filter(s => f[s].enabled);
   const total = enabled.reduce((sum, s) => sum + f[s].budget_pct, 0);
   if (total === 0) {
@@ -87,7 +110,7 @@ function Toggle({ checked, onChange }) {
   );
 }
 
-function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onToggle, onPctChange, onFieldChange }) {
+function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onToggle, onPctChange, onUnlock, onFieldChange, onPlatformToggle }) {
   const s = stageData;
   return (
     <div className={cn('surface-card p-6 space-y-5 border-t-2', color)}>
@@ -100,14 +123,28 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
       </div>
       {s.enabled && (
         <div className="space-y-5">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <input
               type="number" min={0} max={100} value={s.budget_pct}
               onChange={e => onPctChange(+e.target.value)}
-              className="w-20 bg-white border border-neutral-200 rounded-xl px-3 py-2.5 text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-neutral-300"
+              className={cn(
+                'w-20 border rounded-xl px-3 py-2.5 text-sm font-mono text-center focus:outline-none focus:ring-1 transition-all',
+                s.locked
+                  ? 'bg-ink-charcoal text-white border-ink-charcoal font-bold focus:ring-neutral-600'
+                  : 'bg-white border-neutral-200 text-ink-primary focus:ring-neutral-300'
+              )}
             />
+            <button
+              onClick={onUnlock}
+              title={s.locked ? 'Locked — click to unlock and make auto' : 'Unlocked — auto-adjusts'}
+              className={cn('p-1.5 rounded-lg transition-all shrink-0',
+                s.locked ? 'text-ink-primary hover:text-rose-400' : 'text-neutral-300 hover:text-neutral-400'
+              )}
+            >
+              {s.locked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
+            </button>
             <div className="text-xs text-neutral-400 font-medium leading-relaxed">
-              <span>% of budget</span><br />
+              {!s.locked && <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">auto · </span>}
               <span className="text-ink-primary font-semibold">
                 {sym} {(budget * s.budget_pct / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total
                 &nbsp;·&nbsp;
@@ -115,6 +152,28 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
               </span>
             </div>
           </div>
+          
+          <F label="Active Mediums">
+            <div className="flex flex-wrap gap-2 mt-1">
+              {PLATFORMS.map(p => {
+                const active = s.platforms?.[p.key];
+                return (
+                  <button
+                    key={p.key}
+                    onClick={() => onPlatformToggle?.(p.key)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs font-bold transition-all border',
+                      active 
+                        ? cn(p.color, 'text-white border-transparent shadow-sm') 
+                        : 'bg-white border-neutral-200 text-neutral-400 hover:border-neutral-300 hover:text-neutral-600'
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </F>
           {stage === 'tofu' && <>
             <F label="Audience Definition"><input value={s.audience} onChange={e => onFieldChange('audience', e.target.value)} className={ic} placeholder="Demographics, interests, lookalikes..." /></F>
             <F label="Keywords / Search Terms"><textarea value={s.keywords} onChange={e => onFieldChange('keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Brand terms, informational queries..." /></F>
@@ -138,9 +197,9 @@ const DEFAULT = {
   mediums: { google: true, meta: false, tiktok: false, linkedin: false },
   keywords: { primary: '', secondary: '', negative: '' },
   funnel: {
-    tofu: { enabled: true, focus: 'Brand Awareness / Traffic', audience: '', keywords: '', budget_pct: 40 },
-    mofu: { enabled: true, focus: 'Consideration / Engagement', remarketing_logic: '', budget_pct: 30 },
-    bofu: { enabled: true, focus: 'Direct Response / Conversion', conversion_flow: '', keywords: '', budget_pct: 30 },
+    tofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Brand Awareness / Traffic', audience: '', keywords: '', budget_pct: 40 },
+    mofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Consideration / Engagement', remarketing_logic: '', budget_pct: 30 },
+    bofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Direct Response / Conversion', conversion_flow: '', keywords: '', budget_pct: 30 },
   },
   conversion: { goal: 'Lead', flow: '', attribution: 'Data-Driven', tracking: 'GA4 + GTM' },
   audience: { age: '', gender: 'All', location: '', interests: '', devices: 'All Devices' },
@@ -158,8 +217,10 @@ export default function AdPlanning() {
 
   const makeFunnelHandlers = (stage) => ({
     onToggle: () => setForm(f => ({ ...f, funnel: toggleStage(f.funnel, stage) })),
-    onPctChange: (v) => setForm(f => ({ ...f, funnel: autoBalance(f.funnel, stage, v) })),
+    onPctChange: (v) => setForm(f => ({ ...f, funnel: smartBalance(f.funnel, stage, v) })),
+    onUnlock: () => setForm(f => ({ ...f, funnel: { ...f.funnel, [stage]: { ...f.funnel[stage], locked: false } } })),
     onFieldChange: (field, v) => setForm(f => ({ ...f, funnel: { ...f.funnel, [stage]: { ...f.funnel[stage], [field]: v } } })),
+    onPlatformToggle: (plat) => setForm(f => ({ ...f, funnel: { ...f.funnel, [stage]: { ...f.funnel[stage], platforms: { ...f.funnel[stage].platforms, [plat]: !f.funnel[stage].platforms[plat] } } } })),
   });
 
   useEffect(() => {
@@ -418,15 +479,9 @@ export default function AdPlanning() {
                 {totalPct !== 100 && <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
                 {totalPct === 100 ? '✓ Budget fully allocated (100%)' : totalPct > 100 ? `Over-allocated by ${totalPct - 100}% — reduce allocation` : `${100 - totalPct}% unallocated — assign remaining budget`}
               </div>
-              {[{stage:'tofu',label:'TOFU — Top of Funnel (Cold Audience)',color:'border-t-sky-300'},{stage:'mofu',label:'MOFU — Middle of Funnel (Remarketing)',color:'border-t-violet-400'},{stage:'bofu',label:'BOFU — Bottom of Funnel (Conversion)',color:'border-t-emerald-400'}].map(cfg => (
-                <FunnelCard
-                  key={cfg.stage}
-                  stage={cfg.stage} label={cfg.label} color={cfg.color}
-                  stageData={form.funnel[cfg.stage]}
-                  budget={budget} daily={daily} sym={sym}
-                  {...makeFunnelHandlers(cfg.stage)}
-                />
-              ))}
+              <FunnelCard stage="tofu" label="1. Top of Funnel" color="border-blue-500" stageData={form.funnel.tofu} budget={budget} daily={daily} sym={sym} {...makeFunnelHandlers('tofu')} />
+              <FunnelCard stage="mofu" label="2. Middle of Funnel" color="border-indigo-500" stageData={form.funnel.mofu} budget={budget} daily={daily} sym={sym} {...makeFunnelHandlers('mofu')} />
+              <FunnelCard stage="bofu" label="3. Bottom of Funnel" color="border-emerald-500" stageData={form.funnel.bofu} budget={budget} daily={daily} sym={sym} {...makeFunnelHandlers('bofu')} />
             </div>
 
             {/* C: Conversion */}
