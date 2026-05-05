@@ -439,7 +439,10 @@ export default function AdPlanView() {
                           )}
                         </div>
                       </div>
-                      <span className="font-serif text-2xl text-white sm:text-right">{s.budget_pct}%</span>
+                      <div className="flex flex-col sm:items-end mt-4 sm:mt-0">
+                        <span className="font-serif text-2xl text-white sm:text-right leading-none">{s.budget_pct}%</span>
+                        <span className="text-xs text-indigo-400 font-mono sm:text-right mt-2">{money(stats.budget * (s.budget_pct / 100), stats.sym)}</span>
+                      </div>
                     </div>
                   );
                 })}
