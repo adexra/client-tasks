@@ -406,6 +406,62 @@ export default function AdPlanView() {
           </div>
         </SectionContainer>
 
+        {/* 6.5 Arquitetura do Funil (3 Cards) */}
+        <SectionContainer>
+          <div className="w-full max-w-7xl mx-auto space-y-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="text-center">
+              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">Arquitetura</span>
+              <h2 className="text-4xl md:text-5xl font-serif text-white leading-tight mt-4">Setup do <span className="italic text-indigo-400">Funil</span>.</h2>
+            </motion.div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {['tofu', 'mofu', 'bofu'].map((stage, i) => {
+                const s = plan.funnel?.[stage];
+                if (!s?.enabled) return null;
+                const labels = { tofu: 'Topo de Funil', mofu: 'Meio de Funil', bofu: 'Fundo de Funil' };
+                return (
+                  <motion.div 
+                    key={stage}
+                    initial={{ opacity: 0, y: 30 }} 
+                    whileInView={{ opacity: 1, y: 0 }} 
+                    transition={{ duration: 0.8, delay: i * 0.1 }} 
+                    viewport={{ once: true }}
+                  >
+                    <GlassCard className="h-full flex flex-col relative overflow-hidden bg-[#08090D] border-white/5">
+                      <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                      
+                      <div className="flex justify-between items-start mb-8 mt-2">
+                        <div>
+                          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{labels[stage]}</div>
+                          <div className="text-3xl font-serif text-white mt-1">{s.budget_pct}%</div>
+                        </div>
+                        <div className="text-xs font-mono text-slate-400 bg-white/5 px-2 py-1 rounded">
+                          {money(stats.budget * (s.budget_pct / 100), stats.sym)}
+                        </div>
+                      </div>
+
+                      <div className="space-y-6 flex-1">
+                        <div>
+                          <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] mb-1">Objetivo</div>
+                          <div className="text-sm text-white">{s.objective || s.focus || 'Padrão'}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold text-fuchsia-400 uppercase tracking-[0.2em] mb-1">Criativo</div>
+                          <div className="text-sm text-white">{s.creative_type || 'Múltiplos Formatos'}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-[0.2em] mb-1">Conversão</div>
+                          <div className="text-sm text-white font-bold">{s.conversion_action || 'Ação'}</div>
+                        </div>
+                      </div>
+                    </GlassCard>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </SectionContainer>
+
         {/* 7. Distribuição de Canais */}
         <SectionContainer>
           <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-16 items-center">

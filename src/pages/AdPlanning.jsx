@@ -175,6 +175,12 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
               })}
             </div>
           </F>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <F label="Objetivo da Etapa"><input value={s.objective || ''} onChange={e => onFieldChange('objective', e.target.value)} className={ic} placeholder="Ex: Reconhecimento, Captura..." /></F>
+            <F label="Tipo de Criativo"><input value={s.creative_type || ''} onChange={e => onFieldChange('creative_type', e.target.value)} className={ic} placeholder="Ex: Vídeo Reels, Banner Estático..." /></F>
+            <F label="Ação de Conversão"><input value={s.conversion_action || ''} onChange={e => onFieldChange('conversion_action', e.target.value)} className={ic} placeholder="Ex: Clique no Link, Compra..." /></F>
+          </div>
+
           {stage === 'tofu' && <>
             <F label="Audience Definition"><input value={s.audience} onChange={e => onFieldChange('audience', e.target.value)} className={ic} placeholder="Demographics, interests, lookalikes..." /></F>
             <F label="Keywords / Search Terms"><textarea value={s.keywords} onChange={e => onFieldChange('keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Brand terms, informational queries..." /></F>
@@ -183,7 +189,6 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
             <F label="Remarketing Logic"><textarea value={s.remarketing_logic} onChange={e => onFieldChange('remarketing_logic', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="e.g. Visited landing page but did not convert..." /></F>
           </>}
           {stage === 'bofu' && <>
-            <F label="Conversion Flow Path"><textarea value={s.conversion_flow} onChange={e => onFieldChange('conversion_flow', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Ex: Pesquisa Google → Página do Produto → Compra → Obrigado → Tracking" /></F>
             <F label="High-Intent Keywords"><textarea value={s.keywords} onChange={e => onFieldChange('keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Buy now, best price, hire now, compare..." /></F>
           </>}
         </div>
@@ -199,9 +204,9 @@ const DEFAULT = {
   keywords: { primary: '', secondary: '', negative: '' },
   market_data: { potential_volume: 50000 },
   funnel: {
-    tofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Brand Awareness / Traffic', audience: '', keywords: '', budget_pct: 40 },
-    mofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Consideration / Engagement', remarketing_logic: '', budget_pct: 30 },
-    bofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Direct Response / Conversion', conversion_flow: '', keywords: '', budget_pct: 30 },
+    tofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Brand Awareness / Traffic', audience: '', keywords: '', budget_pct: 40, objective: 'Descoberta', creative_type: 'Vídeos / Reels', conversion_action: 'Visualização / Clique' },
+    mofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Consideration / Engagement', remarketing_logic: '', budget_pct: 30, objective: 'Retenção / Consideração', creative_type: 'Carrossel / Depoimentos', conversion_action: 'Visita à Landing Page' },
+    bofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Direct Response / Conversion', conversion_flow: '', keywords: '', budget_pct: 30, objective: 'Conversão Direta', creative_type: 'Oferta / Escassez', conversion_action: 'Compra / Lead' },
   },
   conversion: { goal: 'Lead', flow: '', attribution: 'Data-Driven', tracking: 'GA4 + GTM' },
   audience: { age: '', gender: 'All', location: '', interests: '', devices: 'All Devices', potential_volume: 50000 },
@@ -275,9 +280,8 @@ export default function AdPlanning() {
       target_kpi: { type: form.target_kpi.type, value: Number(form.target_kpi.value) },
       funnel: form.funnel, mediums: form.mediums,
       keywords: form.keywords,
-      conversion: form.conversion, 
+      conversion: { ...form.conversion, _creative: form.creative }, 
       audience: { ...form.audience, potential_volume: Number(form.audience?.potential_volume || 50000) }, 
-      creative: form.creative,
     };
 
     let data, error;
@@ -317,6 +321,10 @@ export default function AdPlanning() {
   };
 
   const handleEdit = (plan) => {
+    // Restore creative from conversion JSONB if it exists there to fix legacy schema mismatch
+    if (plan.conversion && plan.conversion._creative) {
+      plan.creative = plan.conversion._creative;
+    }
     setForm(plan);
     setEditingId(plan.id);
     setTab('builder');
