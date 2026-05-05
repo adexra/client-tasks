@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { cn } from '../lib/utils';
 import { Megaphone, Copy, ExternalLink, Trash2, Check, AlertTriangle, Lock, LockOpen } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 const SYM = { BRL: 'R$', USD: '$', EUR: '€' };
 const money = (n, sym) => `${sym} ${(parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -196,6 +197,7 @@ const DEFAULT = {
   target_kpi: { type: 'CPA', value: '' },
   mediums: { google: true, meta: false, tiktok: false, linkedin: false },
   keywords: { primary: '', secondary: '', negative: '' },
+  market_data: { potential_volume: 50000 },
   funnel: {
     tofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Brand Awareness / Traffic', audience: '', keywords: '', budget_pct: 40 },
     mofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Consideration / Engagement', remarketing_logic: '', budget_pct: 30 },
@@ -270,7 +272,9 @@ export default function AdPlanning() {
       name: form.name, client_id: form.client_id || null, currency: form.currency,
       total_budget: Math.round(budget * 100) / 100,
       days, start_date: form.start_date || null,
-      target_kpi: form.target_kpi, funnel: form.funnel, mediums: form.mediums,
+      target_kpi: { type: form.target_kpi.type, value: Number(form.target_kpi.value) },
+      market_data: { potential_volume: Number(form.market_data?.potential_volume || 50000) },
+      funnel: form.funnel, mediums: form.mediums,
       keywords: form.keywords,
       conversion: form.conversion, audience: form.audience, creative: form.creative,
     };
@@ -452,6 +456,9 @@ export default function AdPlanning() {
                     </select>
                     <input type="number" value={form.target_kpi.value} onChange={e => set('target_kpi.value', e.target.value)} className={ic} placeholder={form.target_kpi.type === 'ROAS' ? 'e.g. 4' : 'e.g. 50'} />
                   </div>
+                </F>
+                <F label="Volume de Pesquisa Mensal (Estimado)">
+                  <input type="number" value={form.market_data?.potential_volume || ''} onChange={e => set('market_data.potential_volume', e.target.value)} className={ic} placeholder="Ex: 50000" />
                 </F>
               </div>
             </div>
@@ -676,6 +683,30 @@ export default function AdPlanning() {
                       <p className="text-[10px] text-neutral-400 font-medium uppercase tracking-widest">Est. Revenue (BOFU @ {kpiVal}x ROAS)</p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {totalPct > 0 && (
+                <div className="surface-card p-6 space-y-4">
+                  <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Alocação de Funil</p>
+                  <div className="h-40">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'TOFU', value: form.funnel?.tofu?.budget_pct || 0 },
+                            { name: 'MOFU', value: form.funnel?.mofu?.budget_pct || 0 },
+                            { name: 'BOFU', value: form.funnel?.bofu?.budget_pct || 0 },
+                          ].filter(d => d.value > 0)}
+                          cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={5} dataKey="value" stroke="none"
+                        >
+                          <Cell fill="#38bdf8" />
+                          <Cell fill="#a78bfa" />
+                          <Cell fill="#10b981" />
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
               )}
 

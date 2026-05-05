@@ -85,6 +85,16 @@ export default function AdPlanView() {
     return { budget, daily, days, sym, projection, type, kpiVal };
   }, [plan]);
 
+  const marketChartData = useMemo(() => {
+    const vol = plan?.market_data?.potential_volume || 10000;
+    return [
+      { name: 'Semana 1', atual: vol * 0.05, potencial: vol * 0.4 },
+      { name: 'Semana 2', atual: vol * 0.15, potencial: vol * 0.6 },
+      { name: 'Semana 3', atual: vol * 0.25, potencial: vol * 0.8 },
+      { name: 'Semana 4', atual: vol * 0.40, potencial: vol },
+    ];
+  }, [plan]);
+
   if (loading) return (
     <div className="min-h-screen bg-[#08090D] flex items-center justify-center">
       <div className="h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -207,12 +217,7 @@ export default function AdPlanView() {
             
             <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="h-[400px] w-full bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-sm">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={[
-                    { name: 'Semana 1', atual: 400, potencial: 2400 },
-                    { name: 'Semana 2', atual: 800, potencial: 3200 },
-                    { name: 'Semana 3', atual: 1200, potencial: 4800 },
-                    { name: 'Semana 4', atual: 2100, potencial: 6400 },
-                  ]}>
+                <AreaChart data={marketChartData}>
                   <defs>
                     <linearGradient id="colorPotencial" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
@@ -350,10 +355,10 @@ export default function AdPlanView() {
               />
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10">
-                <FlowNode step="1" title="Origem" desc="Google / Meta Ads" icon={Network} />
-                <FlowNode step="2" title="Contato" desc="Landing Page" icon={Laptop} />
-                <FlowNode step="3" title="Ação" desc="Formulário / Lead" icon={MousePointer2} />
-                <FlowNode step="4" title="Conversão" desc="Venda / Reunião" icon={ShieldCheck} />
+                <FlowNode step="1" title="Origem" desc={Object.keys(plan?.mediums || {}).filter(k => plan.mediums[k]).join(' + ') || 'Ads'} icon={Network} />
+                <FlowNode step="2" title="Destino" desc={plan?.creative?.landing_page?.replace('https://', '') || 'Landing Page'} icon={Laptop} />
+                <FlowNode step="3" title="Ação" desc={plan?.conversion?.goal || 'Lead / Conversão'} icon={MousePointer2} />
+                <FlowNode step="4" title="Resultado" desc="Venda / ROI" icon={ShieldCheck} />
               </div>
             </div>
           </div>
