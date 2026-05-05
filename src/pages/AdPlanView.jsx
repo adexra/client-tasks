@@ -239,7 +239,7 @@ export default function AdPlanView() {
               <Search className="h-12 w-12 text-indigo-400 mb-6 relative z-10" />
               <div className="text-[10px] md:text-[12px] font-bold text-indigo-300 uppercase tracking-[0.3em] mb-4 relative z-10">Volume de Pesquisa Mensal</div>
               <div className="text-7xl md:text-8xl font-serif text-white tracking-tighter relative z-10">
-                {parseInt(plan.audience?.potential_volume || 50000).toLocaleString('pt-BR')}
+                {parseInt(plan.audience?.potential_volume || plan.market_data?.potential_volume || 50000).toLocaleString('pt-BR')}
               </div>
               <div className="mt-6 text-sm text-slate-400 font-mono bg-white/5 px-6 py-3 rounded-full border border-white/10 relative z-10">
                 Buscas Exatas & Relacionadas
@@ -508,7 +508,7 @@ export default function AdPlanView() {
             <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 w-full h-[400px] relative">
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
                 <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Mercado Total</div>
-                <div className="text-3xl font-serif text-white">{parseInt(plan.audience?.potential_volume || 50000).toLocaleString('pt-BR')}</div>
+                <div className="text-3xl font-serif text-white">{parseInt(plan.audience?.potential_volume || plan.market_data?.potential_volume || 50000).toLocaleString('pt-BR')}</div>
               </div>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>

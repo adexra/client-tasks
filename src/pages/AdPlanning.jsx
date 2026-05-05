@@ -325,6 +325,11 @@ export default function AdPlanning() {
     if (plan.conversion && plan.conversion._creative) {
       plan.creative = plan.conversion._creative;
     }
+    // Restore potential_volume from market_data if it exists there
+    if (plan.market_data?.potential_volume && !plan.audience?.potential_volume) {
+      if (!plan.audience) plan.audience = {};
+      plan.audience.potential_volume = plan.market_data.potential_volume;
+    }
     setForm(plan);
     setEditingId(plan.id);
     setTab('builder');
