@@ -91,7 +91,7 @@ export default function AdPlanView() {
   }, [plan]);
 
   const marketChartData = useMemo(() => {
-    const vol = plan?.market_data?.potential_volume || 10000;
+    const vol = plan?.audience?.potential_volume || 10000;
     return [
       { name: 'Semana 1', atual: vol * 0.05, potencial: vol * 0.4 },
       { name: 'Semana 2', atual: vol * 0.15, potencial: vol * 0.6 },

@@ -204,7 +204,7 @@ const DEFAULT = {
     bofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Direct Response / Conversion', conversion_flow: '', keywords: '', budget_pct: 30 },
   },
   conversion: { goal: 'Lead', flow: '', attribution: 'Data-Driven', tracking: 'GA4 + GTM' },
-  audience: { age: '', gender: 'All', location: '', interests: '', devices: 'All Devices' },
+  audience: { age: '', gender: 'All', location: '', interests: '', devices: 'All Devices', potential_volume: 50000 },
   creative: { formats: '', hook: '', cta: '', landing_page: '' },
 };
 
@@ -273,10 +273,11 @@ export default function AdPlanning() {
       total_budget: Math.round(budget * 100) / 100,
       days, start_date: form.start_date || null,
       target_kpi: { type: form.target_kpi.type, value: Number(form.target_kpi.value) },
-      market_data: { potential_volume: Number(form.market_data?.potential_volume || 50000) },
       funnel: form.funnel, mediums: form.mediums,
       keywords: form.keywords,
-      conversion: form.conversion, audience: form.audience, creative: form.creative,
+      conversion: form.conversion, 
+      audience: { ...form.audience, potential_volume: Number(form.audience?.potential_volume || 50000) }, 
+      creative: form.creative,
     };
 
     let data, error;
@@ -458,7 +459,7 @@ export default function AdPlanning() {
                   </div>
                 </F>
                 <F label="Volume de Pesquisa Mensal (Estimado)">
-                  <input type="number" value={form.market_data?.potential_volume || ''} onChange={e => set('market_data.potential_volume', e.target.value)} className={ic} placeholder="Ex: 50000" />
+                  <input type="number" value={form.audience?.potential_volume || ''} onChange={e => set('audience.potential_volume', e.target.value)} className={ic} placeholder="Ex: 50000" />
                 </F>
               </div>
             </div>
