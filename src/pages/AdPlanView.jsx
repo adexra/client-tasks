@@ -232,25 +232,18 @@ export default function AdPlanView() {
               </div>
             </motion.div>
             
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="h-[400px] w-full bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-sm">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={marketChartData}>
-                  <defs>
-                    <linearGradient id="colorPotencial" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorAtual" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" stroke="#475569" fontSize={10} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }} />
-                  <Area type="monotone" dataKey="potencial" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorPotencial)" />
-                  <Area type="monotone" dataKey="atual" stroke="#ec4899" strokeWidth={2} fillOpacity={1} fill="url(#colorAtual)" />
-                </AreaChart>
-              </ResponsiveContainer>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="h-full min-h-[400px] w-full bg-[#08090D] border border-indigo-500/20 rounded-3xl p-10 backdrop-blur-sm flex flex-col justify-center items-center text-center shadow-[0_0_50px_rgba(99,102,241,0.1)] relative overflow-hidden">
+              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-indigo-500/20 blur-[100px] rounded-full pointer-events-none"></div>
+              
+              <Search className="h-12 w-12 text-indigo-400 mb-6 relative z-10" />
+              <div className="text-[10px] md:text-[12px] font-bold text-indigo-300 uppercase tracking-[0.3em] mb-4 relative z-10">Volume de Pesquisa Mensal</div>
+              <div className="text-7xl md:text-8xl font-serif text-white tracking-tighter relative z-10">
+                {parseInt(plan.audience?.potential_volume || 50000).toLocaleString('pt-BR')}
+              </div>
+              <div className="mt-6 text-sm text-slate-400 font-mono bg-white/5 px-6 py-3 rounded-full border border-white/10 relative z-10">
+                Buscas Exatas & Relacionadas
+              </div>
             </motion.div>
           </div>
         </SectionContainer>
@@ -310,13 +303,35 @@ export default function AdPlanView() {
               </GlassCard>
               
               <GlassCard>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Meta de Custo</div>
-                <div className="text-3xl font-serif text-white">{stats.type === 'CPA' ? stats.sym : ''} {stats.kpiVal}</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Meta {stats.type}</div>
+                <div className="text-3xl font-serif text-white">{stats.type === 'CPA' ? stats.sym : ''} {stats.kpiVal}{stats.type === 'ROAS' ? 'x' : ''}</div>
               </GlassCard>
               
               <GlassCard>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Modelo de Atribuição</div>
-                <div className="text-xl font-serif text-white pt-2">{plan.conversion?.attribution || 'Data-Driven'}</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Modelos (Atribuição & Tracking)</div>
+                <div className="text-lg font-serif text-white pt-2">{plan.conversion?.attribution || 'Data-Driven'}</div>
+                <div className="text-xs text-indigo-400 font-mono mt-1">{plan.conversion?.tracking || 'GA4 + GTM'}</div>
+              </GlassCard>
+              
+              <GlassCard className="col-span-2 mt-4 bg-[#08090D] border-indigo-500/20">
+                <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                  <Fingerprint className="h-4 w-4" />
+                  Creative & Copywriting Setup
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <div className="text-xs text-slate-500 font-medium mb-1">Formatos</div>
+                    <div className="text-sm text-white">{plan.creative?.formats || 'Múltiplos Formatos'}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500 font-medium mb-1">Gatilho (Hook)</div>
+                    <div className="text-sm text-white">{plan.creative?.hook || 'Oferta Direta'}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500 font-medium mb-1">Call to Action</div>
+                    <div className="text-sm text-indigo-300 font-bold">{plan.creative?.cta || 'Comprar Agora'}</div>
+                  </div>
+                </div>
               </GlassCard>
             </motion.div>
           </div>
@@ -326,16 +341,33 @@ export default function AdPlanView() {
         <SectionContainer>
           <div className="w-full max-w-6xl mx-auto flex flex-col-reverse lg:flex-row gap-16 items-center">
             
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 w-full relative">
-              {/* Mock Map Premium */}
-              <div className="aspect-square w-full max-w-[500px] mx-auto rounded-full bg-slate-900 border border-white/10 relative overflow-hidden flex items-center justify-center shadow-2xl shadow-indigo-500/10">
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
-                <div className="w-[80%] h-[80%] border border-indigo-500/30 rounded-full flex items-center justify-center animate-[ping_4s_ease-out_infinite]"></div>
-                <div className="w-[50%] h-[50%] border border-indigo-500/50 rounded-full flex items-center justify-center animate-[ping_3s_ease-out_infinite]"></div>
-                <div className="w-4 h-4 bg-indigo-500 rounded-full shadow-[0_0_20px_rgba(99,102,241,1)] relative z-10"></div>
-                
-                {/* Decorative Grid */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 w-full h-[400px] relative bg-[#08090D] border border-white/10 rounded-3xl p-8 overflow-hidden flex flex-col justify-between">
+              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+              
+              <div className="relative z-10 flex justify-between items-start">
+                <div>
+                  <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Radar Ativado</div>
+                  <div className="text-xl font-serif text-white">{plan.audience?.location || 'Nacional'}</div>
+                </div>
+                <Target className="h-6 w-6 text-slate-500" />
+              </div>
+              
+              <div className="relative z-10 flex-1 flex items-center justify-center">
+                <div className="w-full max-w-[200px] aspect-square rounded-full border border-indigo-500/30 flex items-center justify-center relative">
+                  <motion.div 
+                    className="absolute inset-0 rounded-full border-2 border-indigo-500/50 border-t-transparent"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                  />
+                  <div className="text-center">
+                    <div className="text-3xl font-serif text-white">{plan.audience?.age?.split('-')[0] || '25'}+</div>
+                    <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Target Age</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative z-10 text-xs text-slate-400 font-mono text-center">
+                Scanning for: {plan.audience?.interests || 'High Intent'}
               </div>
             </motion.div>
             
@@ -389,20 +421,36 @@ export default function AdPlanView() {
                   const s = plan.funnel?.[stage];
                   if (!s?.enabled) return null;
                   const labels = { tofu: 'Topo (Descoberta)', mofu: 'Meio (Retenção)', bofu: 'Fundo (Conversão)' };
+                  const activePlatforms = Object.keys(s.platforms || {}).filter(k => s.platforms[k]);
                   return (
-                    <div key={stage} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
+                    <div key={stage} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                        <span className="text-sm font-bold text-white uppercase tracking-widest">{labels[stage]}</span>
+                        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                        <div>
+                          <span className="text-sm font-bold text-white uppercase tracking-widest">{labels[stage]}</span>
+                          {activePlatforms.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {activePlatforms.map(p => (
+                                <span key={p} className="text-[9px] bg-white/10 px-2 py-0.5 rounded text-slate-300 font-mono uppercase">
+                                  {p}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <span className="font-serif text-xl text-white">{s.budget_pct}%</span>
+                      <span className="font-serif text-2xl text-white sm:text-right">{s.budget_pct}%</span>
                     </div>
                   );
                 })}
               </div>
             </motion.div>
             
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 w-full h-[400px]">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 w-full h-[400px] relative">
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Mercado Total</div>
+                <div className="text-3xl font-serif text-white">{parseInt(plan.audience?.potential_volume || 50000).toLocaleString('pt-BR')}</div>
+              </div>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
