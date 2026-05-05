@@ -177,7 +177,24 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
           </F>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <F label="Objetivo da Etapa"><input value={s.objective || ''} onChange={e => onFieldChange('objective', e.target.value)} className={ic} placeholder="Ex: Reconhecimento, Captura..." /></F>
-            <F label="Tipo de Campanha"><input value={s.campaign_type || ''} onChange={e => onFieldChange('campaign_type', e.target.value)} className={ic} placeholder="Ex: Pesquisa, Display, Engajamento..." /></F>
+            <F label="Tipo de Campanha">
+              <select 
+                value={s.campaign_type || ''} 
+                onChange={e => onFieldChange('campaign_type', e.target.value)} 
+                className={ic + ' cursor-pointer appearance-none'}
+              >
+                <option value="" disabled>Selecione...</option>
+                <option value="Pesquisa (Search)">Pesquisa (Search)</option>
+                <option value="Performance Max">Performance Max</option>
+                <option value="Display / Rede de Display">Display / Rede de Display</option>
+                <option value="Vídeo (YouTube / Reels)">Vídeo (YouTube / Reels)</option>
+                <option value="Shopping / E-commerce">Shopping / E-commerce</option>
+                <option value="Engajamento (Social)">Engajamento (Social)</option>
+                <option value="Geração de Cadastros (Lead)">Geração de Cadastros (Lead)</option>
+                <option value="Mensagens (WhatsApp)">Mensagens (WhatsApp)</option>
+                <option value="Remarketing Dinâmico">Remarketing Dinâmico</option>
+              </select>
+            </F>
             <F label="Tipo de Criativo"><input value={s.creative_type || ''} onChange={e => onFieldChange('creative_type', e.target.value)} className={ic} placeholder="Ex: Vídeo Reels, Banner Estático..." /></F>
             <F label="Ação de Conversão"><input value={s.conversion_action || ''} onChange={e => onFieldChange('conversion_action', e.target.value)} className={ic} placeholder="Ex: Clique no Link, Compra..." /></F>
           </div>
