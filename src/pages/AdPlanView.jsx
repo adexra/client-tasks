@@ -7,7 +7,8 @@ import {
   ChevronLeft, Target, Globe, Search, ArrowRight, 
   MousePointer2, ShieldCheck, Zap,
   TrendingUp, Calendar, Wallet, Database, Fingerprint, RefreshCcw, Network,
-  Crosshair, Users, Activity, BarChart, Smartphone, Laptop
+  Crosshair, Users, Activity, BarChart, Smartphone, Laptop,
+  ShoppingCart, MessageSquare, CheckCircle2, Share2
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -269,10 +270,14 @@ export default function AdPlanView() {
                   <div className="text-6xl font-serif text-white tracking-tight">{money(stats.budget, stats.sym)}</div>
                 </div>
               </div>
-              <div className="bg-gradient-to-bl from-fuchsia-500/20 to-transparent p-1 rounded-3xl">
-                <div className="bg-[#08090D] h-full w-full rounded-[23px] p-10 border border-white/5 flex flex-col items-center text-center justify-center">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Investimento Diário</div>
-                  <div className="text-6xl font-serif text-white tracking-tight">{money(stats.daily, stats.sym)}</div>
+              <div className="bg-gradient-to-bl from-fuchsia-500/20 to-transparent p-1 rounded-3xl group relative">
+                <div className="bg-[#08090D] h-full w-full rounded-[23px] p-10 border border-white/5 flex flex-col items-center text-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-fuchsia-500/0 group-hover:bg-fuchsia-500/5 transition-colors duration-500" />
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4 relative z-10">Investimento Diário</div>
+                  <div className="text-6xl font-serif text-white tracking-tight relative z-10 group-hover:-translate-y-2 transition-transform duration-300">{money(stats.daily, stats.sym)}</div>
+                  <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 bottom-6 text-[9px] text-fuchsia-400 font-mono tracking-[0.2em] uppercase text-center w-full">
+                    ≅ {Math.floor(stats.daily / (stats.kpiVal || 10))} Cliq. Qualificados
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -360,44 +365,9 @@ export default function AdPlanView() {
             </motion.div>
 
             <div className="w-full max-w-4xl relative py-12">
-              {/* Connecting Line */}
-              <div className="absolute top-1/2 left-0 w-full h-1 bg-white/5 -translate-y-1/2 rounded-full hidden md:block" />
-              
-              {/* Light Ball Animation */}
-              <motion.div 
-                className="absolute top-1/2 left-0 w-24 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent -translate-y-1/2 rounded-full hidden md:block shadow-[0_0_20px_rgba(99,102,241,0.8)]"
-                animate={{ left: ['0%', '100%'] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              />
+              <SmartFlow flowString={plan?.conversion?.flow || "Google Search -> Landing Page -> Compra"} />
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10 w-full">
-                <FlowNode 
-                  step="1" 
-                  title="Atração" 
-                  desc={Object.keys(plan?.mediums || {}).filter(k => plan.mediums[k]).join(' & ') || "Multi-Channel Ads"} 
-                  icon={Network} 
-                />
-                <FlowNode 
-                  step="2" 
-                  title="Engajamento" 
-                  desc={plan?.creative?.landing_page?.split('//')[1] || "Landing Page Premium"} 
-                  icon={Laptop} 
-                />
-                <FlowNode 
-                  step="3" 
-                  title="Decisão" 
-                  desc={plan?.conversion?.goal || "Conversão Direta"} 
-                  icon={MousePointer2} 
-                />
-                <FlowNode 
-                  step="4" 
-                  title="Resultado" 
-                  desc={plan?.target_kpi?.type === 'ROAS' ? 'Faturamento & Escala' : 'Lead Qualificado'} 
-                  icon={ShieldCheck} 
-                />
-              </div>
-
-              <motion.p className="text-sm text-slate-500 font-mono mt-12 bg-white/5 py-3 px-6 rounded-full border border-white/10">
+              <motion.p className="text-sm text-slate-500 font-mono mt-20 bg-white/5 py-3 px-6 rounded-full border border-white/10">
                 Logística do Funil: {plan?.conversion?.flow || "Tráfego Direto → Conversão"}
               </motion.p>
             </div>
@@ -489,6 +459,66 @@ function GlassCard({ children, className }) {
   return (
     <div className={cn("bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm", className)}>
       {children}
+    </div>
+  );
+}
+
+const iconMap = {
+  search: Search,
+  google: Search,
+  ads: MousePointer2,
+  click: MousePointer2,
+  lp: Globe,
+  site: Globe,
+  whatsapp: MessageSquare,
+  contato: MessageSquare,
+  venda: ShoppingCart,
+  compra: CheckCircle2,
+  obrigado: CheckCircle2,
+  instagram: Share2,
+  meta: Share2,
+};
+
+export function SmartFlow({ flowString }) {
+  const steps = flowString?.split(/->|→/).map(s => s.trim()) || [];
+
+  return (
+    <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0 w-full py-12">
+      {steps.map((step, i) => {
+        const matchedKey = Object.keys(iconMap).find(k => step.toLowerCase().includes(k));
+        const Icon = matchedKey ? iconMap[matchedKey] : CheckCircle2;
+        const isLast = i === steps.length - 1;
+
+        return (
+          <div key={i} className="flex flex-col md:flex-row items-center flex-1 max-w-[200px]">
+            {/* Node */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.2 }}
+              className="relative group z-10"
+            >
+              <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl bg-[#08090D] border border-white/10 flex items-center justify-center backdrop-blur-xl group-hover:border-indigo-500/50 transition-colors duration-500 shadow-xl">
+                <Icon className="h-6 w-6 md:h-8 md:w-8 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
+              </div>
+              <p className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">
+                {step}
+              </p>
+            </motion.div>
+
+            {/* Connector (Liquid Line) */}
+            {!isLast && (
+              <div className="h-12 w-1 md:h-1 md:w-full bg-white/5 relative overflow-hidden my-4 md:my-0 -z-0 rounded-full">
+                <motion.div 
+                  className="absolute top-0 left-0 h-full w-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50"
+                  animate={{ left: ['-100%', '100%'] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
