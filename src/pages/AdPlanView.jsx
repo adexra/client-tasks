@@ -361,7 +361,7 @@ export default function AdPlanView() {
                   />
                   <div className="text-center">
                     <div className="text-3xl font-serif text-white">{plan.audience?.age?.split('-')[0] || '25'}+</div>
-                    <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Target Age</div>
+                    <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Idade Alvo</div>
                   </div>
                 </div>
               </div>
@@ -442,7 +442,11 @@ export default function AdPlanView() {
 
                       <div className="space-y-6 flex-1">
                         <div>
-                          <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] mb-1">Objetivo</div>
+                          <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] mb-1">Tipo de Campanha</div>
+                          <div className="text-sm text-white font-bold">{s.campaign_type || 'Campanha Padrão'}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-[0.2em] mb-1">Objetivo</div>
                           <div className="text-sm text-white">{s.objective || s.focus || 'Padrão'}</div>
                         </div>
                         <div>
@@ -450,8 +454,8 @@ export default function AdPlanView() {
                           <div className="text-sm text-white">{s.creative_type || 'Múltiplos Formatos'}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-[0.2em] mb-1">Conversão</div>
-                          <div className="text-sm text-white font-bold">{s.conversion_action || 'Ação'}</div>
+                          <div className="text-[10px] font-bold text-amber-400 uppercase tracking-[0.2em] mb-1">Conversão</div>
+                          <div className="text-sm text-white">{s.conversion_action || 'Ação'}</div>
                         </div>
                       </div>
                     </GlassCard>
@@ -590,42 +594,44 @@ export function SmartFlow({ flowString }) {
   const steps = flowString?.split(/->|→/).map(s => s.trim()) || [];
 
   return (
-    <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0 w-full py-12">
-      {steps.map((step, i) => {
-        const matchedKey = Object.keys(iconMap).find(k => step.toLowerCase().includes(k));
-        const Icon = matchedKey ? iconMap[matchedKey] : CheckCircle2;
-        const isLast = i === steps.length - 1;
+    <div className="w-full overflow-x-auto pb-16 pt-4 hide-scrollbar snap-x flex justify-start md:justify-center">
+      <div className="flex items-center min-w-max px-8">
+        {steps.map((step, i) => {
+          const matchedKey = Object.keys(iconMap).find(k => step.toLowerCase().includes(k));
+          const Icon = matchedKey ? iconMap[matchedKey] : CheckCircle2;
+          const isLast = i === steps.length - 1;
 
-        return (
-          <div key={i} className="flex flex-col md:flex-row items-center flex-1 max-w-[200px]">
-            {/* Node */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.2 }}
-              className="relative group z-10"
-            >
-              <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl bg-[#08090D] border border-white/10 flex items-center justify-center backdrop-blur-xl group-hover:border-indigo-500/50 transition-colors duration-500 shadow-xl">
-                <Icon className="h-6 w-6 md:h-8 md:w-8 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
-              </div>
-              <p className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">
-                {step}
-              </p>
-            </motion.div>
+          return (
+            <div key={i} className="flex items-center snap-center">
+              {/* Node */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.1 }}
+                className="relative group z-10 flex flex-col items-center"
+              >
+                <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl bg-[#08090D] border border-white/10 flex items-center justify-center backdrop-blur-xl group-hover:border-indigo-500/50 transition-colors duration-500 shadow-xl">
+                  <Icon className="h-6 w-6 md:h-8 md:w-8 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
+                </div>
+                <p className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center w-32 leading-tight">
+                  {step}
+                </p>
+              </motion.div>
 
-            {/* Connector (Liquid Line) */}
-            {!isLast && (
-              <div className="h-12 w-1 md:h-1 md:w-full bg-white/5 relative overflow-hidden my-4 md:my-0 -z-0 rounded-full">
-                <motion.div 
-                  className="absolute top-0 left-0 h-full w-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50"
-                  animate={{ left: ['-100%', '100%'] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                />
-              </div>
-            )}
-          </div>
-        );
-      })}
+              {/* Connector (Liquid Line) */}
+              {!isLast && (
+                <div className="h-1 w-8 md:w-16 bg-white/5 relative overflow-hidden mx-2 md:mx-4 -z-0 rounded-full">
+                  <motion.div 
+                    className="absolute top-0 left-0 h-full w-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50"
+                    animate={{ left: ['-100%', '100%'] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -154,7 +154,7 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
             </div>
           </div>
           
-          <F label="Active Mediums">
+          <F label="Canais Ativos">
             <div className="flex flex-wrap gap-2 mt-1">
               {PLATFORMS.map(p => {
                 const active = s.platforms?.[p.key];
@@ -175,21 +175,22 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
               })}
             </div>
           </F>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <F label="Objetivo da Etapa"><input value={s.objective || ''} onChange={e => onFieldChange('objective', e.target.value)} className={ic} placeholder="Ex: Reconhecimento, Captura..." /></F>
+            <F label="Tipo de Campanha"><input value={s.campaign_type || ''} onChange={e => onFieldChange('campaign_type', e.target.value)} className={ic} placeholder="Ex: Pesquisa, Display, Engajamento..." /></F>
             <F label="Tipo de Criativo"><input value={s.creative_type || ''} onChange={e => onFieldChange('creative_type', e.target.value)} className={ic} placeholder="Ex: Vídeo Reels, Banner Estático..." /></F>
             <F label="Ação de Conversão"><input value={s.conversion_action || ''} onChange={e => onFieldChange('conversion_action', e.target.value)} className={ic} placeholder="Ex: Clique no Link, Compra..." /></F>
           </div>
 
           {stage === 'tofu' && <>
-            <F label="Audience Definition"><input value={s.audience} onChange={e => onFieldChange('audience', e.target.value)} className={ic} placeholder="Demographics, interests, lookalikes..." /></F>
-            <F label="Keywords / Search Terms"><textarea value={s.keywords} onChange={e => onFieldChange('keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Brand terms, informational queries..." /></F>
+            <F label="Definição de Público"><input value={s.audience} onChange={e => onFieldChange('audience', e.target.value)} className={ic} placeholder="Demografia, interesses, lookalikes..." /></F>
+            <F label="Palavras-chave / Termos"><textarea value={s.keywords} onChange={e => onFieldChange('keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Termos de marca, buscas informativas..." /></F>
           </>}
           {stage === 'mofu' && <>
-            <F label="Remarketing Logic"><textarea value={s.remarketing_logic} onChange={e => onFieldChange('remarketing_logic', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="e.g. Visited landing page but did not convert..." /></F>
+            <F label="Lógica de Remarketing"><textarea value={s.remarketing_logic} onChange={e => onFieldChange('remarketing_logic', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Ex: Visitou a página mas não comprou..." /></F>
           </>}
           {stage === 'bofu' && <>
-            <F label="High-Intent Keywords"><textarea value={s.keywords} onChange={e => onFieldChange('keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Buy now, best price, hire now, compare..." /></F>
+            <F label="Palavras-chave de Alta Intenção"><textarea value={s.keywords} onChange={e => onFieldChange('keywords', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="Comprar agora, melhor preço, contratar..." /></F>
           </>}
         </div>
       )}
@@ -204,9 +205,9 @@ const DEFAULT = {
   keywords: { primary: '', secondary: '', negative: '' },
   market_data: { potential_volume: 50000 },
   funnel: {
-    tofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Brand Awareness / Traffic', audience: '', keywords: '', budget_pct: 40, objective: 'Descoberta', creative_type: 'Vídeos / Reels', conversion_action: 'Visualização / Clique' },
-    mofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Consideration / Engagement', remarketing_logic: '', budget_pct: 30, objective: 'Retenção / Consideração', creative_type: 'Carrossel / Depoimentos', conversion_action: 'Visita à Landing Page' },
-    bofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Direct Response / Conversion', conversion_flow: '', keywords: '', budget_pct: 30, objective: 'Conversão Direta', creative_type: 'Oferta / Escassez', conversion_action: 'Compra / Lead' },
+    tofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Brand Awareness / Traffic', audience: '', keywords: '', budget_pct: 40, objective: 'Descoberta', creative_type: 'Vídeos / Reels', conversion_action: 'Visualização / Clique', campaign_type: 'Display / Social' },
+    mofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Consideration / Engagement', remarketing_logic: '', budget_pct: 30, objective: 'Retenção / Consideração', creative_type: 'Carrossel / Depoimentos', conversion_action: 'Visita à Landing Page', campaign_type: 'Remarketing' },
+    bofu: { enabled: true, locked: false, platforms: { google: true, meta: true, tiktok: false, linkedin: false }, focus: 'Direct Response / Conversion', conversion_flow: '', keywords: '', budget_pct: 30, objective: 'Conversão Direta', creative_type: 'Oferta / Escassez', conversion_action: 'Compra / Lead', campaign_type: 'Pesquisa / Shopping' },
   },
   conversion: { goal: 'Lead', flow: '', attribution: 'Data-Driven', tracking: 'GA4 + GTM' },
   audience: { age: '', gender: 'All', location: '', interests: '', devices: 'All Devices', potential_volume: 50000 },
@@ -449,7 +450,7 @@ export default function AdPlanning() {
                     {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </F>
-                <F label="Total Budget">
+                <F label="Orçamento Total">
                   <div className="flex gap-2">
                     <select value={form.currency} onChange={e => set('currency', e.target.value)} className="bg-white border border-neutral-200 rounded-xl px-3 py-3 text-[10px] font-bold uppercase focus:outline-none w-24 cursor-pointer">
                       {['BRL', 'USD', 'EUR'].map(c => <option key={c}>{c}</option>)}
@@ -457,18 +458,18 @@ export default function AdPlanning() {
                     <input type="number" value={form.total_budget} onChange={e => set('total_budget', e.target.value)} className={ic} placeholder="5000.00" />
                   </div>
                 </F>
-                <F label="Campaign Duration (Days)">
+                <F label="Duração da Campanha (Dias)">
                   <input type="number" min={1} value={form.days} onChange={e => set('days', e.target.value)} className={ic} placeholder="30" />
                 </F>
-                <F label="Start Date">
+                <F label="Data de Início">
                   <input type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} className={ic} />
                 </F>
-                <F label="Target KPI">
+                <F label="KPI Alvo">
                   <div className="flex gap-2">
                     <select value={form.target_kpi.type} onChange={e => set('target_kpi.type', e.target.value)} className="bg-white border border-neutral-200 rounded-xl px-3 py-3 text-[10px] font-bold uppercase focus:outline-none w-32 cursor-pointer">
                       {['CPA', 'ROAS', 'Leads', 'CPL'].map(t => <option key={t}>{t}</option>)}
                     </select>
-                    <input type="number" value={form.target_kpi.value} onChange={e => set('target_kpi.value', e.target.value)} className={ic} placeholder={form.target_kpi.type === 'ROAS' ? 'e.g. 4' : 'e.g. 50'} />
+                    <input type="number" value={form.target_kpi.value} onChange={e => set('target_kpi.value', e.target.value)} className={ic} placeholder={form.target_kpi.type === 'ROAS' ? 'Ex: 4' : 'Ex: 50'} />
                   </div>
                 </F>
                 <F label="Volume de Pesquisa Mensal (Estimado)">
@@ -480,9 +481,9 @@ export default function AdPlanning() {
             {/* A2: Advertising Mediums */}
             <div className="surface-card p-8 space-y-5">
               <div>
-                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Section A2</p>
-                <h3 className="text-xl font-serif text-ink-primary mt-1">Advertising Mediums</h3>
-                <p className="text-xs text-neutral-400 mt-1">Select every platform this campaign will run on.</p>
+                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Seção A2</p>
+                <h3 className="text-xl font-serif text-ink-primary mt-1">Canais de Mídia</h3>
+                <p className="text-xs text-neutral-400 mt-1">Selecione todas as plataformas onde a campanha será veiculada.</p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {PLATFORMS.map(p => {
@@ -511,12 +512,12 @@ export default function AdPlanning() {
             {/* A3: Keywords */}
             <div className="surface-card p-8 space-y-6">
               <div>
-                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Section A3</p>
-                <h3 className="text-xl font-serif text-ink-primary mt-1">Campaign Keywords</h3>
-                <p className="text-xs text-neutral-400 mt-1">One keyword per line, or comma-separated.</p>
+                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Seção A3</p>
+                <h3 className="text-xl font-serif text-ink-primary mt-1">Palavras-chave da Campanha</h3>
+                <p className="text-xs text-neutral-400 mt-1">Uma palavra-chave por linha, ou separada por vírgula.</p>
               </div>
               <div className="space-y-5">
-                <F label="🎯 Primary Keywords — High intent, high bid">
+                <F label="🎯 Palavras-chave Principais — Alta intenção, lance alto">
                   <textarea
                     value={form.keywords.primary}
                     onChange={e => set('keywords.primary', e.target.value)}
