@@ -14,6 +14,11 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, 
 const SYM = { BRL: 'R$', USD: '$', EUR: '€' };
 const money = (n, sym) => `${sym} ${(parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 
+const parseKeywords = (kwString) => {
+  if (!kwString) return [];
+  return kwString.split(/[\n,]+/).map(k => k.trim()).filter(k => k !== "");
+};
+
 const COLORS = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6'];
 
 export default function AdPlanView() {
@@ -94,6 +99,9 @@ export default function AdPlanView() {
       { name: 'Semana 4', atual: vol * 0.40, potencial: vol },
     ];
   }, [plan]);
+
+  const primaryKeywords = parseKeywords(plan?.keywords?.primary || plan?.funnel?.bofu?.keywords);
+  const secondaryKeywords = parseKeywords(plan?.keywords?.secondary || plan?.funnel?.tofu?.keywords);
 
   if (loading) return (
     <div className="min-h-screen bg-[#08090D] flex items-center justify-center">
@@ -203,13 +211,21 @@ export default function AdPlanView() {
               
               <div className="mt-8 space-y-4">
                 <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/10 pb-2">Top Keywords Estratégicas</div>
-                <div className="flex flex-wrap gap-3">
-                  {(plan.keywords?.primary || 'Alta Conversão, Fundo de Funil').split(/[\n,]+/).slice(0,6).map((kw, i) => (
-                    kw.trim() && (
-                      <span key={i} className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-slate-300 font-medium">
-                        {kw.trim()}
-                      </span>
-                    )
+                <div className="flex flex-wrap gap-2">
+                  {primaryKeywords.map((kw, i) => (
+                    <motion.span 
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-xs font-bold text-indigo-400 uppercase tracking-widest"
+                    >
+                      {kw}
+                    </motion.span>
+                  ))}
+                  {secondaryKeywords.slice(0, 5).map((kw, i) => (
+                    <span key={i} className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-slate-500">
+                      {kw}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -354,12 +370,36 @@ export default function AdPlanView() {
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10">
-                <FlowNode step="1" title="Origem" desc={Object.keys(plan?.mediums || {}).filter(k => plan.mediums[k]).join(' + ') || 'Ads'} icon={Network} />
-                <FlowNode step="2" title="Destino" desc={plan?.creative?.landing_page?.replace('https://', '') || 'Landing Page'} icon={Laptop} />
-                <FlowNode step="3" title="Ação" desc={plan?.conversion?.goal || 'Lead / Conversão'} icon={MousePointer2} />
-                <FlowNode step="4" title="Resultado" desc="Venda / ROI" icon={ShieldCheck} />
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10 w-full">
+                <FlowNode 
+                  step="1" 
+                  title="Atração" 
+                  desc={Object.keys(plan?.mediums || {}).filter(k => plan.mediums[k]).join(' & ') || "Multi-Channel Ads"} 
+                  icon={Network} 
+                />
+                <FlowNode 
+                  step="2" 
+                  title="Engajamento" 
+                  desc={plan?.creative?.landing_page?.split('//')[1] || "Landing Page Premium"} 
+                  icon={Laptop} 
+                />
+                <FlowNode 
+                  step="3" 
+                  title="Decisão" 
+                  desc={plan?.conversion?.goal || "Conversão Direta"} 
+                  icon={MousePointer2} 
+                />
+                <FlowNode 
+                  step="4" 
+                  title="Resultado" 
+                  desc={plan?.target_kpi?.type === 'ROAS' ? 'Faturamento & Escala' : 'Lead Qualificado'} 
+                  icon={ShieldCheck} 
+                />
               </div>
+
+              <motion.p className="text-sm text-slate-500 font-mono mt-12 bg-white/5 py-3 px-6 rounded-full border border-white/10">
+                Logística do Funil: {plan?.conversion?.flow || "Tráfego Direto → Conversão"}
+              </motion.p>
             </div>
           </div>
         </SectionContainer>
