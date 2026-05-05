@@ -1,21 +1,29 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { 
   ChevronLeft, Target, Globe, Search, ArrowRight, 
-  MessageSquare, MousePointer2, ShieldCheck, Zap,
-  TrendingUp, Calendar, Wallet, Database, Fingerprint, RefreshCcw, Network
+  MousePointer2, ShieldCheck, Zap,
+  TrendingUp, Calendar, Wallet, Database, Fingerprint, RefreshCcw, Network,
+  Crosshair, Users, Activity, BarChart, Smartphone, Laptop
 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const SYM = { BRL: 'R$', USD: '$', EUR: '€' };
+const money = (n, sym) => `${sym} ${(parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+
+const COLORS = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6'];
 
 export default function AdPlanView() {
   const { id } = useParams();
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeSection, setActiveSection] = useState(0);
+
+  const containerRef = useRef(null);
 
   useEffect(() => {
     supabase.from('ad_plans')
@@ -30,14 +38,39 @@ export default function AdPlanView() {
       });
   }, [id]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const { scrollTop, clientHeight } = containerRef.current;
+      const index = Math.round(scrollTop / clientHeight);
+      setActiveSection(index);
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, [loading]);
+
+  const scrollTo = (index) => {
+    if (containerRef.current) {
+      containerRef.current.scrollTo({
+        top: index * window.innerHeight,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   const stats = useMemo(() => {
     if (!plan) return null;
     const budget = parseFloat(plan.total_budget) || 0;
+    const days = parseInt(plan.days) || 30;
+    const daily = budget / days;
     const kpiVal = parseFloat(plan.target_kpi?.value) || 0;
     const type = plan.target_kpi?.type || 'CPA';
     const sym = SYM[plan.currency] || 'R$';
     
-    // Cálculo de volume baseado na última etapa do funil (Decisão)
     const bofuPct = plan.funnel?.bofu?.budget_pct || 100;
     const focusBudget = budget * (bofuPct / 100);
     
@@ -49,304 +82,395 @@ export default function AdPlanView() {
         projection = `${sym} ${(focusBudget * kpiVal).toLocaleString('pt-BR')}`;
       }
     }
-    return { budget, sym, projection, type };
+    return { budget, daily, days, sym, projection, type, kpiVal };
   }, [plan]);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+    <div className="min-h-screen bg-[#08090D] flex items-center justify-center">
       <div className="h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   if (error) return (
-    <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center p-6 text-white">
-      <h2 className="text-3xl font-serif mb-6">{error}</h2>
-      <Link to="/ad-planning" className="px-6 py-3 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-all">
-        Voltar ao Painel
+    <div className="min-h-screen bg-[#08090D] flex flex-col items-center justify-center p-6 text-white">
+      <h2 className="text-3xl font-serif mb-6 text-center">{error}</h2>
+      <Link to="/ad-planning" className="px-8 py-4 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-all font-medium text-sm tracking-wider uppercase">
+        Voltar
       </Link>
     </div>
   );
 
+  const sections = [
+    'Visão Geral', 'Mercado', 'Investimento', 'Metas', 'Audiência', 'Fluxo', 'Alocação'
+  ];
+
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-300 font-sans selection:bg-indigo-500/30">
+    <div className="bg-[#08090D] text-slate-300 font-sans selection:bg-indigo-500/30 overflow-hidden h-screen w-full">
       
-      {/* Navigation - Minimalist & Fixed */}
-      <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#020617]/80 backdrop-blur-md px-8 h-20 flex items-center justify-between">
-        <Link to="/ad-planning" className="flex items-center gap-2 group text-slate-500 hover:text-white transition-colors">
-          <ChevronLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-xs font-bold uppercase tracking-[0.2em]">Dashboard</span>
-        </Link>
-        <div className="text-lg font-serif italic text-white tracking-widest">ADEXRA <span className="text-indigo-500">.</span></div>
-        <div className="flex gap-6">
-          <div className="h-10 w-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 cursor-pointer transition-all">
-            <Zap className="h-4 w-4 text-indigo-400" />
-          </div>
+      {/* 0. Header & Navegação */}
+      <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#08090D]/60 backdrop-blur-xl px-6 md:px-12 h-20 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="text-xl font-serif italic text-white tracking-widest">ADEXRA<span className="text-indigo-500">.</span></div>
+        </div>
+        
+        <div className="hidden md:flex items-center gap-6">
+          {sections.map((sec, i) => (
+            <button 
+              key={i} 
+              onClick={() => scrollTo(i)}
+              className={cn(
+                "text-[10px] uppercase font-bold tracking-widest transition-all",
+                activeSection === i ? "text-indigo-400" : "text-slate-500 hover:text-slate-300"
+              )}
+            >
+              {sec}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-4">
+           <span className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[10px] font-bold uppercase tracking-[0.2em] hidden sm:block">
+            Project: {plan.clients?.name || plan.name}
+          </span>
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-8 pt-40 pb-32">
+      {/* Main Content - Scroll Snapping Container */}
+      <main 
+        ref={containerRef}
+        className="h-screen w-full overflow-y-auto snap-y snap-mandatory scroll-smooth hide-scrollbar"
+      >
         
-        {/* Header - The Narrative */}
-        <header className="mb-24">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center text-center space-y-6"
-          >
-            <span className="px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">
-              Ecossistema de Receita
-            </span>
-            <h1 className="text-5xl md:text-7xl font-serif text-white tracking-tight leading-tight max-w-4xl">
-              Dominando a jornada de <span className="italic text-indigo-400">{plan.clients?.name || plan.name}</span>
-            </h1>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5 border border-white/10 rounded-[2rem] mt-16 overflow-hidden">
-            <StatBlock icon={Wallet} label="Investimento Planejado" value={`${stats.sym} ${stats.budget.toLocaleString('pt-BR')}`} />
-            <StatBlock icon={Target} label={`Meta de ${stats.type === 'Leads' ? 'Aquisição' : stats.type}`} value={`${stats.type === 'CPA' ? stats.sym : ''} ${plan.target_kpi?.value || 0}${stats.type === 'ROAS' ? 'x' : ''}`} />
-            <StatBlock icon={TrendingUp} label="Volume Estimado" value={stats.projection} />
+        {/* 1. Hero (Welcome & Intro) */}
+        <SectionContainer>
+          <div className="absolute inset-0 z-0 opacity-30">
+            <div className="absolute top-[20%] left-[20%] w-[40vw] h-[40vw] bg-indigo-600/30 blur-[120px] rounded-full mix-blend-screen animate-pulse-slow" />
+            <div className="absolute bottom-[20%] right-[20%] w-[30vw] h-[30vw] bg-fuchsia-600/20 blur-[100px] rounded-full mix-blend-screen" />
           </div>
-        </header>
+          <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center text-center space-y-12">
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }}>
+              <span className="inline-block mb-6 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">
+                Roadmap Estratégico
+              </span>
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white tracking-tight leading-[1.1] max-w-4xl">
+                Bem-vindo ao seu <br />
+                <span className="italic text-indigo-400">Planejamento</span>.
+              </h1>
+              <p className="mt-8 text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-light">
+                Este é o mapa do tesouro para os próximos {stats.days} dias. Uma operação desenhada para capturar demanda e gerar lucro com precisão cirúrgica.
+              </p>
+            </motion.div>
+            
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+              <GlassCard>
+                <Wallet className="h-5 w-5 text-indigo-500 mb-4" />
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Investimento Total</div>
+                <div className="text-3xl font-serif text-white">{money(stats.budget, stats.sym)}</div>
+              </GlassCard>
+              <GlassCard>
+                <Target className="h-5 w-5 text-fuchsia-500 mb-4" />
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Meta {stats.type}</div>
+                <div className="text-3xl font-serif text-white">{stats.type === 'CPA' ? stats.sym : ''} {stats.kpiVal}{stats.type === 'ROAS' ? 'x' : ''}</div>
+              </GlassCard>
+              <GlassCard>
+                <TrendingUp className="h-5 w-5 text-emerald-500 mb-4" />
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Volume Projetado</div>
+                <div className="text-3xl font-serif text-white">{stats.projection}</div>
+              </GlassCard>
+            </motion.div>
+          </div>
+        </SectionContainer>
 
-        {/* The Strategy Breakdown - Visual & Tangible */}
-        <section className="space-y-32">
-          
-          {/* Phase 1: Awareness */}
-          {plan.funnel?.tofu?.enabled && (
-            <JourneyPhase 
-              title="1. Descoberta & Alcance"
-              subtitle="Onde criamos o primeiro impacto e capturamos a atenção."
-              description="Focamos em audiências que estão na fase inicial de busca, interceptando a demanda com posicionamento premium."
-              budget={`${stats.sym} ${(stats.budget * plan.funnel.tofu.budget_pct / 100).toLocaleString('pt-BR')}`}
-              pct={plan.funnel.tofu.budget_pct}
-            >
-              {/* Ad/Campaign Representation Block */}
-              <div className="w-full bg-slate-900/50 rounded-[2rem] border border-white/10 p-8 relative overflow-hidden group">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                    <Globe className="h-5 w-5 text-indigo-400" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-sm font-bold text-white tracking-widest uppercase">Aquisição Ativa</div>
-                    <div className="text-xs text-slate-500">Google / Meta / LinkedIn</div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  {(plan.funnel.tofu.keywords || plan.funnel.tofu.audience)?.split(/[,|\n]+/).filter(Boolean).slice(0, 4).map((kw, i) => (
-                    <div key={i} className="px-4 py-3 bg-slate-800/50 border border-white/5 rounded-xl flex items-center justify-between">
-                      <span className="text-sm text-slate-300">{kw.trim()}</span>
-                      <Search className="h-4 w-4 text-slate-600" />
-                    </div>
+        {/* 2. Oportunidade de Mercado */}
+        <SectionContainer>
+          <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="space-y-6">
+              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">Oceano Azul</span>
+              <h2 className="text-4xl md:text-5xl font-serif text-white leading-tight">O tamanho real da sua <span className="italic text-indigo-400">oportunidade</span>.</h2>
+              <p className="text-slate-400 text-lg leading-relaxed font-light">
+                Baseado no seu perfil, mapeamos a intenção de busca. O gráfico ilustra a demanda latente pronta para ser convertida.
+              </p>
+              
+              <div className="mt-8 space-y-4">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/10 pb-2">Top Keywords Estratégicas</div>
+                <div className="flex flex-wrap gap-3">
+                  {(plan.keywords?.primary || 'Alta Conversão, Fundo de Funil').split(/[\n,]+/).slice(0,6).map((kw, i) => (
+                    kw.trim() && (
+                      <span key={i} className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-slate-300 font-medium">
+                        {kw.trim()}
+                      </span>
+                    )
                   ))}
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#020617] to-transparent opacity-0 group-hover:opacity-10 transition-opacity" />
               </div>
-            </JourneyPhase>
-          )}
-
-          {/* Phase 2: Intent -> Safety Net & Drop-off */}
-          {plan.funnel?.mofu?.enabled && (
-            <JourneyPhase 
-              title="2. Filtro & Retenção"
-              subtitle="A rede de segurança que impede a evasão de lucro."
-              description="A maioria das campanhas perde leads aqui. Nós implementamos um protocolo de resgate contínuo para quem acessou mas não converteu."
-              budget={`${stats.sym} ${(stats.budget * plan.funnel.mofu.budget_pct / 100).toLocaleString('pt-BR')}`}
-              pct={plan.funnel.mofu.budget_pct}
-              reverse
-            >
-              {/* Drop-off & Rescue Diagram */}
-              <div className="bg-slate-900/30 border border-white/5 rounded-[2rem] p-8 relative">
-                
-                <div className="flex justify-between items-center bg-slate-800/50 rounded-2xl p-4 border border-white/10 relative z-10">
-                  <div className="text-center px-4">
-                    <MousePointer2 className="h-5 w-5 text-slate-400 mx-auto mb-2" />
-                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Tráfego Frio</span>
-                  </div>
-                  <ArrowRight className="text-slate-600" />
-                  <div className="text-center px-4">
-                    <Globe className="h-5 w-5 text-indigo-400 mx-auto mb-2" />
-                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Sua Página</span>
-                  </div>
-                </div>
-
-                {/* Drop-off path */}
-                <div className="flex justify-center mt-2 relative z-0">
-                  <div className="h-12 border-r-2 border-dashed border-rose-500/30" />
-                </div>
-                
-                <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-4 text-center mx-auto max-w-[200px] mb-2 relative z-10">
-                  <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">Leads Evadidos (Drop-off)</span>
-                </div>
-
-                {/* Rescue Path */}
-                <div className="flex justify-between items-start mt-4 px-4 relative z-10">
-                  <div className="flex-1 flex justify-center -mt-6">
-                     <div className="w-full h-16 border-l-2 border-b-2 border-indigo-500/40 rounded-bl-[2rem]" />
-                  </div>
-                  <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-2xl p-6 w-[240px] text-center shadow-[0_0_30px_rgba(99,102,241,0.15)] backdrop-blur-md relative z-20">
-                    <RefreshCcw className="h-6 w-6 text-indigo-400 mx-auto mb-3" />
-                    <span className="text-xs font-bold text-white uppercase tracking-widest block mb-2">Protocolo de Recuperação</span>
-                    <span className="text-[10px] text-indigo-300 italic">Remarketing Automático</span>
-                  </div>
-                </div>
-
-              </div>
-            </JourneyPhase>
-          )}
-
-          {/* Phase 3: Conversion */}
-          {plan.funnel?.bofu?.enabled && (
-            <JourneyPhase 
-              title="3. Decisão & Fechamento"
-              subtitle="Capturando a demanda pronta para comprar."
-              description="O estágio final onde convertemos a intenção validada em reuniões ou vendas diretas através de alta performance."
-              budget={`${stats.sym} ${(stats.budget * plan.funnel.bofu.budget_pct / 100).toLocaleString('pt-BR')}`}
-              pct={plan.funnel.bofu.budget_pct}
-            >
-              <div className="bg-slate-900/50 border border-white/10 rounded-[2rem] p-8 space-y-6">
-                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 tracking-widest uppercase">
-                  <Target className="h-3 w-3 text-indigo-400" /> Fluxo de Conversão
-                </div>
-                
-                <div className="bg-slate-800/40 rounded-xl p-4 border border-white/5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white uppercase tracking-widest">Volume de Alta Intenção</span>
-                    <TrendingUp className="h-4 w-4 text-indigo-400" />
-                  </div>
-                  <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden">
-                    <motion.div initial={{width: 0}} whileInView={{width: '100%'}} transition={{duration: 1.5}} className="h-full bg-gradient-to-r from-indigo-500 to-indigo-300" />
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-white/5 flex justify-between items-center">
-                   <div className="flex items-center gap-2">
-                     <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                     <span className="text-xs font-bold text-white uppercase tracking-widest">Conversão Segura</span>
-                   </div>
-                   <div className="px-4 py-2 bg-indigo-500 rounded-xl text-xs font-bold text-white shadow-[0_0_20px_rgba(99,102,241,0.4)]">ACIONAR VENDA</div>
-                </div>
-              </div>
-            </JourneyPhase>
-          )}
-
-        </section>
-
-        {/* Infraestrutura Invisível (Tracking) */}
-        <section className="mt-40 pt-20 border-t border-white/10">
-          <div className="text-center mb-16">
-            <span className="px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-6 inline-block">
-              Governança Técnica
-            </span>
-            <h2 className="text-4xl md:text-5xl font-serif text-white tracking-tight">
-              Inteligência de Rastreamento
-            </h2>
-            <p className="text-slate-400 mt-4 max-w-2xl mx-auto leading-relaxed">
-              Seu investimento não pode depender da sorte. Implementamos uma infraestrutura invisível que blinda os dados da sua operação contra AdBlockers e atualizações do iOS, garantindo que toda conversão seja computada e otimizada pelo algoritmo.
-            </p>
+            </motion.div>
+            
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="h-[400px] w-full bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-sm">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={[
+                    { name: 'Semana 1', atual: 400, potencial: 2400 },
+                    { name: 'Semana 2', atual: 800, potencial: 3200 },
+                    { name: 'Semana 3', atual: 1200, potencial: 4800 },
+                    { name: 'Semana 4', atual: 2100, potencial: 6400 },
+                  ]}>
+                  <defs>
+                    <linearGradient id="colorPotencial" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorAtual" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="#475569" fontSize={10} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }} />
+                  <Area type="monotone" dataKey="potencial" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorPotencial)" />
+                  <Area type="monotone" dataKey="atual" stroke="#ec4899" strokeWidth={2} fillOpacity={1} fill="url(#colorAtual)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </motion.div>
           </div>
+        </SectionContainer>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <TrackingBadge 
-              icon={Network} 
-              title="Server-Side Tracking" 
-              desc="Em vez de depender do navegador do usuário, o disparo da conversão acontece diretamente no nosso servidor em nuvem. Anti-bloqueio e resiliente." 
-            />
-            <TrackingBadge 
-              icon={Database} 
-              title="Conversions API (CAPI)" 
-              desc="Conexão de dados primários direta com a Meta e Google. Nós enviamos o dado de compra com qualidade máxima, alimentando a inteligência da plataforma." 
-            />
-            <TrackingBadge 
-              icon={Fingerprint} 
-              title="Identity Fingerprinting" 
-              desc="Mesmo sem cookies de terceiros, utilizamos parâmetros avançados (GCLID/FBCLID e hashed data) para identificar leads através de múltiplos dispositivos." 
-            />
+        {/* 3. Investimento & Projeções */}
+        <SectionContainer>
+          <div className="w-full max-w-5xl mx-auto space-y-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="text-center">
+              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">Financials</span>
+              <h2 className="text-4xl md:text-6xl font-serif text-white leading-tight mt-4">Combustível de <span className="italic text-indigo-400">Crescimento</span></h2>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-gradient-to-br from-indigo-500/20 to-transparent p-1 rounded-3xl">
+                <div className="bg-[#08090D] h-full w-full rounded-[23px] p-10 border border-white/5 flex flex-col items-center text-center justify-center">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Orçamento Mensal</div>
+                  <div className="text-6xl font-serif text-white tracking-tight">{money(stats.budget, stats.sym)}</div>
+                </div>
+              </div>
+              <div className="bg-gradient-to-bl from-fuchsia-500/20 to-transparent p-1 rounded-3xl">
+                <div className="bg-[#08090D] h-full w-full rounded-[23px] p-10 border border-white/5 flex flex-col items-center text-center justify-center">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Investimento Diário</div>
+                  <div className="text-6xl font-serif text-white tracking-tight">{money(stats.daily, stats.sym)}</div>
+                </div>
+              </div>
+            </motion.div>
           </div>
-        </section>
+        </SectionContainer>
+
+        {/* 4. Objetivos e KPIs */}
+        <SectionContainer>
+          <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-16 items-center">
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 space-y-6">
+              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">Indicadores</span>
+              <h2 className="text-4xl md:text-5xl font-serif text-white leading-tight">O que define o <span className="italic text-indigo-400">sucesso</span>?</h2>
+              <p className="text-slate-400 text-lg leading-relaxed font-light">
+                Não compramos cliques, compramos dados de conversão. Estes são os alvos que nosso algoritmo irá perseguir implacavelmente.
+              </p>
+            </motion.div>
+            
+            <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 w-full grid grid-cols-2 gap-4">
+              <GlassCard className="col-span-2">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="h-12 w-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                    <Crosshair className="h-6 w-6 text-indigo-400" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Alvo Principal</div>
+                    <div className="text-2xl font-serif text-white">{plan.conversion?.goal || 'Conversão'}</div>
+                  </div>
+                </div>
+                <div className="text-sm text-slate-400 font-mono bg-white/5 p-3 rounded-lg">Flow: {plan.conversion?.flow || 'Anúncio -> LP -> Ação'}</div>
+              </GlassCard>
+              
+              <GlassCard>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Meta de Custo</div>
+                <div className="text-3xl font-serif text-white">{stats.type === 'CPA' ? stats.sym : ''} {stats.kpiVal}</div>
+              </GlassCard>
+              
+              <GlassCard>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Modelo de Atribuição</div>
+                <div className="text-xl font-serif text-white pt-2">{plan.conversion?.attribution || 'Data-Driven'}</div>
+              </GlassCard>
+            </motion.div>
+          </div>
+        </SectionContainer>
+
+        {/* 5. Audiência e Geolocalização */}
+        <SectionContainer>
+          <div className="w-full max-w-6xl mx-auto flex flex-col-reverse lg:flex-row gap-16 items-center">
+            
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 w-full relative">
+              {/* Mock Map Premium */}
+              <div className="aspect-square w-full max-w-[500px] mx-auto rounded-full bg-slate-900 border border-white/10 relative overflow-hidden flex items-center justify-center shadow-2xl shadow-indigo-500/10">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+                <div className="w-[80%] h-[80%] border border-indigo-500/30 rounded-full flex items-center justify-center animate-[ping_4s_ease-out_infinite]"></div>
+                <div className="w-[50%] h-[50%] border border-indigo-500/50 rounded-full flex items-center justify-center animate-[ping_3s_ease-out_infinite]"></div>
+                <div className="w-4 h-4 bg-indigo-500 rounded-full shadow-[0_0_20px_rgba(99,102,241,1)] relative z-10"></div>
+                
+                {/* Decorative Grid */}
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+              </div>
+            </motion.div>
+            
+            <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 space-y-6">
+              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">Segmentação</span>
+              <h2 className="text-4xl md:text-5xl font-serif text-white leading-tight">Mapeamento de <span className="italic text-indigo-400">Território</span>.</h2>
+              <p className="text-slate-400 text-lg leading-relaxed font-light">
+                Definimos o perímetro exato e o perfil psicológico de quem verá a oferta.
+              </p>
+              
+              <div className="space-y-4 mt-8">
+                <AudienceRow icon={Globe} label="Geolocalização" value={plan.audience?.location || 'Nacional'} />
+                <AudienceRow icon={Users} label="Demografia" value={`${plan.audience?.age || '25-54'} · ${plan.audience?.gender || 'Todos'}`} />
+                <AudienceRow icon={Activity} label="Comportamento" value={plan.audience?.interests || 'Intenção de Compra Elevada'} />
+                <AudienceRow icon={Smartphone} label="Dispositivos" value={plan.audience?.devices || 'Mobile & Desktop'} />
+              </div>
+            </motion.div>
+          </div>
+        </SectionContainer>
+
+        {/* 6. Fluxo da Estratégia (Flowchart) */}
+        <SectionContainer>
+          <div className="w-full max-w-6xl mx-auto flex flex-col items-center text-center space-y-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }}>
+              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">A Jornada</span>
+              <h2 className="text-4xl md:text-5xl font-serif text-white leading-tight mt-4">Do clique ao <span className="italic text-indigo-400">lucro</span>.</h2>
+            </motion.div>
+
+            <div className="w-full max-w-4xl relative py-12">
+              {/* Connecting Line */}
+              <div className="absolute top-1/2 left-0 w-full h-1 bg-white/5 -translate-y-1/2 rounded-full hidden md:block" />
+              
+              {/* Light Ball Animation */}
+              <motion.div 
+                className="absolute top-1/2 left-0 w-24 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent -translate-y-1/2 rounded-full hidden md:block shadow-[0_0_20px_rgba(99,102,241,0.8)]"
+                animate={{ left: ['0%', '100%'] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10">
+                <FlowNode step="1" title="Origem" desc="Google / Meta Ads" icon={Network} />
+                <FlowNode step="2" title="Contato" desc="Landing Page" icon={Laptop} />
+                <FlowNode step="3" title="Ação" desc="Formulário / Lead" icon={MousePointer2} />
+                <FlowNode step="4" title="Conversão" desc="Venda / Reunião" icon={ShieldCheck} />
+              </div>
+            </div>
+          </div>
+        </SectionContainer>
+
+        {/* 7. Distribuição de Canais */}
+        <SectionContainer>
+          <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-16 items-center">
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 space-y-6">
+              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">Distribuição</span>
+              <h2 className="text-4xl md:text-5xl font-serif text-white leading-tight">Alocação de <span className="italic text-indigo-400">Recursos</span>.</h2>
+              <p className="text-slate-400 text-lg leading-relaxed font-light">
+                Como dividimos o orçamento para garantir que estamos cobrindo todas as fases do funil, desde a descoberta até o fechamento.
+              </p>
+
+              <div className="space-y-4 mt-8">
+                {['tofu', 'mofu', 'bofu'].map((stage, i) => {
+                  const s = plan.funnel?.[stage];
+                  if (!s?.enabled) return null;
+                  const labels = { tofu: 'Topo (Descoberta)', mofu: 'Meio (Retenção)', bofu: 'Fundo (Conversão)' };
+                  return (
+                    <div key={stage} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                        <span className="text-sm font-bold text-white uppercase tracking-widest">{labels[stage]}</span>
+                      </div>
+                      <span className="font-serif text-xl text-white">{s.budget_pct}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+            
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 w-full h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'TOFU', value: plan.funnel?.tofu?.budget_pct || 40 },
+                      { name: 'MOFU', value: plan.funnel?.mofu?.budget_pct || 30 },
+                      { name: 'BOFU', value: plan.funnel?.bofu?.budget_pct || 30 },
+                    ].filter(d => d.value > 0)}
+                    cx="50%" cy="50%"
+                    innerRadius={100}
+                    outerRadius={140}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {COLORS.map((color, index) => (
+                      <Cell key={`cell-${index}`} fill={color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </motion.div>
+          </div>
+        </SectionContainer>
+        
+        {/* Footer */}
+        <div className="snap-start w-full bg-[#040508] border-t border-white/5 py-12 flex flex-col items-center justify-center text-center px-6">
+          <div className="text-2xl font-serif italic text-white tracking-widest mb-6">ADEXRA<span className="text-indigo-500">.</span></div>
+          <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.4em]">
+            ESTRATÉGIA PROPRIETÁRIA © {new Date().getFullYear()}
+          </p>
+        </div>
 
       </main>
-
-      <footer className="py-20 border-t border-white/5 bg-black/40 text-center">
-        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.4em]">
-          ADEXRA ESTRATÉGIA PROPRIETÁRIA © 2026
-        </p>
-      </footer>
     </div>
   );
 }
 
-// Visual Helpers
+// Helper Components
 
-function StatBlock({ icon: Icon, label, value }) {
+function SectionContainer({ children }) {
   return (
-    <div className="p-10 flex flex-col items-center text-center group hover:bg-white/5 transition-colors">
-      <Icon className="h-5 w-5 text-indigo-500 mb-6 group-hover:scale-110 transition-transform" />
-      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">{label}</span>
-      <span className="text-3xl font-serif text-white">{value}</span>
+    <section className="h-screen w-full snap-start flex flex-col justify-center items-center px-6 md:px-12 relative">
+      {children}
+    </section>
+  );
+}
+
+function GlassCard({ children, className }) {
+  return (
+    <div className={cn("bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm", className)}>
+      {children}
     </div>
   );
 }
 
-function JourneyPhase({ title, subtitle, description, budget, pct, children, reverse = false }) {
+function AudienceRow({ icon: Icon, label, value }) {
   return (
-    <div className={cn(
-      "flex flex-col lg:flex-row gap-16 items-center",
-      reverse && "lg:flex-row-reverse"
-    )}>
-      <div className="flex-1 space-y-8">
-        <div className="space-y-4">
-          <h2 className="text-3xl md:text-4xl font-serif text-white">{title}</h2>
-          <p className="text-indigo-400 font-serif italic text-lg">{subtitle}</p>
-          <p className="text-slate-500 leading-relaxed text-sm max-w-md">{description}</p>
-        </div>
-        
-        <div className="pt-8 flex items-center gap-10 border-t border-white/5">
-          <div>
-            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Budget Alocado</div>
-            <div className="text-xl font-serif text-white">{budget}</div>
-          </div>
-          <div className="flex-1 max-w-[120px]">
-             <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-2">
-               <span>Intensidade</span>
-               <span>{pct}%</span>
-             </div>
-             <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${pct}%` }}
-                  className="h-full bg-indigo-500" 
-                />
-             </div>
-          </div>
-        </div>
+    <div className="flex items-center gap-4 p-4 border border-white/5 rounded-xl bg-white/5">
+      <div className="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+        <Icon className="h-5 w-5 text-indigo-400" />
       </div>
-
-      <div className="flex-1 w-full relative">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
-          className="relative z-10"
-        >
-          {children}
-        </motion.div>
-        {/* Decorative elements */}
-        <div className="absolute -top-10 -right-10 h-40 w-40 bg-indigo-500/10 blur-[100px] rounded-full" />
-        <div className="absolute -bottom-10 -left-10 h-40 w-40 bg-indigo-500/5 blur-[80px] rounded-full" />
+      <div>
+        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</div>
+        <div className="text-sm text-slate-200 mt-1">{value}</div>
       </div>
     </div>
   );
 }
 
-function TrackingBadge({ icon: Icon, title, desc }) {
+function FlowNode({ step, title, desc, icon: Icon }) {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 hover:bg-white/10 transition-colors group h-full">
-      <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-        <Icon className="h-6 w-6 text-indigo-400" />
+    <div className="bg-[#08090D] border border-white/10 rounded-2xl p-6 flex flex-col items-center shadow-xl">
+      <div className="h-12 w-12 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center mb-4">
+        <Icon className="h-5 w-5 text-indigo-400" />
       </div>
-      <h3 className="text-lg font-serif text-white mb-3">{title}</h3>
-      <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
+      <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-2">Passo {step}</div>
+      <h3 className="text-lg font-serif text-white mb-1">{title}</h3>
+      <p className="text-xs text-slate-400">{desc}</p>
     </div>
   );
 }
