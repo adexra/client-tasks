@@ -13,6 +13,11 @@ import Account from './pages/Account';
 import Auth from './pages/Auth';
 import AdPlanning from './pages/AdPlanning';
 import AdPlanView from './pages/AdPlanView';
+import Agents from './pages/Agents';
+import AgentEditor from './pages/AgentEditor';
+import Memory from './pages/Memory';
+import RAG from './pages/RAG';
+import Briefing from './pages/Briefing';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -69,6 +74,11 @@ export default function App() {
                   <Route path="financials" element={<Financials />} />
                   <Route path="account" element={<Account />} />
                   <Route path="ads" element={<AdPlanning />} />
+                  <Route path="agents" element={<Agents />} />
+                  <Route path="agents/:id" element={<AgentEditor />} />
+                  <Route path="memory" element={<Memory />} />
+                  <Route path="rag" element={<RAG />} />
+                  <Route path="briefing/:clientId" element={<Briefing />} />
                 </Route>
               </Routes>
             </BrowserRouter>

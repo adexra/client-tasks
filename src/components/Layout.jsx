@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
-import { 
-  BarChart3, 
-  Users, 
-  Settings, 
+import {
+  BarChart3,
+  Users,
+  Settings,
   Search,
   Target,
   RefreshCcw,
@@ -17,7 +17,10 @@ import {
   X,
   Eye,
   EyeOff,
-  Megaphone
+  Megaphone,
+  Bot,
+  BookOpen,
+  Database
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
@@ -33,6 +36,9 @@ const NAV_ITEMS = [
   { to: '/priority', icon: Target, key: 'nav.execution' },
   { to: '/financials', icon: Wallet, key: 'nav.financials' },
   { to: '/ads', icon: Megaphone, label: 'Ads Planning' },
+  { to: '/agents', icon: Bot, label: 'Agents' },
+  { to: '/memory', icon: BookOpen, label: 'Memory' },
+  { to: '/rag', icon: Database, label: 'RAG Docs' },
 ];
 
 export default function Layout() {

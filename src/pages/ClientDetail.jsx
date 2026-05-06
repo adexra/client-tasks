@@ -1,23 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { 
-  ArrowLeft, 
-  Archive, 
-  ArchiveRestore, 
-  Building, 
-  Mail, 
-  Pencil, 
-  Globe, 
-  Trash2, 
-  Target, 
-  CheckCircle2, 
+import {
+  ArrowLeft,
+  Archive,
+  ArchiveRestore,
+  Building,
+  Mail,
+  Pencil,
+  Globe,
+  Trash2,
+  Target,
+  CheckCircle2,
   Activity,
   DollarSign,
   Plus,
   CheckCircle,
   Clock,
-  Trash
+  Trash,
+  Cpu
 } from 'lucide-react';
 import TagBadge from '../components/TagBadge';
 import AddClientModal from '../components/AddClientModal';
@@ -308,6 +309,10 @@ export default function ClientDetail() {
         </Link>
         
         <div className="flex flex-wrap items-center gap-3">
+          <Link to={`/briefing/${id}`} className="btn-minimal bg-ink-primary text-white hover:bg-neutral-800 flex items-center gap-2 p-3 sm:px-4">
+            <Cpu className="h-3.5 w-3.5" />
+            <span className="text-[10px] uppercase font-bold tracking-widest hidden sm:inline">Brain</span>
+          </Link>
           <button onClick={() => setIsEditModalOpen(true)} className="btn-minimal bg-white border-[var(--border-light)] text-[var(--ink-primary)] hover:bg-neutral-50 flex items-center gap-2 p-3 sm:px-4">
             <Pencil className="h-3.5 w-3.5" /> 
             <span className="text-[10px] uppercase font-bold tracking-widest hidden sm:inline">{t('client_detail.edit_record')}</span>
