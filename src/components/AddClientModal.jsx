@@ -179,6 +179,21 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
         if (tasksError) toast.error('Warning: Client created, but failed to insert templates.');
       }
     }
+    if (!error && !editClient && newClient && nextActions.length > 0) {
+      const todayDate = new Date().toISOString().split('T')[0];
+      const actionTasks = nextActions
+        .filter(a => a.text?.trim())
+        .map(a => ({
+          title: a.text.trim(),
+          client_id: newClient.id,
+          bucket: 'today',
+          priority: 'high',
+          done: false,
+          scheduled_date: todayDate,
+          created_at: new Date().toISOString(),
+        }));
+      if (actionTasks.length) await supabase.from('tasks').insert(actionTasks);
+    }
     if (!error && editClient) {
       if (parseFloat(formData.revenue) !== parseFloat(editClient.revenue || 0)) {
         const { data: existing } = await supabase.from('client_payments')
