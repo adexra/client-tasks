@@ -5,13 +5,15 @@ import {
   Search,
   Filter,
   ChevronRight,
-  Briefcase
+  Briefcase,
+  Plus
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import TagBadge from '../components/TagBadge';
 import { useLanguage } from '../context/LanguageContext';
 import PageHeader from '../components/PageHeader';
+import AddClientModal from '../components/AddClientModal';
 
 export default function Clients() {
   const { t, language } = useLanguage();
@@ -19,6 +21,7 @@ export default function Clients() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [showAdd, setShowAdd] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -45,6 +48,14 @@ export default function Clients() {
         eyebrow={t('portfolio.tag')}
         title={t('portfolio.title')}
         description={t('portfolio.subtitle')}
+        actions={
+          <button
+            onClick={() => setShowAdd(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}
+          >
+            <Plus className="h-3.5 w-3.5" /> Novo Cliente
+          </button>
+        }
       />
 
       <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -150,6 +161,15 @@ export default function Clients() {
            )}
         </div>
       )}
+
+      <AddClientModal
+        isOpen={showAdd}
+        onClose={() => setShowAdd(false)}
+        onClientAdded={newClient => {
+          setClients(prev => [...prev, newClient].sort((a, b) => a.name.localeCompare(b.name)));
+          setShowAdd(false);
+        }}
+      />
     </div>
   );
 }
