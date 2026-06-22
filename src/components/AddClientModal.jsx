@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Plus, Target, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Plus, Target, Trash2, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -31,7 +31,7 @@ const di = {
   transition: 'border-color 0.2s',
 };
 
-const ds = { ...di, fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', appearance: 'none', colorScheme: 'dark' };
+const ds = { ...di, fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', appearance: 'none', colorScheme: 'dark' }; // kept for reference but replaced by CustomSelect
 
 function DLabel({ children }) {
   return (
@@ -331,17 +331,15 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                 <div className="grid grid-cols-3 gap-4">
                   <div className="col-span-1 space-y-2">
                     <DLabel>{t('project_modal.currency_label')}</DLabel>
-                    <select
+                    <CustomSelect
                       value={formData.currency}
-                      onChange={e => setFormData({...formData, currency: e.target.value})}
-                      style={ds}
-                      onFocus={focusStyle}
-                      onBlur={blurStyle}
-                    >
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR">EUR (€)</option>
-                      <option value="BRL">BRL (R$)</option>
-                    </select>
+                      onChange={v => setFormData({...formData, currency: v})}
+                      options={[
+                        { value: 'USD', label: 'USD ($)' },
+                        { value: 'EUR', label: 'EUR (€)' },
+                        { value: 'BRL', label: 'BRL (R$)' },
+                      ]}
+                    />
                   </div>
                   <div className="col-span-2">
                     <MinimalInput label={t('project_modal.revenue_label')} value={formData.revenue} onChange={v => setFormData({...formData, revenue: v})} placeholder="0.00" type="number" />
@@ -388,20 +386,18 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                 {!editClient && (
                   <div className="space-y-2">
                     <DLabel>{t('project_modal.main_delivery_label')}</DLabel>
-                    <select
+                    <CustomSelect
                       value={formData.main_delivery}
-                      onChange={e => setFormData({...formData, main_delivery: e.target.value})}
-                      style={ds}
-                      onFocus={focusStyle}
-                      onBlur={blurStyle}
-                    >
-                      <option value="none">{t('project_modal.main_delivery.none')}</option>
-                      <option value="framer_site">{t('project_modal.main_delivery.framer_site')}</option>
-                      <option value="automation">{t('project_modal.main_delivery.automation')}</option>
-                      <option value="whatsapp_bot">{t('project_modal.main_delivery.whatsapp_bot')}</option>
-                      <option value="advertising">{t('project_modal.main_delivery.advertising')}</option>
-                      <option value="update">{t('project_modal.main_delivery.update')}</option>
-                    </select>
+                      onChange={v => setFormData({...formData, main_delivery: v})}
+                      options={[
+                        { value: 'none', label: t('project_modal.main_delivery.none') },
+                        { value: 'framer_site', label: t('project_modal.main_delivery.framer_site') },
+                        { value: 'automation', label: t('project_modal.main_delivery.automation') },
+                        { value: 'whatsapp_bot', label: t('project_modal.main_delivery.whatsapp_bot') },
+                        { value: 'advertising', label: t('project_modal.main_delivery.advertising') },
+                        { value: 'update', label: t('project_modal.main_delivery.update') },
+                      ]}
+                    />
                   </div>
                 )}
 
@@ -567,6 +563,62 @@ function MinimalTextarea({ label, value, onChange, placeholder }) {
         onFocus={e => { e.target.style.borderColor = 'rgba(51,98,255,0.5)'; }}
         onBlur={e => { e.target.style.borderColor = 'rgba(244,244,246,0.12)'; }}
       />
+    </div>
+  );
+}
+
+function CustomSelect({ value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const selected = options.find(o => o.value === value);
+
+  useEffect(() => {
+    function handleClick(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', width: '100%' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'rgba(244,244,246,0.05)', border: `1px solid ${open ? 'rgba(51,98,255,0.5)' : 'rgba(244,244,246,0.12)'}`,
+          borderRadius: '12px', padding: '14px 16px', fontSize: '12px', fontWeight: '700',
+          textTransform: 'uppercase', letterSpacing: '0.05em', color: '#F4F4F6', cursor: 'pointer',
+        }}
+      >
+        <span>{selected?.label}</span>
+        <ChevronDown style={{ width: 14, height: 14, color: '#6B7080', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200,
+          background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.15)', borderRadius: '12px',
+          overflow: 'hidden', boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
+        }}>
+          {options.map(o => (
+            <button
+              key={o.value}
+              type="button"
+              onClick={() => { onChange(o.value); setOpen(false); }}
+              style={{
+                width: '100%', textAlign: 'left', padding: '12px 16px',
+                fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em',
+                color: o.value === value ? '#F4F4F6' : '#6B7080',
+                background: o.value === value ? 'rgba(51,98,255,0.15)' : 'transparent',
+                border: 'none', cursor: 'pointer', transition: 'background 0.1s',
+              }}
+              onMouseEnter={e => { if (o.value !== value) e.currentTarget.style.background = 'rgba(244,244,246,0.05)'; }}
+              onMouseLeave={e => { if (o.value !== value) e.currentTarget.style.background = 'transparent'; }}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
