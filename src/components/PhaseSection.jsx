@@ -1,9 +1,21 @@
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, CheckCircle2, Circle, Trash2, Loader2, GripVertical } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle2, Circle, Trash2, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
-import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';
+
+const di = {
+  width: '100%',
+  background: 'rgba(244,244,246,0.05)',
+  border: '1px solid rgba(244,244,246,0.1)',
+  borderRadius: '12px',
+  padding: '14px 24px',
+  fontSize: '14px',
+  fontWeight: '500',
+  color: '#F4F4F6',
+  outline: 'none',
+  transition: 'border-color 0.2s',
+};
 
 export default function PhaseSection({ phase, onUpdate }) {
   const { t } = useLanguage();
@@ -13,10 +25,10 @@ export default function PhaseSection({ phase, onUpdate }) {
   const [savingId, setSavingId] = useState(null);
 
   const PHASE_META = {
-    onboarding: { label: t('project_modal.phases.onboarding'), color: 'text-neutral-500',  bg: 'bg-neutral-50',  border: 'border-neutral-200'  },
-    delivery:   { label: t('project_modal.phases.delivery'),   color: 'text-neutral-500',  bg: 'bg-neutral-50',  border: 'border-neutral-200' },
-    qa:         { label: t('project_modal.phases.qa'), color: 'text-neutral-500', bg: 'bg-neutral-50',  border: 'border-neutral-200' },
-    update:     { label: t('project_modal.phases.update'),     color: 'text-neutral-500', bg: 'bg-neutral-50',  border: 'border-neutral-200' },
+    onboarding: { label: t('project_modal.phases.onboarding') },
+    delivery:   { label: t('project_modal.phases.delivery') },
+    qa:         { label: t('project_modal.phases.qa') },
+    update:     { label: t('project_modal.phases.update') },
   };
 
   useEffect(() => {
@@ -53,67 +65,87 @@ export default function PhaseSection({ phase, onUpdate }) {
   }
 
   return (
-    <div className={cn(
-      'rounded-2xl border transition-all duration-300 overflow-hidden group/phase',
-      phase.completed
-        ? 'border-neutral-100 bg-white/50'
-        : 'border-neutral-200 bg-white shadow-sm'
-    )}>
+    <div
+      className="rounded-2xl overflow-hidden transition-all duration-300"
+      style={{
+        background: phase.completed ? 'rgba(244,244,246,0.02)' : '#0D0F1E',
+        border: `1px solid ${phase.completed ? 'rgba(244,244,246,0.05)' : 'rgba(244,244,246,0.08)'}`,
+      }}
+    >
       {/* Header */}
       <button
         type="button"
-        className="w-full flex items-center gap-6 px-8 py-6 text-left hover:bg-neutral-50/50 transition-colors"
+        className="w-full flex items-center gap-6 px-8 py-6 text-left transition-colors"
+        style={{ background: 'transparent' }}
+        onMouseEnter={e => e.currentTarget.style.background = 'rgba(244,244,246,0.02)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         onClick={() => setIsOpen(!isOpen)}
       >
+        {/* Complete toggle */}
         <button
           type="button"
           onClick={handleToggleComplete}
-          className={cn(
-            'shrink-0 transition-all duration-300',
-            phase.completed ? 'text-[var(--success-green)]' : 'text-neutral-200 hover:text-neutral-400'
-          )}
+          className="shrink-0 transition-all duration-300"
+          style={{ color: phase.completed ? '#22C55E' : 'rgba(244,244,246,0.2)' }}
+          onMouseEnter={e => { if (!phase.completed) e.currentTarget.style.color = '#6B7080'; }}
+          onMouseLeave={e => { if (!phase.completed) e.currentTarget.style.color = 'rgba(244,244,246,0.2)'; }}
         >
           {phase.completed
             ? <CheckCircle2 className="h-6 w-6" />
-            : <Circle className="h-6 w-6" />}
+            : <Circle className="h-6 w-6" />
+          }
         </button>
 
         <div className="flex-1 space-y-1">
-          <span className={cn(
-            'text-[9px] font-bold uppercase tracking-[0.2em] transition-all', 
-            phase.completed ? "text-neutral-300" : "text-neutral-400"
-          )}>
+          <span
+            className="text-[9px] font-bold uppercase tracking-[0.2em] transition-all"
+            style={{ color: phase.completed ? 'rgba(244,244,246,0.2)' : '#6B7080' }}
+          >
             {meta.label}
           </span>
-          <h4 className={cn(
-            "text-lg font-serif transition-colors",
-            phase.completed ? "text-neutral-400 italic line-through" : "text-[var(--ink-primary)]"
-          )}>
+          <h4
+            className="text-lg font-serif transition-colors"
+            style={{
+              color: phase.completed ? 'rgba(244,244,246,0.3)' : '#F4F4F6',
+              textDecoration: phase.completed ? 'line-through' : 'none',
+              fontStyle: phase.completed ? 'italic' : 'normal',
+            }}
+          >
             {t('phases_ui.module_prefix')}
-            {phase.phase_name === 'onboarding' ? t('project_modal.phases.onboarding') : 
-             phase.phase_name === 'delivery' ? t('project_modal.phases.delivery') : 
-             phase.phase_name === 'qa' ? t('project_modal.phases.qa') : 
+            {phase.phase_name === 'onboarding' ? t('project_modal.phases.onboarding') :
+             phase.phase_name === 'delivery'   ? t('project_modal.phases.delivery')   :
+             phase.phase_name === 'qa'         ? t('project_modal.phases.qa')         :
              t('project_modal.phases.update')}
           </h4>
         </div>
 
         <div className="flex items-center gap-4">
-           {phase.completed && (
-             <span className="text-[9px] text-[var(--success-green)] font-bold uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded">{t('phases_ui.validated')}</span>
-           )}
-           <div className="h-8 w-[1px] bg-neutral-100" />
-           {isOpen
-             ? <ChevronDown className="h-4 w-4 text-neutral-300" />
-             : <ChevronRight className="h-4 w-4 text-neutral-300" />
-           }
+          {phase.completed && (
+            <span
+              className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded"
+              style={{ background: 'rgba(34,197,94,0.1)', color: '#22C55E' }}
+            >
+              {t('phases_ui.validated')}
+            </span>
+          )}
+          <div className="h-8 w-[1px]" style={{ background: 'rgba(244,244,246,0.07)' }} />
+          {isOpen
+            ? <ChevronDown className="h-4 w-4" style={{ color: '#6B7080' }} />
+            : <ChevronRight className="h-4 w-4" style={{ color: '#6B7080' }} />
+          }
         </div>
       </button>
 
-      {/* Expanded content */}
+      {/* Expanded */}
       {isOpen && (
-        <div className="border-t border-neutral-100 px-10 py-10 space-y-10 bg-neutral-50/30 animate-in slide-in-from-top-1 duration-300">
+        <div
+          className="px-10 py-10 space-y-10 animate-in slide-in-from-top-1 duration-300"
+          style={{ borderTop: '1px solid rgba(244,244,246,0.07)', background: 'rgba(244,244,246,0.01)' }}
+        >
           {fields.length === 0 && (
-            <p className="text-xs text-neutral-400 italic text-center py-4">{t('phases_ui.no_fields')}</p>
+            <p className="text-xs italic text-center py-4" style={{ color: '#6B7080' }}>
+              {t('phases_ui.no_fields')}
+            </p>
           )}
           {fields.map(field => (
             <FieldRenderer
@@ -135,9 +167,10 @@ export default function PhaseSection({ phase, onUpdate }) {
   );
 }
 
-function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
+function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange }) {
   const { t } = useLanguage();
-  const isTaskList = field.field_key === 'Execution Roadmap' || field.field_key === 'Action Items' || field.field_key === 'Roteiro de Execução' || field.field_key === 'Itens de Ação';
+  const isTaskList = field.field_key === 'Execution Roadmap' || field.field_key === 'Action Items' ||
+                     field.field_key === 'Roteiro de Execução' || field.field_key === 'Itens de Ação';
 
   if (isTaskList) {
     let items = [];
@@ -149,27 +182,44 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-          <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-            {field.field_key === 'Execution Roadmap' ? t('phases_ui.add_task').replace('+ ', '') : field.field_key === 'Action Items' ? t('execution.task_load') : field.field_key}
+        <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid rgba(244,244,246,0.07)' }}>
+          <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>
+            {field.field_key === 'Execution Roadmap' ? t('phases_ui.add_task').replace('+ ', '') :
+             field.field_key === 'Action Items' ? t('execution.task_load') :
+             field.field_key}
           </label>
-          <button type="button" onClick={addItem} className="text-[9px] font-bold uppercase text-[var(--ink-charcoal)] hover:underline underline-offset-4 decoration-neutral-300">
+          <button
+            type="button"
+            onClick={addItem}
+            className="text-[9px] font-bold uppercase tracking-widest transition-colors"
+            style={{ color: '#6B7080' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#3362FF'}
+            onMouseLeave={e => e.currentTarget.style.color = '#6B7080'}
+          >
             {t('phases_ui.add_task')}
           </button>
         </div>
-        <div className="space-y-3">
+
+        <div className="space-y-2">
           {items.map(item => (
             <div
               key={item.id}
-              className="group/row flex items-center gap-4 bg-white border border-neutral-100 rounded-xl px-4 py-3.5 transition-all hover:border-neutral-200 shadow-sm"
+              className="group/row flex items-center gap-4 rounded-xl px-4 py-3.5 transition-all"
+              style={{
+                background: 'rgba(244,244,246,0.03)',
+                border: '1px solid rgba(244,244,246,0.07)',
+              }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(244,244,246,0.12)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(244,244,246,0.07)'}
             >
-              <button 
+              <button
                 type="button"
                 onClick={() => updateItem(item.id, { done: !item.done })}
-                className={cn(
-                  "h-5 w-5 rounded border flex items-center justify-center transition-all duration-300",
-                  item.done ? "bg-[var(--success-green)] border-[var(--success-green)]" : "border-neutral-200 bg-neutral-50"
-                )}
+                className="h-5 w-5 rounded flex items-center justify-center transition-all duration-300 shrink-0"
+                style={item.done
+                  ? { background: '#22C55E', border: '1px solid #22C55E' }
+                  : { background: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.15)' }
+                }
               >
                 {item.done && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
               </button>
@@ -179,19 +229,32 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
                 onChange={e => updateItem(item.id, { text: e.target.value })}
                 onBlur={() => onTaskListChange(items)}
                 placeholder={t('phases_ui.task_placeholder')}
-                className={cn(
-                  "flex-1 bg-transparent border-none p-0 text-sm font-medium focus:ring-0 placeholder:text-neutral-200 transition-all",
-                  item.done ? "line-through text-neutral-300" : "text-[var(--ink-primary)]"
-                )}
+                className="flex-1 bg-transparent border-none p-0 text-sm font-medium focus:ring-0 focus:outline-none transition-all"
+                style={{
+                  color: item.done ? '#6B7080' : '#F4F4F6',
+                  textDecoration: item.done ? 'line-through' : 'none',
+                }}
               />
-              <button type="button" onClick={() => removeItem(item.id)} className="text-neutral-200 hover:text-rose-500 transition-colors opacity-0 group-hover/row:opacity-100 p-1">
+              <button
+                type="button"
+                onClick={() => removeItem(item.id)}
+                className="transition-colors opacity-0 group-hover/row:opacity-100 p-1"
+                style={{ color: '#6B7080' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#FF3B5C'}
+                onMouseLeave={e => e.currentTarget.style.color = '#6B7080'}
+              >
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
           ))}
           {items.length === 0 && (
-            <div className="py-12 border border-dashed border-neutral-100 rounded-2xl flex items-center justify-center">
-               <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest italic">{t('phases_ui.waiting_tasks')}</span>
+            <div
+              className="py-12 rounded-2xl flex items-center justify-center"
+              style={{ border: '2px dashed rgba(244,244,246,0.08)' }}
+            >
+              <span className="text-[10px] font-bold uppercase tracking-widest italic" style={{ color: '#6B7080' }}>
+                {t('phases_ui.waiting_tasks')}
+              </span>
             </div>
           )}
         </div>
@@ -202,8 +265,10 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
   const InputLayout = ({ children, label, saving }) => (
     <div className="space-y-3 group">
       <div className="flex items-center justify-between ml-1">
-        <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-[0.1em]">{label === 'Timeline' ? t('financials.records') : label}</label>
-        {saving && <Loader2 className="h-3.5 w-3.5 text-neutral-300 animate-spin" />}
+        <label className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: '#6B7080' }}>
+          {label === 'Timeline' ? t('financials.records') : label}
+        </label>
+        {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: '#6B7080' }} />}
       </div>
       {children}
     </div>
@@ -213,22 +278,33 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
     const checked = field.field_value === 'true';
     return (
       <label
-        className={cn(
-          "flex items-center gap-4 bg-white border border-neutral-100 rounded-xl px-6 py-5 cursor-pointer transition-all duration-300 group",
-          checked ? "bg-neutral-50/50" : "hover:border-neutral-200 hover:shadow-sm"
-        )}
+        className="flex items-center gap-4 rounded-xl px-6 py-5 cursor-pointer transition-all duration-300"
+        style={{
+          background: checked ? 'rgba(34,197,94,0.05)' : 'rgba(244,244,246,0.03)',
+          border: `1px solid ${checked ? 'rgba(34,197,94,0.2)' : 'rgba(244,244,246,0.08)'}`,
+        }}
         onClick={() => {
           onChange(checked ? 'false' : 'true');
           setTimeout(() => onBlur(), 0);
         }}
       >
-        <div className={cn(
-          "h-5 w-5 rounded border flex items-center justify-center transition-all duration-300",
-          checked ? "bg-[var(--success-green)] border-[var(--success-green)]" : "border-neutral-200 bg-neutral-50"
-        )}>
+        <div
+          className="h-5 w-5 rounded flex items-center justify-center transition-all duration-300 shrink-0"
+          style={checked
+            ? { background: '#22C55E', border: '1px solid #22C55E' }
+            : { background: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.15)' }
+          }
+        >
           {checked && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
         </div>
-        <span className={cn("text-xs font-medium transition-colors", checked ? "text-neutral-300 italic line-through" : "text-[var(--ink-secondary)] uppercase tracking-widest text-[10px] font-bold")}>
+        <span
+          className="text-xs font-medium transition-colors uppercase tracking-widest text-[10px] font-bold"
+          style={{
+            color: checked ? 'rgba(244,244,246,0.35)' : '#F4F4F6',
+            textDecoration: checked ? 'line-through' : 'none',
+            fontStyle: checked ? 'italic' : 'normal',
+          }}
+        >
           {field.field_key}
         </span>
       </label>
@@ -243,7 +319,8 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
           value={field.field_value || ''}
           onChange={e => onChange(e.target.value)}
           onBlur={onBlur}
-          className="w-full bg-white border border-neutral-200 rounded-xl px-6 py-4 text-sm font-medium text-[var(--ink-primary)] focus:outline-none focus:ring-1 focus:ring-neutral-200 focus:border-neutral-400 transition-all font-mono"
+          style={{ ...di, fontFamily: 'monospace' }}
+          onFocus={e => { e.target.style.borderColor = 'rgba(51,98,255,0.5)'; }}
         />
       </InputLayout>
     );
@@ -258,7 +335,8 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
           onChange={e => onChange(e.target.value)}
           onBlur={onBlur}
           placeholder={t('phases_ui.timeline_placeholder')}
-          className="w-full bg-white border border-neutral-200 rounded-xl px-6 py-4 text-sm font-medium text-[var(--ink-primary)] placeholder:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-neutral-200 transition-all italic"
+          style={{ ...di, fontStyle: 'italic' }}
+          onFocus={e => { e.target.style.borderColor = 'rgba(51,98,255,0.5)'; }}
         />
       </InputLayout>
     );
@@ -272,7 +350,8 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
         onBlur={onBlur}
         rows={3}
         placeholder={t('phases_ui.details_placeholder')}
-        className="w-full bg-white border border-neutral-200 rounded-xl px-6 py-4 text-sm font-medium text-[var(--ink-secondary)] placeholder:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-neutral-200 transition-all resize-none italic leading-relaxed"
+        style={{ ...di, resize: 'none', lineHeight: '1.6', fontStyle: 'italic' }}
+        onFocus={e => { e.target.style.borderColor = 'rgba(51,98,255,0.5)'; }}
       />
     </InputLayout>
   );
