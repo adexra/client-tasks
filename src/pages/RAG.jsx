@@ -5,13 +5,12 @@ import { Plus, Trash2, Download, Edit3, Save, X, Tag, Database, Loader, CheckCir
 import { useToast } from '../context/ToastContext';
 
 const STATUS_ICONS = {
-  pending: <div className="h-3.5 w-3.5 rounded-full bg-neutral-300" />,
-  processing: <Loader className="h-3.5 w-3.5 text-blue-500 animate-spin" />,
-  done: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />,
-  error: <AlertCircle className="h-3.5 w-3.5 text-red-500" />,
+  pending:    <div style={{ height: '14px', width: '14px', borderRadius: '99px', background: 'rgba(244,244,246,0.2)' }} />,
+  processing: <Loader style={{ width: '14px', height: '14px', color: '#3362FF' }} className="animate-spin" />,
+  done:       <CheckCircle2 style={{ width: '14px', height: '14px', color: '#22C55E' }} />,
+  error:      <AlertCircle style={{ width: '14px', height: '14px', color: '#FF3B5C' }} />,
 };
 
-// Chunk text into ~500 char segments with overlap
 function chunkText(text, size = 500, overlap = 80) {
   const chunks = [];
   let start = 0;
@@ -21,6 +20,24 @@ function chunkText(text, size = 500, overlap = 80) {
   }
   return chunks;
 }
+
+const card = {
+  background: '#0D0F1E',
+  border: '1px solid rgba(244,244,246,0.08)',
+  borderRadius: '16px',
+  padding: '24px',
+};
+
+const di = {
+  width: '100%',
+  background: 'rgba(244,244,246,0.05)',
+  border: '1px solid rgba(244,244,246,0.12)',
+  borderRadius: '12px',
+  padding: '10px 14px',
+  fontSize: '14px',
+  color: '#F4F4F6',
+  outline: 'none',
+};
 
 function RAGCard({ doc, onSave, onDelete, onEmbed }) {
   const [editing, setEditing] = useState(false);
@@ -43,69 +60,93 @@ function RAGCard({ doc, onSave, onDelete, onEmbed }) {
     URL.revokeObjectURL(url);
   }
 
+  const iconBtn = {
+    height: '32px', width: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'transparent', border: 'none', borderRadius: '8px', color: '#6B7080', cursor: 'pointer',
+  };
+
   return (
-    <div className="bg-white border border-border-light rounded-2xl p-6 space-y-4">
+    <div style={card}>
       {editing ? (
-        <>
+        <div className="space-y-3">
           <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-            className="w-full px-3 py-2 border border-border-light rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black/10" placeholder="Document title" />
+            style={di} placeholder="Document title"
+            onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
+            onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'} />
           <input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
-            className="w-full px-3 py-2 border border-border-light rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10" placeholder="tags, comma, separated" />
+            style={di} placeholder="tags, comma, separated"
+            onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
+            onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'} />
           <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
-            rows={14} className="w-full px-3 py-2.5 border border-border-light rounded-xl text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-black/10 resize-none"
-            placeholder="Paste the full document content here…" />
-          <div className="flex items-center gap-2">
-            <button onClick={save} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-ink-primary text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors disabled:opacity-50">
+            rows={14} style={{ ...di, resize: 'none', lineHeight: '1.6', fontFamily: 'monospace' }}
+            placeholder="Paste the full document content here…"
+            onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
+            onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'} />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={save} disabled={saving}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
               <Save className="h-3.5 w-3.5" /> {saving ? 'Saving…' : 'Save'}
             </button>
-            <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-4 py-2 border border-border-light text-neutral-500 rounded-xl text-sm font-medium hover:bg-neutral-50 transition-colors">
+            <button onClick={() => setEditing(false)}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'transparent', color: '#6B7080', border: '1px solid rgba(244,244,246,0.12)', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
               <X className="h-3.5 w-3.5" /> Cancel
             </button>
           </div>
-        </>
+        </div>
       ) : (
         <>
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-2 flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5">
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   {STATUS_ICONS[doc.embedding_status] || STATUS_ICONS.pending}
-                  <span className="text-[10px] font-mono text-neutral-400">{doc.embedding_status}</span>
+                  <span style={{ fontSize: '10px', fontFamily: 'monospace', color: '#6B7080' }}>{doc.embedding_status}</span>
                 </div>
                 {doc.embedding_status === 'done' && (
-                  <span className="text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                  <span style={{ fontSize: '10px', color: '#22C55E', background: 'rgba(34,197,94,0.1)', padding: '2px 8px', borderRadius: '99px' }}>
                     {Array.isArray(doc.chunks) ? doc.chunks.length : 0} chunks
                   </span>
                 )}
                 {doc.tags?.map(tag => (
-                  <span key={tag} className="flex items-center gap-1 text-[10px] text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-full">
+                  <span key={tag} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(244,244,246,0.06)', color: '#6B7080', padding: '2px 8px', borderRadius: '99px', fontSize: '10px' }}>
                     <Tag className="h-2.5 w-2.5" />{tag}
                   </span>
                 ))}
               </div>
-              <h3 className="text-lg font-serif text-ink-primary">{doc.title}</h3>
+              <h3 style={{ fontSize: '18px', fontFamily: 'serif', color: '#F4F4F6', margin: 0 }}>{doc.title}</h3>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
               {doc.embedding_status !== 'done' && (
-                <button onClick={() => onEmbed(doc)} className="h-8 px-2.5 flex items-center gap-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                <button onClick={() => onEmbed(doc)}
+                  style={{ height: '32px', padding: '0 10px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '500', color: '#3362FF', background: 'rgba(51,98,255,0.12)', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,98,255,0.2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(51,98,255,0.12)'}>
                   <Database className="h-3 w-3" /> Embed
                 </button>
               )}
-              <button onClick={exportMd} title="Export .md" className="h-8 w-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-ink-primary hover:bg-neutral-100 transition-colors">
+              <button onClick={exportMd} title="Export .md" style={iconBtn}
+                onMouseEnter={e => { e.currentTarget.style.color = '#F4F4F6'; e.currentTarget.style.background = 'rgba(244,244,246,0.08)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#6B7080'; e.currentTarget.style.background = 'transparent'; }}>
                 <Download className="h-3.5 w-3.5" />
               </button>
-              <button onClick={() => setEditing(true)} className="h-8 w-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-ink-primary hover:bg-neutral-100 transition-colors">
+              <button onClick={() => setEditing(true)} style={iconBtn}
+                onMouseEnter={e => { e.currentTarget.style.color = '#F4F4F6'; e.currentTarget.style.background = 'rgba(244,244,246,0.08)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#6B7080'; e.currentTarget.style.background = 'transparent'; }}>
                 <Edit3 className="h-3.5 w-3.5" />
               </button>
-              <button onClick={() => onDelete(doc.id)} className="h-8 w-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+              <button onClick={() => onDelete(doc.id)} style={iconBtn}
+                onMouseEnter={e => { e.currentTarget.style.color = '#FF3B5C'; e.currentTarget.style.background = 'rgba(255,59,92,0.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#6B7080'; e.currentTarget.style.background = 'transparent'; }}>
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
-          <div className="bg-neutral-50 rounded-xl p-4 max-h-40 overflow-y-auto">
-            <p className="text-sm text-neutral-600 leading-relaxed line-clamp-5">{doc.content || <span className="italic text-neutral-400">No content yet.</span>}</p>
+          <div style={{ background: 'rgba(244,244,246,0.03)', borderRadius: '12px', padding: '16px', maxHeight: '160px', overflowY: 'auto', marginBottom: '12px' }}>
+            <p style={{ fontSize: '14px', color: '#9CA3AF', lineHeight: '1.6', margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical' }}>
+              {doc.content || <span style={{ fontStyle: 'italic', color: '#6B7080' }}>No content yet.</span>}
+            </p>
           </div>
-          <div className="text-xs text-neutral-400">
+          <div style={{ fontSize: '12px', color: '#6B7080' }}>
             {doc.content?.length || 0} chars · Updated {new Date(doc.updated_at).toLocaleDateString()}
           </div>
         </>
@@ -176,28 +217,29 @@ export default function RAG() {
     <div className="space-y-16 animate-in fade-in duration-700 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
         <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Brain System</span>
-            <div className="h-[1px] w-8 bg-neutral-200" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '10px', fontWeight: '700', color: '#6B7080', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Brain System</span>
+            <div style={{ height: '1px', width: '32px', background: 'rgba(244,244,246,0.1)' }} />
           </div>
-          <h1 className="text-6xl font-serif text-ink-primary leading-tight tracking-tight">RAG Documents</h1>
-          <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
+          <h1 style={{ fontSize: '60px', fontFamily: 'serif', color: '#F4F4F6', lineHeight: '1.1', margin: 0 }}>RAG Documents</h1>
+          <p style={{ color: '#6B7080', fontSize: '16px', lineHeight: '1.6', maxWidth: '480px', margin: 0 }}>
             Long-form documents embedded for semantic retrieval. Competitor research, transcripts, brand guides — paste and embed.
           </p>
         </div>
-        <button onClick={create} className="flex items-center gap-2 px-5 py-2.5 bg-ink-primary text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors">
+        <button onClick={create}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
           <Plus className="h-4 w-4" /> New Document
         </button>
       </div>
 
       {loading ? (
         <div className="space-y-4">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-48 rounded-2xl bg-neutral-100 animate-pulse" />)}
+          {[...Array(3)].map((_, i) => <div key={i} style={{ height: '192px', borderRadius: '16px', background: 'rgba(244,244,246,0.03)' }} className="animate-pulse" />)}
         </div>
       ) : docs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-          <Database className="h-10 w-10 text-neutral-300" />
-          <p className="text-neutral-400">No RAG documents yet. Add a document and click Embed to make it searchable.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '96px 0', gap: '16px', textAlign: 'center' }}>
+          <Database style={{ width: '40px', height: '40px', color: '#6B7080' }} />
+          <p style={{ color: '#6B7080', margin: 0 }}>No RAG documents yet. Add a document and click Embed to make it searchable.</p>
         </div>
       ) : (
         <div className="space-y-4">

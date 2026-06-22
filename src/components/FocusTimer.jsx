@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Play, Pause, X, Target, CheckCircle2 } from 'lucide-react';
-import { cn } from '../lib/utils';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -49,49 +48,62 @@ export default function FocusTimer({ onLog }) {
   const seconds = timeLeft % 60;
 
   return (
-    <div className="flex items-center gap-2 sm:gap-6 bg-white/50 backdrop-blur-sm border border-border-light rounded-full px-3 sm:px-5 py-2 group transition-all hover:bg-white hover:shadow-sm min-w-0">
-      <div className="flex items-center gap-2 sm:gap-3 border-r border-border-light pr-2 sm:pr-4 shrink-0">
-        <div className="relative flex items-center justify-center">
-            <span className={cn(
-              "text-sm font-mono font-bold tracking-tight w-12 text-center",
-              isActive ? "text-ink-charcoal animate-pulse" : "text-ink-muted"
-            )}>
-              {minutes}:{seconds.toString().padStart(2, '0')}
-            </span>
-        </div>
-        
-        <div className="flex items-center gap-1">
-          <button 
-            onClick={toggle}
-            className="p-1 hover:text-ink-charcoal text-ink-muted transition-colors"
-          >
-            {isActive ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+    <div
+      className="group"
+      style={{
+        display: 'flex', alignItems: 'center', gap: '16px',
+        background: 'rgba(244,244,246,0.04)', backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(244,244,246,0.1)', borderRadius: '99px',
+        padding: '8px 20px', transition: 'all 0.15s',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,244,246,0.07)'; e.currentTarget.style.borderColor = 'rgba(244,244,246,0.16)'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(244,244,246,0.04)'; e.currentTarget.style.borderColor = 'rgba(244,244,246,0.1)'; }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRight: '1px solid rgba(244,244,246,0.1)', paddingRight: '16px', flexShrink: 0 }}>
+        <span style={{
+          fontSize: '14px', fontFamily: 'monospace', fontWeight: '700', letterSpacing: '-0.02em', width: '48px', textAlign: 'center',
+          color: isActive ? '#F4F4F6' : '#6B7080',
+        }}
+          className={isActive ? 'animate-pulse' : ''}>
+          {minutes}:{seconds.toString().padStart(2, '0')}
+        </span>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <button onClick={toggle}
+            style={{ padding: '4px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#6B7080', transition: 'color 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#F4F4F6'}
+            onMouseLeave={e => e.currentTarget.style.color = '#6B7080'}>
+            {isActive ? <Pause style={{ width: '14px', height: '14px' }} /> : <Play style={{ width: '14px', height: '14px' }} />}
           </button>
-          <button 
-            onClick={handleStopAndLog}
-            className="p-1 hover:text-rose-500 text-ink-muted opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
+          <button onClick={handleStopAndLog}
+            style={{ padding: '4px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#6B7080', opacity: 0, transition: 'all 0.15s' }}
             title={t('timer.stop_title')}
-          >
-            <X className="h-3.5 w-3.5" />
+            className="group-hover:opacity-100"
+            onMouseEnter={e => e.currentTarget.style.color = '#FF3B5C'}
+            onMouseLeave={e => e.currentTarget.style.color = '#6B7080'}>
+            <X style={{ width: '14px', height: '14px' }} />
           </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3 min-w-[100px] sm:min-w-[200px] flex-1">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '100px', flex: 1 }}>
         {isCompleted ? (
-          <div className="flex items-center gap-2 text-success-green animate-in fade-in slide-in-from-left-2">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">{t('timer.completed')}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#22C55E' }} className="animate-in fade-in slide-in-from-left-2">
+            <CheckCircle2 style={{ width: '14px', height: '14px' }} />
+            <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('timer.completed')}</span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 flex-1">
-            <Target className="h-3 w-3 text-ink-muted shrink-0" />
-            <input 
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+            <Target style={{ width: '12px', height: '12px', color: '#6B7080', flexShrink: 0 }} />
+            <input
               type="text"
               placeholder={t('timer.placeholder')}
               value={intent}
               onChange={(e) => setIntent(e.target.value)}
-              className="bg-transparent border-none p-0 text-[11px] font-medium placeholder:text-ink-placeholder focus:ring-0 w-full"
+              style={{
+                background: 'transparent', border: 'none', outline: 'none', padding: 0,
+                fontSize: '11px', fontWeight: '500', color: '#F4F4F6', width: '100%',
+              }}
             />
           </div>
         )}

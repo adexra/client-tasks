@@ -24,10 +24,10 @@ export default function DeadlinesWidget() {
   const [loading, setLoading] = useState(true);
 
   const BUCKET_META = {
-    vencido:    { label: t('deadlines.vencido'), color: 'text-rose-500',   dot: 'bg-rose-500' },
-    'esta-semana':  { label: t('deadlines.esta_semana'),   color: 'text-neutral-500',  dot: 'bg-[var(--accent-sand)]' },
-    'este-mes': { label: t('deadlines.este_mes'),         color: 'text-neutral-500',  dot: 'bg-neutral-200' },
-    depois:      { label: t('deadlines.depois'),     color: 'text-neutral-300',  dot: 'bg-neutral-100' },
+    vencido:       { label: t('deadlines.vencido'),    color: '#FF3B5C', dot: '#FF3B5C' },
+    'esta-semana': { label: t('deadlines.esta_semana'), color: '#F4F4F6', dot: '#3362FF' },
+    'este-mes':    { label: t('deadlines.este_mes'),    color: '#6B7080', dot: 'rgba(244,244,246,0.2)' },
+    depois:        { label: t('deadlines.depois'),      color: '#6B7080', dot: 'rgba(244,244,246,0.1)' },
   };
 
   useEffect(() => {
@@ -88,25 +88,27 @@ export default function DeadlinesWidget() {
           const { label, color, dot } = BUCKET_META[key];
           return (
             <div key={key} className="space-y-4">
-              <p className={cn("text-[9px] font-bold uppercase tracking-[0.1em]", color)}>{label}</p>
+              <p style={{ fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', color }}>{label}</p>
               <div className="space-y-3">
                 {buckets[key].map((e, i) => (
                   <Link
                     key={i}
                     to={`/client/${e.clientId}`}
-                    className="flex items-center gap-4 p-4 rounded-xl border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50 transition-all group"
+                    style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', borderRadius: '12px', border: '1px solid rgba(244,244,246,0.07)', background: 'rgba(244,244,246,0.02)', textDecoration: 'none', transition: 'border-color 0.15s, background 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(244,244,246,0.14)'; e.currentTarget.style.background = 'rgba(244,244,246,0.04)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(244,244,246,0.07)'; e.currentTarget.style.background = 'rgba(244,244,246,0.02)'; }}
                   >
-                    <div className={cn("h-1.5 w-1.5 rounded-full shrink-0", dot)} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-baseline mb-1">
-                        <span className="text-xs font-serif text-[var(--ink-primary)] truncate">{e.clientName}</span>
-                        <span className="text-[9px] font-bold text-neutral-300 shrink-0 uppercase tracking-tighter tabular-nums">{e.value}</span>
+                    <div style={{ height: '6px', width: '6px', borderRadius: '99px', flexShrink: 0, background: dot }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '12px', fontFamily: 'serif', color: '#F4F4F6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.clientName}</span>
+                        <span style={{ fontSize: '9px', fontWeight: '700', color: '#6B7080', flexShrink: 0, textTransform: 'uppercase', fontVariantNumeric: 'tabular-nums' }}>{e.value}</span>
                       </div>
-                      <p className="text-[8px] font-bold text-neutral-300 uppercase tracking-widest">
+                      <p style={{ fontSize: '8px', fontWeight: '700', color: '#6B7080', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
                         {t('deadlines.phase_prefix')}
-                        {e.phaseName === 'onboarding' ? t('project_modal.phases.onboarding') : 
-                         e.phaseName === 'delivery' ? t('project_modal.phases.delivery') : 
-                         e.phaseName === 'qa' ? t('project_modal.phases.qa') : 
+                        {e.phaseName === 'onboarding' ? t('project_modal.phases.onboarding') :
+                         e.phaseName === 'delivery' ? t('project_modal.phases.delivery') :
+                         e.phaseName === 'qa' ? t('project_modal.phases.qa') :
                          t('project_modal.phases.update')}
                       </p>
                     </div>

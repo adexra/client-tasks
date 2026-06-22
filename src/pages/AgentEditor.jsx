@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { chatStream } from '../lib/azure';
 import { ArrowLeft, Save, Trash2, Send, Bot, Code, PenTool, TrendingUp, Layout, Cpu, RotateCcw } from 'lucide-react';
-import { cn } from '../lib/utils';
 import { useToast } from '../context/ToastContext';
 
 const ICONS = ['Bot', 'Code', 'PenTool', 'TrendingUp', 'Layout', 'Brain'];
@@ -11,6 +10,30 @@ const ICON_MAP = { Brain: Cpu, Code, PenTool, TrendingUp, Layout, Bot };
 const MODELS = ['gpt-4o-mini', 'gpt-4o'];
 const COLORS = ['#6366f1', '#3b82f6', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'];
 const TYPES = ['general', 'brand', 'niche', 'seo', 'technical', 'client'];
+
+const di = {
+  width: '100%',
+  background: 'rgba(244,244,246,0.05)',
+  border: '1px solid rgba(244,244,246,0.12)',
+  borderRadius: '12px',
+  padding: '10px 14px',
+  fontSize: '14px',
+  color: '#F4F4F6',
+  outline: 'none',
+};
+
+const ds = { ...di, cursor: 'pointer' };
+
+const panelCard = {
+  background: '#0D0F1E',
+  border: '1px solid rgba(244,244,246,0.08)',
+  borderRadius: '16px',
+  padding: '24px',
+};
+
+function DLabel({ children }) {
+  return <label style={{ fontSize: '12px', fontWeight: '500', color: '#6B7080', display: 'block', marginBottom: '8px' }}>{children}</label>;
+}
 
 export default function AgentEditor() {
   const { id } = useParams();
@@ -23,7 +46,6 @@ export default function AgentEditor() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Test chat state
   const [testMessages, setTestMessages] = useState([]);
   const [testInput, setTestInput] = useState('');
   const [testing, setTesting] = useState(false);
@@ -89,34 +111,38 @@ export default function AgentEditor() {
   const Icon = ICON_MAP[form.icon] || Bot;
 
   if (!agent) return (
-    <div className="flex items-center justify-center h-64">
-      <div className="h-6 w-6 border-2 border-black border-t-transparent rounded-full animate-spin" />
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '256px' }}>
+      <div style={{ height: '24px', width: '24px', border: '2px solid rgba(244,244,246,0.2)', borderTopColor: '#3362FF', borderRadius: '99px' }} className="animate-spin" />
     </div>
   );
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20">
       {/* Header */}
-      <div className="flex items-start justify-between gap-6">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px' }}>
         <div className="space-y-4">
-          <Link to="/agents" className="flex items-center gap-2 text-sm text-neutral-400 hover:text-ink-primary transition-colors">
+          <Link to="/agents" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#6B7080', textDecoration: 'none', transition: 'color 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#F4F4F6'}
+            onMouseLeave={e => e.currentTarget.style.color = '#6B7080'}>
             <ArrowLeft className="h-4 w-4" /> All Agents
           </Link>
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: form.color + '22' }}>
-              <Icon className="h-6 w-6" style={{ color: form.color }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ height: '48px', width: '48px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: form.color + '22' }}>
+              <Icon style={{ width: '24px', height: '24px', color: form.color }} />
             </div>
             <div>
-              <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.15em]">{form.role}</div>
-              <h1 className="text-3xl font-serif text-ink-primary">{form.name}</h1>
+              <div style={{ fontSize: '10px', fontWeight: '700', color: '#6B7080', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{form.role}</div>
+              <h1 style={{ fontSize: '30px', fontFamily: 'serif', color: '#F4F4F6', margin: 0 }}>{form.name}</h1>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3 pt-8">
-          <button onClick={deleteAgent} disabled={deleting} className="flex items-center gap-2 px-4 py-2.5 border border-red-200 text-red-500 rounded-xl text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-50">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '32px' }}>
+          <button onClick={deleteAgent} disabled={deleting}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'transparent', color: '#FF3B5C', border: '1px solid rgba(255,59,92,0.3)', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.5 : 1 }}>
             <Trash2 className="h-4 w-4" /> Delete
           </button>
-          <button onClick={save} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-ink-primary text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors disabled:opacity-50">
+          <button onClick={save} disabled={saving}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}>
             <Save className="h-4 w-4" /> {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -125,117 +151,129 @@ export default function AgentEditor() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
         {/* Editor panel */}
         <div className="space-y-6">
-          <div className="bg-white border border-border-light rounded-2xl p-6 space-y-5">
-            <h2 className="text-sm font-bold text-ink-primary uppercase tracking-[0.1em]">Identity</h2>
+          <div style={panelCard}>
+            <h2 style={{ fontSize: '12px', fontWeight: '700', color: '#F4F4F6', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '20px' }}>Identity</h2>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-neutral-500">Name</label>
-                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-border-light rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div>
+                <DLabel>Name</DLabel>
+                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} style={di}
+                  onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'} />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-neutral-500">Role Label</label>
-                <input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-border-light rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10" />
+              <div>
+                <DLabel>Role Label</DLabel>
+                <input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} style={di}
+                  onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'} />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-neutral-500">Description</label>
-              <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                className="w-full px-3 py-2.5 border border-border-light rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10" />
+            <div style={{ marginBottom: '16px' }}>
+              <DLabel>Description</DLabel>
+              <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} style={di}
+                onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
+                onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'} />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-neutral-500">Model</label>
-                <select value={form.model} onChange={e => setForm(f => ({ ...f, model: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-border-light rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10 bg-white">
-                  {MODELS.map(m => <option key={m} value={m}>{m}</option>)}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div>
+                <DLabel>Model</DLabel>
+                <select value={form.model} onChange={e => setForm(f => ({ ...f, model: e.target.value }))} style={ds}>
+                  {MODELS.map(m => <option key={m} value={m} style={{ background: '#0D0F1E', color: '#F4F4F6' }}>{m}</option>)}
                 </select>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-neutral-500">Icon</label>
-                <select value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-border-light rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10 bg-white">
-                  {ICONS.map(i => <option key={i} value={i}>{i}</option>)}
+              <div>
+                <DLabel>Icon</DLabel>
+                <select value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} style={ds}>
+                  {ICONS.map(i => <option key={i} value={i} style={{ background: '#0D0F1E', color: '#F4F4F6' }}>{i}</option>)}
                 </select>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-neutral-500">Color</label>
-              <div className="flex items-center gap-2 flex-wrap">
+            <div>
+              <DLabel>Color</DLabel>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 {COLORS.map(c => (
                   <button key={c} onClick={() => setForm(f => ({ ...f, color: c }))}
-                    className={cn('h-8 w-8 rounded-lg transition-all', form.color === c ? 'ring-2 ring-offset-2 ring-black scale-110' : 'hover:scale-105')}
-                    style={{ backgroundColor: c }} />
+                    style={{
+                      height: '32px', width: '32px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                      backgroundColor: c,
+                      outline: form.color === c ? `3px solid ${c}` : 'none',
+                      outlineOffset: '2px',
+                      transform: form.color === c ? 'scale(1.1)' : 'scale(1)',
+                      transition: 'transform 0.15s',
+                    }} />
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="bg-white border border-border-light rounded-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-ink-primary uppercase tracking-[0.1em]">System Prompt</h2>
-              <span className="text-xs text-neutral-400 font-mono">{form.system_prompt.length} chars</span>
+          <div style={panelCard}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '12px', fontWeight: '700', color: '#F4F4F6', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>System Prompt</h2>
+              <span style={{ fontSize: '12px', color: '#6B7080', fontFamily: 'monospace' }}>{form.system_prompt.length} chars</span>
             </div>
             <textarea
               value={form.system_prompt}
               onChange={e => setForm(f => ({ ...f, system_prompt: e.target.value }))}
               rows={18}
-              className="w-full px-4 py-3 border border-border-light rounded-xl text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-black/10 resize-none"
+              style={{ ...di, resize: 'none', lineHeight: '1.6', fontFamily: 'monospace', fontStyle: 'italic' }}
               placeholder="You are a specialist agent at Adexra…"
+              onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
+              onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'}
             />
           </div>
         </div>
 
         {/* Test chat panel */}
-        <div className="bg-white border border-border-light rounded-2xl flex flex-col" style={{ height: '700px' }}>
-          <div className="p-5 border-b border-border-light flex items-center justify-between">
+        <div style={{ ...panelCard, padding: 0, display: 'flex', flexDirection: 'column', height: '700px' }}>
+          <div style={{ padding: '20px', borderBottom: '1px solid rgba(244,244,246,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <h2 className="text-sm font-bold text-ink-primary uppercase tracking-[0.1em]">Test Chat</h2>
-              <p className="text-xs text-neutral-400 mt-0.5">Uses the current system prompt (unsaved changes apply)</p>
+              <h2 style={{ fontSize: '12px', fontWeight: '700', color: '#F4F4F6', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px 0' }}>Test Chat</h2>
+              <p style={{ fontSize: '12px', color: '#6B7080', margin: 0 }}>Uses the current system prompt (unsaved changes apply)</p>
             </div>
-            <button onClick={() => setTestMessages([])} className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-ink-primary transition-colors">
+            <button onClick={() => setTestMessages([])}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6B7080', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#F4F4F6'}
+              onMouseLeave={e => e.currentTarget.style.color = '#6B7080'}>
               <RotateCcw className="h-3.5 w-3.5" /> Clear
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {testMessages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full text-center gap-3">
-                <div className="h-12 w-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: form.color + '22' }}>
-                  <Icon className="h-6 w-6" style={{ color: form.color }} />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px', textAlign: 'center' }}>
+                <div style={{ height: '48px', width: '48px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: form.color + '22' }}>
+                  <Icon style={{ width: '24px', height: '24px', color: form.color }} />
                 </div>
-                <p className="text-sm text-neutral-400">Send a message to test this agent's system prompt</p>
+                <p style={{ fontSize: '14px', color: '#6B7080', margin: 0 }}>Send a message to test this agent's system prompt</p>
               </div>
             )}
             {testMessages.map((msg, i) => (
-              <div key={i} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
-                <div className={cn(
-                  'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
-                  msg.role === 'user'
-                    ? 'bg-ink-primary text-white rounded-br-sm'
-                    : 'bg-neutral-100 text-ink-primary rounded-bl-sm'
-                )}>
-                  <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+              <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                <div style={{
+                  maxWidth: '85%', borderRadius: '16px', padding: '12px 16px', fontSize: '14px', lineHeight: '1.6',
+                  ...(msg.role === 'user'
+                    ? { background: '#3362FF', color: '#F4F4F6', borderBottomRightRadius: '4px' }
+                    : { background: 'rgba(244,244,246,0.06)', color: '#F4F4F6', borderBottomLeftRadius: '4px' }),
+                }}>
+                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'sans-serif', margin: 0 }}>{msg.content}</pre>
                 </div>
               </div>
             ))}
             {testing && streamBuffer && (
-              <div className="flex justify-start">
-                <div className="max-w-[85%] bg-neutral-100 rounded-2xl rounded-bl-sm px-4 py-3 text-sm leading-relaxed text-ink-primary">
-                  <pre className="whitespace-pre-wrap font-sans">{streamBuffer}</pre>
+              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <div style={{ maxWidth: '85%', background: 'rgba(244,244,246,0.06)', borderRadius: '16px', borderBottomLeftRadius: '4px', padding: '12px 16px', fontSize: '14px', lineHeight: '1.6', color: '#F4F4F6' }}>
+                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'sans-serif', margin: 0 }}>{streamBuffer}</pre>
                 </div>
               </div>
             )}
             {testing && !streamBuffer && (
-              <div className="flex justify-start">
-                <div className="bg-neutral-100 rounded-2xl rounded-bl-sm px-4 py-3">
-                  <div className="flex gap-1">
-                    {[0,1,2].map(i => <div key={i} className="h-1.5 w-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
+              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <div style={{ background: 'rgba(244,244,246,0.06)', borderRadius: '16px', borderBottomLeftRadius: '4px', padding: '12px 16px' }}>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {[0,1,2].map(i => <div key={i} className="animate-bounce" style={{ height: '6px', width: '6px', background: '#6B7080', borderRadius: '99px', animationDelay: `${i * 0.15}s` }} />)}
                   </div>
                 </div>
               </div>
@@ -243,16 +281,18 @@ export default function AgentEditor() {
             <div ref={chatBottomRef} />
           </div>
 
-          <form onSubmit={sendTest} className="p-4 border-t border-border-light flex gap-3">
+          <form onSubmit={sendTest} style={{ padding: '16px', borderTop: '1px solid rgba(244,244,246,0.07)', display: 'flex', gap: '12px' }}>
             <input
               value={testInput}
               onChange={e => setTestInput(e.target.value)}
               disabled={testing}
               placeholder="Test this agent…"
-              className="flex-1 px-4 py-2.5 border border-border-light rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10 disabled:opacity-50"
+              style={{ ...di, flex: 1, opacity: testing ? 0.5 : 1 }}
+              onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
+              onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'}
             />
             <button type="submit" disabled={!testInput.trim() || testing}
-              className="h-10 w-10 flex items-center justify-center bg-ink-primary text-white rounded-xl disabled:opacity-40 hover:bg-neutral-800 transition-colors">
+              style={{ height: '40px', width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '12px', cursor: 'pointer', opacity: (!testInput.trim() || testing) ? 0.4 : 1, flexShrink: 0 }}>
               <Send className="h-4 w-4" />
             </button>
           </form>

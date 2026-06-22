@@ -43,19 +43,19 @@ export default function Agents() {
     <div className="space-y-16 animate-in fade-in duration-700 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
         <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Brain System</span>
-            <div className="h-[1px] w-8 bg-neutral-200" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '10px', fontWeight: '700', color: '#6B7080', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Brain System</span>
+            <div style={{ height: '1px', width: '32px', background: 'rgba(244,244,246,0.1)' }} />
           </div>
-          <h1 className="text-6xl font-serif text-ink-primary leading-tight tracking-tight">Agents</h1>
-          <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
+          <h1 style={{ fontSize: '60px', fontFamily: 'serif', color: '#F4F4F6', lineHeight: '1.1', margin: 0 }}>Agents</h1>
+          <p style={{ color: '#6B7080', fontSize: '16px', lineHeight: '1.6', maxWidth: '480px', margin: 0 }}>
             Each agent is a specialist with its own system prompt, model, and role. They run in parallel and report to Brain.
           </p>
         </div>
         <button
           onClick={createAgent}
           disabled={creating}
-          className="flex items-center gap-2 px-5 py-3 bg-ink-primary text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors disabled:opacity-50"
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: creating ? 'not-allowed' : 'pointer', opacity: creating ? 0.5 : 1 }}
         >
           <Plus className="h-4 w-4" />
           New Agent
@@ -65,7 +65,7 @@ export default function Agents() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-52 rounded-2xl bg-neutral-100 animate-pulse" />
+            <div key={i} style={{ height: '208px', borderRadius: '16px', background: 'rgba(244,244,246,0.03)' }} className="animate-pulse" />
           ))}
         </div>
       ) : (
@@ -76,26 +76,35 @@ export default function Agents() {
               <Link
                 key={agent.id}
                 to={`/agents/${agent.id}`}
-                className="group relative bg-white border border-border-light rounded-2xl p-6 hover:border-neutral-300 hover:shadow-md transition-all duration-200 flex flex-col gap-4"
+                className="group flex flex-col gap-4"
+                style={{
+                  position: 'relative',
+                  background: '#0D0F1E',
+                  border: '1px solid rgba(244,244,246,0.08)',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  textDecoration: 'none',
+                  transition: 'border-color 0.2s, box-shadow 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(244,244,246,0.16)'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(1,2,14,0.4)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(244,244,246,0.08)'; e.currentTarget.style.boxShadow = 'none'; }}
               >
-                <div className="flex items-start justify-between">
-                  <div
-                    className="h-10 w-10 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: agent.color + '22' }}
-                  >
-                    <Icon className="h-5 w-5" style={{ color: agent.color }} />
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  <div style={{ height: '40px', width: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: agent.color + '22' }}>
+                    <Icon style={{ width: '20px', height: '20px', color: agent.color }} />
                   </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-1 rounded-lg bg-neutral-100 text-neutral-500">
+                  <span style={{ fontSize: '10px', fontFamily: 'monospace', fontWeight: '700', padding: '4px 8px', borderRadius: '8px', background: 'rgba(244,244,246,0.06)', color: '#6B7080' }}>
                     {MODEL_LABELS[agent.model] || agent.model}
                   </span>
                 </div>
-                <div className="flex-1">
-                  <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.15em] mb-1">{agent.role}</div>
-                  <h3 className="text-xl font-serif text-ink-primary mb-2">{agent.name}</h3>
-                  <p className="text-sm text-neutral-500 leading-relaxed line-clamp-2">{agent.description}</p>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '10px', fontWeight: '700', color: '#6B7080', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '4px' }}>{agent.role}</div>
+                  <h3 style={{ fontSize: '20px', fontFamily: 'serif', color: '#F4F4F6', margin: '0 0 8px 0' }}>{agent.name}</h3>
+                  <p style={{ fontSize: '14px', color: '#6B7080', lineHeight: '1.5', margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{agent.description}</p>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-medium text-neutral-400 group-hover:text-ink-primary transition-colors">
-                  Edit agent <ChevronRight className="h-3.5 w-3.5" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '500', color: '#6B7080', transition: 'color 0.2s' }}
+                  className="group-hover:text-[#F4F4F6]">
+                  Edit agent <ChevronRight style={{ width: '14px', height: '14px' }} />
                 </div>
               </Link>
             );

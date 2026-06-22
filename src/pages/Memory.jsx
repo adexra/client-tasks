@@ -1,18 +1,38 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Trash2, Download, Edit3, Save, X, Tag, BookOpen } from 'lucide-react';
-import { cn } from '../lib/utils';
 import { useToast } from '../context/ToastContext';
 
 const TYPES = ['general', 'brand', 'niche', 'seo', 'technical', 'client'];
+
 const TYPE_COLORS = {
-  general: 'bg-neutral-100 text-neutral-600',
-  brand: 'bg-purple-100 text-purple-700',
-  niche: 'bg-blue-100 text-blue-700',
-  seo: 'bg-green-100 text-green-700',
-  technical: 'bg-orange-100 text-orange-700',
-  client: 'bg-pink-100 text-pink-700',
+  general:   { bg: 'rgba(107,112,128,0.15)', color: '#9CA3AF' },
+  brand:     { bg: 'rgba(139,92,246,0.15)',  color: '#a78bfa' },
+  niche:     { bg: 'rgba(51,98,255,0.15)',   color: '#818cf8' },
+  seo:       { bg: 'rgba(34,197,94,0.15)',   color: '#4ade80' },
+  technical: { bg: 'rgba(251,146,60,0.15)',  color: '#fb923c' },
+  client:    { bg: 'rgba(236,72,153,0.15)',  color: '#f472b6' },
 };
+
+const card = {
+  background: '#0D0F1E',
+  border: '1px solid rgba(244,244,246,0.08)',
+  borderRadius: '16px',
+  padding: '24px',
+};
+
+const di = {
+  width: '100%',
+  background: 'rgba(244,244,246,0.05)',
+  border: '1px solid rgba(244,244,246,0.12)',
+  borderRadius: '12px',
+  padding: '10px 14px',
+  fontSize: '14px',
+  color: '#F4F4F6',
+  outline: 'none',
+};
+
+const ds = { ...di, cursor: 'pointer' };
 
 function MemoryCard({ bucket, onSave, onDelete }) {
   const [editing, setEditing] = useState(false);
@@ -43,67 +63,92 @@ function MemoryCard({ bucket, onSave, onDelete }) {
     URL.revokeObjectURL(url);
   }
 
+  const tc = TYPE_COLORS[bucket.type] || TYPE_COLORS.general;
+
+  const iconBtn = {
+    height: '32px', width: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'transparent', border: 'none', borderRadius: '8px', color: '#6B7080', cursor: 'pointer',
+  };
+
   return (
-    <div className="bg-white border border-border-light rounded-2xl p-6 space-y-4">
+    <div style={card}>
       {editing ? (
-        <>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-3">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              className="col-span-2 px-3 py-2 border border-border-light rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black/10" placeholder="Bucket name" />
-            <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-              className="px-3 py-2 border border-border-light rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10">
-              {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              style={{ ...di, gridColumn: '1 / -1' }} placeholder="Bucket name"
+              onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
+              onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'} />
+            <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} style={ds}>
+              {TYPES.map(t => <option key={t} value={t} style={{ background: '#0D0F1E', color: '#F4F4F6' }}>{t}</option>)}
             </select>
             <input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
-              className="px-3 py-2 border border-border-light rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10" placeholder="tags, comma, separated" />
+              style={di} placeholder="tags, comma, separated"
+              onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
+              onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'} />
           </div>
           <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
-            rows={10} className="w-full px-3 py-2.5 border border-border-light rounded-xl text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-black/10 resize-none"
-            placeholder="Write memory content in Markdown…" />
-          <div className="flex items-center gap-2">
-            <button onClick={save} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-ink-primary text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors disabled:opacity-50">
+            rows={10} style={{ ...di, resize: 'none', lineHeight: '1.6', fontFamily: 'monospace' }}
+            placeholder="Write memory content in Markdown…"
+            onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
+            onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'} />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={save} disabled={saving}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
               <Save className="h-3.5 w-3.5" /> {saving ? 'Saving…' : 'Save'}
             </button>
-            <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-4 py-2 border border-border-light text-neutral-500 rounded-xl text-sm font-medium hover:bg-neutral-50 transition-colors">
+            <button onClick={() => setEditing(false)}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'transparent', color: '#6B7080', border: '1px solid rgba(244,244,246,0.12)', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
               <X className="h-3.5 w-3.5" /> Cancel
             </button>
           </div>
-        </>
+        </div>
       ) : (
         <>
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-2 flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={cn('text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full', TYPE_COLORS[bucket.type] || TYPE_COLORS.general)}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                <span style={{ background: tc.bg, color: tc.color, padding: '2px 8px', borderRadius: '99px', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   {bucket.type}
                 </span>
                 {bucket.tags?.map(tag => (
-                  <span key={tag} className="flex items-center gap-1 text-[10px] text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-full">
+                  <span key={tag} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(244,244,246,0.06)', color: '#6B7080', padding: '2px 8px', borderRadius: '99px', fontSize: '10px' }}>
                     <Tag className="h-2.5 w-2.5" />{tag}
                   </span>
                 ))}
               </div>
-              <h3 className="text-lg font-serif text-ink-primary">{bucket.name}</h3>
+              <h3 style={{ fontSize: '18px', fontFamily: 'serif', color: '#F4F4F6', margin: 0 }}>{bucket.name}</h3>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button onClick={exportMd} title="Export .md" className="h-8 w-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-ink-primary hover:bg-neutral-100 transition-colors">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+              <button onClick={exportMd} title="Export .md" style={iconBtn}
+                onMouseEnter={e => { e.currentTarget.style.color = '#F4F4F6'; e.currentTarget.style.background = 'rgba(244,244,246,0.08)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#6B7080'; e.currentTarget.style.background = 'transparent'; }}>
                 <Download className="h-3.5 w-3.5" />
               </button>
-              <button onClick={exportJson} title="Export .json" className="h-8 px-2 flex items-center justify-center rounded-lg text-neutral-400 hover:text-ink-primary hover:bg-neutral-100 transition-colors text-[10px] font-mono font-bold">
+              <button onClick={exportJson} title="Export .json"
+                style={{ ...iconBtn, width: 'auto', padding: '0 8px', fontSize: '10px', fontFamily: 'monospace', fontWeight: '700' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#F4F4F6'; e.currentTarget.style.background = 'rgba(244,244,246,0.08)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#6B7080'; e.currentTarget.style.background = 'transparent'; }}>
                 JSON
               </button>
-              <button onClick={() => setEditing(true)} className="h-8 w-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-ink-primary hover:bg-neutral-100 transition-colors">
+              <button onClick={() => setEditing(true)} style={iconBtn}
+                onMouseEnter={e => { e.currentTarget.style.color = '#F4F4F6'; e.currentTarget.style.background = 'rgba(244,244,246,0.08)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#6B7080'; e.currentTarget.style.background = 'transparent'; }}>
                 <Edit3 className="h-3.5 w-3.5" />
               </button>
-              <button onClick={() => onDelete(bucket.id)} className="h-8 w-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+              <button onClick={() => onDelete(bucket.id)} style={iconBtn}
+                onMouseEnter={e => { e.currentTarget.style.color = '#FF3B5C'; e.currentTarget.style.background = 'rgba(255,59,92,0.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#6B7080'; e.currentTarget.style.background = 'transparent'; }}>
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
-          <div className="bg-neutral-50 rounded-xl p-4 max-h-48 overflow-y-auto">
-            <pre className="text-sm text-neutral-600 whitespace-pre-wrap font-sans leading-relaxed">{bucket.content || <span className="italic text-neutral-400">No content yet — click edit to add.</span>}</pre>
+          <div style={{ background: 'rgba(244,244,246,0.03)', borderRadius: '12px', padding: '16px', maxHeight: '192px', overflowY: 'auto', marginBottom: '12px' }}>
+            <pre style={{ fontSize: '14px', color: '#9CA3AF', whiteSpace: 'pre-wrap', fontFamily: 'sans-serif', lineHeight: '1.6', margin: 0 }}>
+              {bucket.content || <span style={{ fontStyle: 'italic', color: '#6B7080' }}>No content yet — click edit to add.</span>}
+            </pre>
           </div>
-          <div className="text-xs text-neutral-400">
+          <div style={{ fontSize: '12px', color: '#6B7080' }}>
             {bucket.content.length} chars · Updated {new Date(bucket.updated_at).toLocaleDateString()}
           </div>
         </>
@@ -160,35 +205,44 @@ export default function Memory() {
 
   const filtered = filter === 'all' ? buckets : buckets.filter(b => b.type === filter);
 
+  function filterBtnStyle(t) {
+    return {
+      padding: '8px 16px', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer',
+      textTransform: 'capitalize', transition: 'all 0.15s',
+      ...(filter === t
+        ? { background: '#3362FF', color: '#F4F4F6', border: 'none' }
+        : { background: 'transparent', color: '#6B7080', border: '1px solid rgba(244,244,246,0.12)' }),
+    };
+  }
+
   return (
     <div className="space-y-16 animate-in fade-in duration-700 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
         <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Brain System</span>
-            <div className="h-[1px] w-8 bg-neutral-200" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '10px', fontWeight: '700', color: '#6B7080', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Brain System</span>
+            <div style={{ height: '1px', width: '32px', background: 'rgba(244,244,246,0.1)' }} />
           </div>
-          <h1 className="text-6xl font-serif text-ink-primary leading-tight tracking-tight">Memory</h1>
-          <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
+          <h1 style={{ fontSize: '60px', fontFamily: 'serif', color: '#F4F4F6', lineHeight: '1.1', margin: 0 }}>Memory</h1>
+          <p style={{ color: '#6B7080', fontSize: '16px', lineHeight: '1.6', maxWidth: '480px', margin: 0 }}>
             Named knowledge buckets injected into conversations. Brand voice, niche rules, SEO constraints — anything the agents should always know.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={exportAll} className="flex items-center gap-2 px-4 py-2.5 border border-border-light text-neutral-600 rounded-xl text-sm font-medium hover:bg-neutral-50 transition-colors">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button onClick={exportAll}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'transparent', color: '#6B7080', border: '1px solid rgba(244,244,246,0.12)', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
             <Download className="h-4 w-4" /> Export All
           </button>
-          <button onClick={create} className="flex items-center gap-2 px-5 py-2.5 bg-ink-primary text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors">
+          <button onClick={create}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
             <Plus className="h-4 w-4" /> New Bucket
           </button>
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
         {['all', ...TYPES].map(t => (
-          <button key={t} onClick={() => setFilter(t)}
-            className={cn('px-4 py-2 rounded-xl text-sm font-medium transition-colors capitalize',
-              filter === t ? 'bg-ink-primary text-white' : 'bg-white border border-border-light text-neutral-500 hover:bg-neutral-50')}>
+          <button key={t} onClick={() => setFilter(t)} style={filterBtnStyle(t)}>
             {t} {t === 'all' ? `(${buckets.length})` : `(${buckets.filter(b => b.type === t).length})`}
           </button>
         ))}
@@ -196,12 +250,12 @@ export default function Memory() {
 
       {loading ? (
         <div className="space-y-4">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-48 rounded-2xl bg-neutral-100 animate-pulse" />)}
+          {[...Array(3)].map((_, i) => <div key={i} style={{ height: '192px', borderRadius: '16px', background: 'rgba(244,244,246,0.03)' }} className="animate-pulse" />)}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-          <BookOpen className="h-10 w-10 text-neutral-300" />
-          <p className="text-neutral-400">No memory buckets yet. Create one to give your agents persistent context.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '96px 0', gap: '16px', textAlign: 'center' }}>
+          <BookOpen style={{ width: '40px', height: '40px', color: '#6B7080' }} />
+          <p style={{ color: '#6B7080', margin: 0 }}>No memory buckets yet. Create one to give your agents persistent context.</p>
         </div>
       ) : (
         <div className="space-y-4">
