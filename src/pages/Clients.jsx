@@ -114,10 +114,10 @@ export default function Clients() {
                          <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-all" style={{ color: 'rgba(244,244,246,0.1)' }} />
                       </div>
 
-                      <div className="space-y-2">
-                         <h3 className="text-2xl font-serif transition-colors" style={{ color: '#F4F4F6' }}>{client.name}</h3>
+                      <div className="space-y-1">
+                         <h3 className="text-2xl font-serif transition-colors" style={{ color: '#F4F4F6' }}>{client.business_name || client.name}</h3>
                          {client.business_name && (
-                           <p className="text-[11px] font-medium" style={{ color: 'rgba(244,244,246,0.45)' }}>{client.business_name}</p>
+                           <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'rgba(244,244,246,0.35)' }}>{client.name}</p>
                          )}
                          {client.contact_link && (
                            <a
