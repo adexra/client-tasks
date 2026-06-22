@@ -43,12 +43,13 @@ const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', BRL: 'R$' };
 
 const SERVICE_TYPES = [
   'Landing Page',
-  'Website',
-  'WhatsApp Ads Management',
-  'WhatsApp Chatbot',
-  'Maintenance',
-  'Consultation',
-  'Custom',
+  '5 Page Website',
+  'Automação',
+  'WhatsApp Bot',
+  'Development',
+  'Advertising',
+  'Lançamento',
+  'Other',
 ];
 
 const HEALTH_COLORS = {
