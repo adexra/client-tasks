@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-06-22 — Sprint 8 — Finance Awareness
+
+### Summary
+Full rewrite of `src/pages/Financials.jsx` from old light editorial theme to dark Adexra brand with better data visibility.
+
+**4 stat cards:** Cash Balance (paid − expenses), Total Billed, Collected, Expenses — all with privacy blur support and live currency conversion.
+
+**Monthly revenue chart (last 6 months):** Pure CSS bar chart built from `client_payments`, split into paid (green) and pending (blue) stacked bars per month.
+
+**3-tab layout:**
+- **Overview** — pending payments list (click to mark paid inline) + per-client billing breakdown with progress bars (paid / billed ratio)
+- **Payments** — full `client_payments` list, click the circle to toggle paid/unpaid (snapshots `paid_brl_amount` on mark-paid)
+- **Expenses** — expense log with inline add form (description, amount, currency, recurring toggle), delete button
+
+**Privacy mode** — `Eye/EyeOff` toggle button blurs all monetary values with CSS `filter: blur(8px)`. Persists to `localStorage` via existing `FinancialContext.showPrivacy`.
+
+**Currency switcher** — BRL/USD/EUR pill strip in header, persists to `localStorage`. All values re-convert live via `fromBRL()`.
+
+**Per-client names** — local `clients` fetch maps `client_id → name` for the billing breakdown (context doesn't include names).
+
+**All context logic kept:** `toBRL`, `fromBRL`, `totals`, `refreshData`, `showPrivacy`, `togglePrivacy`, `changeCurrency` — all consumed from `FinancialContext`, no duplication.
+
+### Files Modified
+- `src/pages/Financials.jsx` — full rewrite, dark brand, tabbed layout
+
+---
+
 ## 2026-06-22 — Sprint 7 — Adexra Client Delivery OS (ClientDetail rewrite)
 
 ### Summary
