@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-06-22 — Cleanup — All open issues resolved
+
+### Summary
+Closed all remaining open issues after migration 004 confirmed run by user.
+
+- **ISSUE-004** — marked resolved: migration 004 run, all 8 missing `clients` columns now exist in DB
+- **ISSUE-009** — FX rates now live: `FinancialContext.fetchFX` fetches `open.er-api.com/v6/latest/BRL`, inverts rate to get BRL-per-unit, falls back to 5.20/6.00 if API down. Refreshes every 5 min.
+- **ISSUE-010** — `package.json` name changed from `temp-app` to `operator-os`
+- **ISSUE-012** — `README.md` replaced with actual project docs (routes, setup, stack)
+- **ISSUE-014** — confirmed already resolved by Sprint 1 ESLint pass
+
+### Files Modified
+- `src/context/FinancialContext.jsx` — live FX rate fetch with fallback
+- `package.json` — name `operator-os`
+- `README.md` — replaced with real project README
+- `docs/KNOWN_ISSUES.md` — all issues marked resolved
+
+---
+
 ## 2026-06-22 — Sprint 8 — Finance Awareness
 
 ### Summary

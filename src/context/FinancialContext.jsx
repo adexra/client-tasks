@@ -11,12 +11,20 @@ export function FinancialProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [showPrivacy, setShowPrivacy] = useState(() => localStorage.getItem('showPrivacy') === 'true');
 
-  const fetchFX = useCallback(() => {
-    // Fixed conversion as requested by the user
-    setFxRates({
-      USD: 5.20,
-      EUR: 6.00
-    });
+  const fetchFX = useCallback(async () => {
+    try {
+      const res = await fetch('https://open.er-api.com/v6/latest/BRL');
+      if (!res.ok) throw new Error('FX fetch failed');
+      const json = await res.json();
+      // API returns rates relative to BRL base: BRL→X
+      // We need X→BRL: invert the rate
+      const usdRate = json.rates?.USD ? 1 / json.rates.USD : 5.20;
+      const eurRate = json.rates?.EUR ? 1 / json.rates.EUR : 6.00;
+      setFxRates({ USD: usdRate, EUR: eurRate });
+    } catch {
+      // Fall back to hardcoded rates if API is unavailable
+      setFxRates({ USD: 5.20, EUR: 6.00 });
+    }
   }, []);
 
   const loadData = useCallback(async () => {
