@@ -291,11 +291,14 @@ export const translations = {
         main_delivery_label: 'Main Delivery / Template',
         main_delivery: {
             none: 'None (Blank Project)',
-            framer_site: 'Framer Website',
-            automation: 'Process Automation',
+            landing_page: 'Landing Page',
+            five_page_site: '5 Page Website',
+            automation: 'Automação',
             whatsapp_bot: 'WhatsApp Bot',
-            advertising: 'Paid Advertising',
-            update: 'System Update'
+            development: 'Development',
+            advertising: 'Advertising',
+            lancamento: 'Lançamento',
+            other: 'Other'
         },
         phase_label: 'Current Phase',
         phases: {
@@ -663,11 +666,14 @@ export const translations = {
         main_delivery_label: 'Entrega Principal / Template',
         main_delivery: {
             none: 'Nenhum (Projeto em Branco)',
-            framer_site: 'Site no Framer',
-            automation: 'Automação de Processos',
-            whatsapp_bot: 'Bot de WhatsApp',
-            advertising: 'Tráfego Pago',
-            update: 'Atualização de Sistema'
+            landing_page: 'Landing Page',
+            five_page_site: 'Site 5 Páginas',
+            automation: 'Automação',
+            whatsapp_bot: 'WhatsApp Bot',
+            development: 'Development',
+            advertising: 'Advertising',
+            lancamento: 'Lançamento',
+            other: 'Other'
         },
         phase_label: 'Fase Atual',
         phases: {

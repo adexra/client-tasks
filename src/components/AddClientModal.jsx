@@ -389,11 +389,14 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                       onChange={v => setFormData({...formData, main_delivery: v})}
                       options={[
                         { value: 'none', label: t('project_modal.main_delivery.none') },
-                        { value: 'framer_site', label: t('project_modal.main_delivery.framer_site') },
+                        { value: 'landing_page', label: t('project_modal.main_delivery.landing_page') },
+                        { value: 'five_page_site', label: t('project_modal.main_delivery.five_page_site') },
                         { value: 'automation', label: t('project_modal.main_delivery.automation') },
                         { value: 'whatsapp_bot', label: t('project_modal.main_delivery.whatsapp_bot') },
+                        { value: 'development', label: t('project_modal.main_delivery.development') },
                         { value: 'advertising', label: t('project_modal.main_delivery.advertising') },
-                        { value: 'update', label: t('project_modal.main_delivery.update') },
+                        { value: 'lancamento', label: t('project_modal.main_delivery.lancamento') },
+                        { value: 'other', label: t('project_modal.main_delivery.other') },
                       ]}
                     />
                   </div>
