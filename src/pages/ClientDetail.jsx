@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   Archive,
   ArchiveRestore,
-  Building,
   Mail,
   Pencil,
   Globe,
@@ -13,12 +12,18 @@ import {
   Target,
   CheckCircle2,
   Activity,
-  DollarSign,
   Plus,
   CheckCircle,
   Clock,
   Trash,
-  Cpu
+  Cpu,
+  Heart,
+  Phone,
+  AlertTriangle,
+  CalendarClock,
+  ChevronDown,
+  X,
+  Check
 } from 'lucide-react';
 import TagBadge from '../components/TagBadge';
 import AddClientModal from '../components/AddClientModal';
@@ -27,751 +32,210 @@ import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
 import { cn } from '../lib/utils';
 
+// ── Constants ──────────────────────────────────────────────
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', BRL: 'R$' };
 
-export default function ClientDetail() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const toast = useToast();
-  const { t, language } = useLanguage();
-  const [client, setClient] = useState(null);
-  const [phases, setPhases] = useState([]);
-  const [contacts, setContacts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [tasks, setTasks] = useState([]);
-  const [payments, setPayments] = useState([]);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [newPayment, setNewPayment] = useState({ amount: '', description: '', currency: 'BRL', is_recurring: false, recurring_start_date: new Date().toISOString().split('T')[0] });
+const SERVICE_TYPES = [
+  'Landing Page',
+  'Website',
+  'WhatsApp Ads Management',
+  'WhatsApp Chatbot',
+  'Maintenance',
+  'Consultation',
+  'Custom',
+];
 
-  async function loadClientData(showSpinner = false) {
-    if (showSpinner) setLoading(true);
-    try {
-      if (!id) throw new Error('Invalid ID');
-      
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('id', id)
-        .single();
-        
-      if (clientError || !clientData) {
-        toast.error(t('client_detail.record_not_found'));
-        navigate('/');
-        return;
-      }
-      setClient(clientData);
+const HEALTH_COLORS = {
+  1: '#FF3B5C',
+  2: '#FF3B5C',
+  3: '#F59E0B',
+  4: '#22C55E',
+  5: '#22C55E',
+};
 
-      const { data: phasesData, error: phasesError } = await supabase
-        .from('client_phases')
-        .select(`
-          *,
-          phase_fields (*)
-        `)
-        .eq('client_id', id)
-        .order('order_index', { ascending: true });
+const PHASES_PIPELINE = ['onboarding', 'delivery', 'review', 'done', 'churned'];
 
-      if (!phasesError) {
-        setPhases(phasesData || []);
-      }
-
-      const { data: paymentsData, error: paymentsError } = await supabase
-        .from('client_payments')
-        .select('*')
-        .eq('client_id', id)
-        .order('created_at', { ascending: false });
-
-      if (!paymentsError) setPayments(paymentsData || []);
-
-      const { data: contactsData } = await supabase
-        .from('contacts')
-        .select('*')
-        .eq('client_id', id)
-        .order('created_at', { ascending: true });
-
-      setContacts(contactsData || []);
-
-      const { data: tasksData } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('client_id', id)
-        .order('created_at', { ascending: true });
-
-      setTasks(tasksData || []);
-    } catch (err) {
-      console.error(err);
-      toast.error(t('client_detail.sync_error'));
-      navigate('/');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => { loadClientData(true); }, [id]);
-
-  async function updateStatus(status) {
-    const { error } = await supabase.from('clients').update({ status }).eq('id', id);
-    if (!error) { 
-      toast.success(status === 'active' ? t('client_detail.project_activated') : t('client_detail.project_archived')); 
-      loadClientData(); 
-    }
-  }
-
-  async function deleteClient() {
-    // 1. Check for open tasks
-    const { data: openTasks, error: checkError } = await supabase
-      .from('tasks')
-      .select('id')
-      .eq('client_id', id)
-      .eq('done', false);
-
-    if (checkError) {
-      console.error('Error checking projects tasks:', checkError);
-    }
-
-    const hasOpenTasks = openTasks && openTasks.length > 0;
-    
-    let deleteTasksConfirmed = false;
-    if (hasOpenTasks) {
-      if (confirm(t('client_detail.delete_confirm_with_tasks', { count: openTasks.length }))) {
-        deleteTasksConfirmed = true;
-      } else {
-        // If they don't want to delete tasks, or they cancel the whole thing?
-        // Let's ask if they want to cancel deletion or just keep tasks.
-        if (!confirm(t('client_detail.delete_confirm_only_project'))) return;
-      }
-    } else {
-      if (!confirm(t('client_detail.delete_confirm'))) return;
-    }
-
-    if (deleteTasksConfirmed) {
-      await supabase.from('tasks').delete().eq('client_id', id).eq('done', false);
-    }
-
-    const { error } = await supabase.from('clients').delete().eq('id', id);
-    if (!error) { 
-      toast.success(t('client_detail.project_deleted')); 
-      navigate('/'); 
-    }
-  }
-
-  async function addPayment(e) {
-    e.preventDefault();
-    if (!newPayment.amount || !newPayment.description) return toast.error(t('financials.check_fields'));
-    
-    const { error } = await supabase.from('client_payments').insert([{
-      client_id: id,
-      amount: parseFloat(newPayment.amount),
-      description: newPayment.description,
-      currency: newPayment.currency || client.currency,
-      is_paid: false,
-      is_recurring: newPayment.is_recurring,
-      recurring_start_date: newPayment.is_recurring ? newPayment.recurring_start_date : null,
-    }]);
-
-    if (!error) {
-      toast.success(t('client_detail.billing_added'));
-      setNewPayment({ amount: '', description: '', currency: 'BRL', is_recurring: false, recurring_start_date: new Date().toISOString().split('T')[0] });
-      setShowPaymentForm(false);
-      loadClientData();
-      window.dispatchEvent(new Event('financial-updated'));
-    }
-  }
-
-  async function togglePaid(paymentId, currentStatus) {
-    const payment = payments.find(p => p.id === paymentId);
-    let updateData = { is_paid: !currentStatus };
-
-    if (!currentStatus && payment) {
-      // Marking as paid — snapshot the BRL value right now using live FX
-      try {
-        const usdToBRL = 5.20;
-        const eurToBRL = 6.00;
-        const amt = parseFloat(payment.amount) || 0;
-        let brlValue = amt;
-        if (payment.currency === 'USD') brlValue = amt * usdToBRL;
-        if (payment.currency === 'EUR') brlValue = amt * eurToBRL;
-        updateData.paid_brl_amount = Math.round(brlValue * 100) / 100;
-      } catch {
-        // FX fetch failed — fall back to stored amount as BRL (safe default)
-        updateData.paid_brl_amount = null;
-      }
-    } else {
-      // Unmarking as paid — clear the snapshot
-      updateData.paid_brl_amount = null;
-    }
-
-    const { error } = await supabase
-      .from('client_payments')
-      .update(updateData)
-      .eq('id', paymentId);
-    
-    if (!error) {
-      toast.success(currentStatus ? t('client_detail.marked_unpaid') : t('client_detail.marked_paid'));
-      loadClientData();
-      window.dispatchEvent(new Event('financial-updated'));
-    }
-  }
-
-  async function deletePayment(paymentId) {
-    if (!confirm(t('client_detail.delete_record_confirm'))) return;
-    const { error } = await supabase.from('client_payments').delete().eq('id', paymentId);
-    if (!error) {
-      toast.success(t('client_detail.record_removed'));
-      loadClientData();
-      window.dispatchEvent(new Event('financial-updated'));
-    }
-  }
-
-  async function terminateRecurring(paymentId) {
-    if (!confirm('Terminate this recurring fee? It will be marked as ended today.')) return;
-    const { error } = await supabase.from('client_payments')
-      .update({ terminated_at: new Date().toISOString() })
-      .eq('id', paymentId);
-    if (!error) {
-      toast.success('Recurring fee terminated.');
-      loadClientData();
-      window.dispatchEvent(new Event('financial-updated'));
-    }
-  }
-
-  function monthsActive(startDate, terminatedAt) {
-    const start = new Date(startDate);
-    const end = terminatedAt ? new Date(terminatedAt) : new Date();
-    return Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24 * 30.44)));
-  }
-
-  const currentBill = payments.filter(p => !p.is_paid).reduce((sum, p) => sum + parseFloat(p.amount), 0);
-  const lifetimeBill = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-
-
-  function getNextAction() {
-    const placeholders = ["Awaiting high-impact trajectory points.", "Awaiting high-impact trajectory points", "Aguardando pontos de trajetória de alto impacto."];
-    if (client.next_action && !placeholders.includes(client.next_action)) {
-      // Try JSON checklist format — return first pending item
-      try {
-        const items = JSON.parse(client.next_action);
-        if (Array.isArray(items)) {
-          const first = items.find(i => !i.done);
-          if (first) return first.text;
-          if (items.length > 0) return items[items.length - 1].text;
-        }
-      } catch {}
-      return client.next_action;
-    }
-
-    const currentPhase = phases.find(p => !p.completed);
-    if (!currentPhase) return t('client_detail.all_phases_completed');
-
-    const fields = currentPhase.phase_fields || [];
-    
-    for (const field of fields) {
-      if (['Execution Roadmap', 'Action Items', 'Roteiro de Execução', 'Itens de Ação'].includes(field.field_key)) {
-        try {
-          const items = JSON.parse(field.field_value || '[]');
-          const firstPending = items.find(item => !item.done);
-          if (firstPending) return firstPending.text;
-        } catch (e) {}
-      }
-    }
-
-    const firstUnchecked = fields.find(f => f.field_type === 'checkbox' && f.field_value === 'false');
-    if (firstUnchecked) return firstUnchecked.field_key;
-
-    return `${t('client_detail.current_phase_prefix')}${currentPhase.phase_name.charAt(0).toUpperCase() + currentPhase.phase_name.slice(1)}`;
-  }
-
-  if (loading) return (
-    <div className="h-96 flex flex-col items-center justify-center gap-4 opacity-50">
-      <div className="h-5 w-5 border-2 border-[var(--ink-charcoal)] border-t-transparent rounded-full animate-spin" />
-      <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400">{t('client_detail.loading_project')}</p>
-    </div>
-  );
-
-  if (!client) return (
-    <div className="h-[60vh] flex flex-col items-center justify-center gap-6 text-center animate-in zoom-in-95 duration-700">
-       <div className="space-y-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-neutral-400">{t('client_detail.not_found_title')}</p>
-          <h1 className="text-4xl font-serif text-[var(--ink-primary)] italic">{t('client_detail.not_found_subtitle', { id: id?.split('-')[0] })}</h1>
-       </div>
-       <Link to="/" className="btn-minimal btn-primary mt-4">{t('client_detail.back_to_board')}</Link>
-    </div>
-  );
-
-  return (
-    <div className="space-y-20 animate-in fade-in duration-700">
-      {/* Navigation & Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pb-10 border-b border-[var(--border-light)]">
-        <Link to="/" className="group flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 hover:text-[var(--ink-primary)] transition-all">
-          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
-          <span className="hidden sm:inline">{t('client_detail.back_to_board')}</span>
-          <span className="sm:hidden text-[8px]">{t('common.back')}</span>
-        </Link>
-        
-        <div className="flex flex-wrap items-center gap-3">
-          <Link to={`/briefing/${id}`} className="btn-minimal bg-ink-primary text-white hover:bg-neutral-800 flex items-center gap-2 p-3 sm:px-4">
-            <Cpu className="h-3.5 w-3.5" />
-            <span className="text-[10px] uppercase font-bold tracking-widest hidden sm:inline">Brain</span>
-          </Link>
-          <button onClick={() => setIsEditModalOpen(true)} className="btn-minimal bg-white border-[var(--border-light)] text-[var(--ink-primary)] hover:bg-neutral-50 flex items-center gap-2 p-3 sm:px-4">
-            <Pencil className="h-3.5 w-3.5" /> 
-            <span className="text-[10px] uppercase font-bold tracking-widest hidden sm:inline">{t('client_detail.edit_record')}</span>
-          </button>
-          <button onClick={() => updateStatus(client.status === 'active' ? 'archived' : 'active')} className="btn-minimal bg-white border-[var(--border-light)] text-[var(--ink-primary)] hover:bg-neutral-50 flex items-center gap-2 p-3 sm:px-4">
-            {client.status === 'active' ? <Archive className="h-3.5 w-3.5" /> : <ArchiveRestore className="h-3.5 w-3.5" />}
-            <span className="text-[10px] uppercase font-bold tracking-widest hidden sm:inline">{client.status === 'active' ? t('client_detail.archive') : t('client_detail.reactivate')}</span>
-          </button>
-          <div className="hidden sm:block h-4 w-[1px] bg-[var(--border-light)] mx-2" />
-          <button onClick={deleteClient} className="p-2.5 text-neutral-300 hover:text-rose-500 transition-colors">
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-16">
-        <div className="lg:col-span-3 space-y-16">
-          <div className="space-y-12">
-             <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                   <div className={cn("h-1.5 w-1.5 rounded-full", client.status === 'active' ? "bg-[var(--success-green)]" : "bg-neutral-300")} />
-                   <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('portfolio.tag')} {client.status === 'active' ? t('portfolio.filter_active') : t('portfolio.filter_archived')}</span>
-                </div>
-                <h1 className="text-4xl sm:text-5xl md:text-7xl font-serif text-[var(--ink-primary)] leading-[1.1] tracking-tight break-words">
-                  {client.name}.
-                </h1>
-                <div className="flex flex-wrap gap-8 pt-2">
-                   <div className="flex items-center gap-2.5">
-                      <Mail className="h-3.5 w-3.5 text-neutral-300" />
-                      <span className="text-sm font-medium text-neutral-500 italic">{client.email || t('client_detail.no_email')}</span>
-                   </div>
-                   {client.contact_link && (
-                     <div className="flex items-center gap-2.5">
-                        <Activity className="h-3.5 w-3.5 text-[var(--accent-sand)]" />
-                        <a 
-                          href={client.contact_link.startsWith('http') ? client.contact_link : `https://${client.contact_link}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-bold text-[var(--accent-sand)] uppercase tracking-widest hover:underline"
-                        >
-                          {t('portfolio.contact_me')}
-                        </a>
-                     </div>
-                   )}
-                   <div className="flex items-center gap-2.5">
-                      <Globe className="h-3.5 w-3.5 text-neutral-300" />
-                      {client.url ? (
-                        <a href={client.url.startsWith('http') ? client.url : `https://${client.url}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[var(--accent-sand)] hover:underline italic">{client.url}</a>
-                      ) : (
-                        <span className="text-sm font-medium text-neutral-500 italic">{t('client_detail.no_url')}</span>
-                      )}
-                   </div>
-                </div>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-                <div className="space-y-4">
-                   <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Target className="h-3.5 w-3.5" /> {t('client_detail.project_scope')}
-                   </label>
-                   <div className="surface-card p-6 md:p-8 min-h-[140px] flex items-center italic text-[var(--ink-secondary)] leading-relaxed">
-                      {client.what_sold || t('client_detail.no_scope')}
-                   </div>
-                </div>
-                <div className="space-y-4">
-                   <label className="text-[10px] font-bold text-violet-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Activity className="h-3.5 w-3.5" /> {t('portfolio.next_action')}
-                   </label>
-                   <div className="surface-card bg-violet-50/40 border-violet-100 p-6 md:p-8 min-h-[140px]">
-                      <NextActionDisplay raw={client.next_action} fallback={getNextAction()} clientId={client.id} onUpdate={loadClientData} />
-                   </div>
-                </div>
-             </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-1 border-t lg:border-t-0 lg:border-l border-[var(--border-light)] pt-12 lg:pt-0 lg:pl-12 space-y-12">
-           <div className="space-y-6">
-              <div className="space-y-2">
-                 <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest">{t('client_detail.current_billing')}</span>
-                 <div className="flex items-baseline gap-2 text-4xl font-serif text-[var(--ink-primary)]">
-                    <span className="text-xs font-medium text-neutral-400 not-serif">{CURRENCY_SYMBOLS[client.currency || 'BRL']}</span>
-                    {currentBill.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                 </div>
-              </div>
-              
-              <div className="space-y-2">
-                 <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest">{t('client_detail.total_revenue')}</span>
-                 <div className="flex items-baseline gap-2 text-xl font-serif text-[var(--success-green)]">
-                    <span className="text-[10px] font-medium text-neutral-400 not-serif">{CURRENCY_SYMBOLS[client.currency || 'BRL']}</span>
-                    {lifetimeBill.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                 </div>
-              </div>
-           </div>
-
-           <div className="space-y-8 pt-8 border-t border-[var(--border-light)]">
-              {/* Contacts */}
-              {contacts.length > 0 && (
-                <div className="space-y-3">
-                  <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Contacts</label>
-                  <div className="space-y-2">
-                    {contacts.map((c, i) => (
-                      <div key={i} className="bg-neutral-50 rounded-xl p-3 space-y-0.5">
-                        {c.name && <p className="text-xs font-bold text-neutral-700">{c.name}{c.role ? <span className="font-normal text-neutral-400 ml-1">· {c.role}</span> : ''}</p>}
-                        {c.phone && <p className="text-[10px] text-neutral-500 font-medium">{c.phone}</p>}
-                        {c.email && <p className="text-[10px] text-neutral-400 italic">{c.email}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                 <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Tags</label>
-                 <div className="flex flex-wrap gap-2">
-                    {client.tags?.map(t => <TagBadge key={t} tag={t} />)}
-                    {!client.tags?.length && <span className="text-[10px] text-neutral-300 italic">{t('client_detail.no_tags')}</span>}
-                 </div>
-              </div>
-
-              <div className="space-y-6">
-                 <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">{t('client_detail.dod')}</label>
-                    <DodDisplay raw={client.definition_of_done} empty={t('client_detail.not_defined')} clientId={client.id} onUpdate={loadClientData} />
-                 </div>
-                 <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-rose-400 uppercase tracking-widest">{t('client_detail.out_of_scope')}</label>
-                    <OosDisplay raw={client.not_included} empty={t('client_detail.no_out_of_scope')} />
-                 </div>
-              </div>
-           </div>
-        </div>
-      </div>
-
-      <div className="space-y-12 pt-20 border-t border-[var(--border-light)]">
-        <div className="flex items-center justify-between">
-           <div className="space-y-2">
-              <h2 className="text-4xl font-serif text-[var(--ink-primary)]">{t('client_detail.roadmap_title')}</h2>
-              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('client_detail.roadmap_subtitle')}</p>
-           </div>
-           <div className="h-[1px] flex-1 bg-neutral-100 mx-10" />
-        </div>
-        
-        <div className="grid grid-cols-1 gap-8">
-           {phases.map(p => (
-              <PhaseSection key={p.id} phase={p} onUpdate={loadClientData} />
-           ))}
-        </div>
-
-        {/* Project Tasks */}
-        {tasks.length > 0 && (
-          <div className="space-y-8 pt-20 border-t border-[var(--border-light)]">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <h2 className="text-4xl font-serif text-[var(--ink-primary)]">{t('client_detail.tasks_title')}</h2>
-                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('client_detail.tasks_subtitle')} · {tasks.filter(tk => !tk.done).length} pending</p>
-              </div>
-              <div className="h-[1px] flex-1 bg-neutral-100 mx-10" />
-            </div>
-            <div className="space-y-2">
-              {tasks.map(task => (
-                <ProjectTaskRow key={task.id} task={task} onToggle={async () => {
-                  setTasks(prev => prev.map(t => t.id === task.id ? { ...t, done: !t.done } : t));
-                  await supabase.from('tasks').update({ done: !task.done }).eq('id', task.id);
-                }} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Payments / Billing Logic */}
-        <div className="space-y-12 pt-20 border-t border-[var(--border-light)]">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <h2 className="text-4xl font-serif text-[var(--ink-primary)]">{t('client_detail.billing_tracker_title')}</h2>
-              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('client_detail.billing_tracker_subtitle')}</p>
-            </div>
-            <button 
-              onClick={() => setShowPaymentForm(!showPaymentForm)}
-              className="btn-minimal btn-primary flex items-center gap-2 px-6 h-10"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span className="text-[10px] uppercase font-bold tracking-widest">{t('client_detail.add_billable_task')}</span>
-            </button>
-          </div>
-
-          {showPaymentForm && (
-            <div className="surface-card p-10 bg-neutral-50/30 animate-in slide-in-from-top-4 duration-500">
-               <form onSubmit={addPayment} className="space-y-6">
-                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                  <div className="md:col-span-2 space-y-2">
-                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('client_detail.task_description')}</label>
-                    <input
-                      type="text"
-                      required
-                      value={newPayment.description}
-                      onChange={e => setNewPayment({...newPayment, description: e.target.value})}
-                      className="w-full bg-white border border-neutral-100 rounded-xl px-4 py-3 text-sm text-neutral-700"
-                      placeholder={t('client_detail.description_placeholder')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1">{t('financials.amount')} ({client.currency})</label>
-                    <input
-                      type="number"
-                      required
-                      value={newPayment.amount}
-                      onChange={e => setNewPayment({...newPayment, amount: e.target.value})}
-                      className="w-full bg-white border border-neutral-100 rounded-xl px-4 py-3 text-sm font-serif text-neutral-700"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <button type="submit" className="btn-minimal btn-primary h-11">
-                    <span className="text-[10px] uppercase font-bold tracking-widest">{t('client_detail.record_billing')}</span>
-                  </button>
-                 </div>
-
-                 {/* Recurring toggle */}
-                 <div className="flex flex-wrap items-center gap-6 pt-2 border-t border-neutral-100">
-                   <button
-                     type="button"
-                     onClick={() => setNewPayment(p => ({...p, is_recurring: !p.is_recurring}))}
-                     className={cn(
-                       "flex items-center gap-2.5 px-4 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all",
-                       newPayment.is_recurring
-                         ? "bg-violet-50 border-violet-200 text-violet-600"
-                         : "bg-white border-neutral-100 text-neutral-400 hover:border-neutral-200"
-                     )}
-                   >
-                     <span className={cn(
-                       "h-3.5 w-7 rounded-full transition-colors relative",
-                       newPayment.is_recurring ? "bg-violet-400" : "bg-neutral-200"
-                     )}>
-                       <span className={cn(
-                         "absolute top-0.5 h-2.5 w-2.5 rounded-full bg-white shadow transition-all",
-                         newPayment.is_recurring ? "left-[14px]" : "left-0.5"
-                       )} />
-                     </span>
-                     Monthly Recurring
-                   </button>
-
-                   {newPayment.is_recurring && (
-                     <div className="flex items-center gap-2">
-                       <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Start Date</label>
-                       <input
-                         type="date"
-                         value={newPayment.recurring_start_date}
-                         onChange={e => setNewPayment(p => ({...p, recurring_start_date: e.target.value}))}
-                         className="bg-white border border-neutral-100 rounded-lg px-3 py-1.5 text-xs text-neutral-700 focus:outline-none focus:ring-1 focus:ring-violet-200"
-                       />
-                     </div>
-                   )}
-                 </div>
-               </form>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-             {payments.map(p => {
-               const months = p.is_recurring && p.recurring_start_date ? monthsActive(p.recurring_start_date, p.terminated_at) : null;
-               const totalCollected = months ? parseFloat(p.amount) * months : null;
-               const isTerminated = !!p.terminated_at;
-               return (
-               <div key={p.id} className={cn("surface-card p-8 flex flex-col justify-between group", isTerminated && "opacity-60")}>
-                  <div className="space-y-4">
-                     <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-mono text-neutral-300 uppercase">{new Date(p.created_at).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}</span>
-                          {p.is_recurring && (
-                            <span className={cn(
-                              "px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest",
-                              isTerminated ? "bg-neutral-100 text-neutral-400" : "bg-violet-50 text-violet-500 border border-violet-100"
-                            )}>
-                              {isTerminated ? 'Ended' : 'Monthly'}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                           {!p.is_recurring && (
-                             <button
-                               onClick={() => togglePaid(p.id, p.is_paid)}
-                               className={cn(
-                                 "px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest transition-all",
-                                 p.is_paid
-                                  ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                                  : "bg-neutral-50 text-neutral-400 border border-neutral-100 hover:border-emerald-200 hover:text-emerald-500"
-                               )}
-                             >
-                               {p.is_paid ? t('financials.paid') : t('financials.pending')}
-                             </button>
-                           )}
-                        </div>
-                     </div>
-                     <div>
-                        <h4 className="text-base font-serif text-[var(--ink-primary)] leading-tight">{p.description}</h4>
-                        {p.is_recurring && p.recurring_start_date && (
-                          <p className="text-[10px] font-medium text-neutral-400 mt-1">
-                            Since {new Date(p.recurring_start_date).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}
-                            {isTerminated && ` · Ended ${new Date(p.terminated_at).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}`}
-                            {!isTerminated && <span className="text-violet-400 ml-1">· {months}mo active</span>}
-                          </p>
-                        )}
-                        {!p.is_recurring && <p className="text-[11px] font-medium text-neutral-400 mt-1 italic">{t('client_detail.billable_task')}</p>}
-                     </div>
-                  </div>
-
-                  <div className="pt-8 flex items-end justify-between">
-                     <div>
-                       <div className="flex items-baseline gap-1">
-                          <span className="text-[10px] font-medium text-neutral-400">{CURRENCY_SYMBOLS[p.currency || 'BRL']}</span>
-                          <span className="text-2xl font-serif text-[var(--ink-primary)]">{parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                          {p.is_recurring && <span className="text-[9px] text-neutral-400 font-medium ml-1">/mo</span>}
-                       </div>
-                       {totalCollected !== null && (
-                         <p className="text-[10px] font-bold text-neutral-500 mt-0.5">
-                           {CURRENCY_SYMBOLS[p.currency || 'BRL']}{totalCollected.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total · {months} payments
-                         </p>
-                       )}
-                     </div>
-
-                     <div className="flex items-center gap-3">
-                        {p.is_recurring && !isTerminated && (
-                          <button
-                            onClick={() => terminateRecurring(p.id)}
-                            className="text-[8px] font-bold uppercase tracking-widest text-neutral-300 hover:text-rose-500 transition-colors border border-neutral-100 hover:border-rose-200 px-2 py-1 rounded-lg"
-                          >
-                            Terminate
-                          </button>
-                        )}
-                        <button
-                          onClick={() => deletePayment(p.id)}
-                          className="text-neutral-200 hover:text-rose-500 transition-colors p-1"
-                        >
-                          <Trash className="h-3.5 w-3.5" />
-                        </button>
-                        {!p.is_recurring && (
-                          <div className={cn(
-                            "h-1.5 w-1.5 rounded-full animate-pulse",
-                            p.is_paid ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-neutral-200"
-                          )} />
-                        )}
-                     </div>
-                  </div>
-               </div>
-             )})}
-             {payments.length === 0 && (
-               <div className="col-span-full py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-300 text-[10px] font-bold uppercase tracking-[0.3em] italic">
-                  {t('client_detail.no_billing_records')}
-               </div>
-             )}
-          </div>
-        </div>
-      </div>
-
-      <AddClientModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => setIsEditModalOpen(false)} 
-        onClientAdded={loadClientData}
-        editClient={client}
-      />
-    </div>
-  );
-}
-
-function ProjectTaskRow({ task, onToggle }) {
-  const priorityColor = { high: 'bg-rose-500', medium: 'bg-amber-400', low: 'bg-neutral-300', very_low: 'bg-neutral-200' };
+// ── Sub-components ─────────────────────────────────────────
+function CmdCard({ children, className = '', style = {} }) {
   return (
     <div
-      onClick={onToggle}
-      className={cn(
-        "flex items-center gap-4 px-5 py-3.5 rounded-xl border cursor-pointer transition-all group",
-        task.done
-          ? "bg-neutral-50 border-neutral-100 opacity-50"
-          : "bg-white border-neutral-100 hover:border-neutral-200 hover:shadow-sm"
-      )}
+      className={cn('rounded-xl p-5', className)}
+      style={{ backgroundColor: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)', ...style }}
     >
-      <span className={cn(
-        "h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center transition-all",
-        task.done ? "bg-neutral-400 border-neutral-400" : "border-neutral-300 group-hover:border-neutral-400"
-      )}>
-        {task.done && <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-      </span>
-      <span className={cn("text-sm font-medium flex-1 select-none", task.done ? "line-through text-neutral-400" : "text-neutral-700")}>{task.title}</span>
-      {task.priority && !task.done && (
-        <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", priorityColor[task.priority] || 'bg-neutral-300')} />
-      )}
+      {children}
     </div>
   );
 }
 
+function SectionLabel({ children }) {
+  return (
+    <p className="text-[9px] font-bold uppercase tracking-[0.25em] mb-3" style={{ color: '#6B7080' }}>
+      {children}
+    </p>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[9px] font-bold uppercase tracking-[0.2em]" style={{ color: '#6B7080' }}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function DarkInput({ className = '', ...props }) {
+  return (
+    <input
+      className={cn('w-full px-3 py-2 rounded-lg text-sm outline-none', className)}
+      style={{ backgroundColor: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.1)', color: '#F4F4F6' }}
+      {...props}
+    />
+  );
+}
+
+function DarkTextarea({ className = '', ...props }) {
+  return (
+    <textarea
+      className={cn('w-full px-3 py-2 rounded-lg text-sm outline-none resize-none', className)}
+      style={{ backgroundColor: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.1)', color: '#F4F4F6' }}
+      {...props}
+    />
+  );
+}
+
+function DarkSelect({ children, ...props }) {
+  return (
+    <div className="relative">
+      <select
+        className="w-full px-3 py-2 rounded-lg text-sm outline-none appearance-none pr-8"
+        style={{ backgroundColor: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.1)', color: '#F4F4F6' }}
+        {...props}
+      >
+        {children}
+      </select>
+      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none" style={{ color: '#6B7080' }} />
+    </div>
+  );
+}
+
+function HealthDots({ score, onChange }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          onClick={() => onChange?.(n)}
+          className="h-3 w-3 rounded-full transition-all hover:scale-125"
+          style={{ backgroundColor: n <= score ? HEALTH_COLORS[score] : 'rgba(244,244,246,0.12)' }}
+          title={`Health: ${n}/5`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function PhasePill({ phase, current, onClick }) {
+  const isActive = phase === current;
+  const isDone = PHASES_PIPELINE.indexOf(phase) < PHASES_PIPELINE.indexOf(current);
+  return (
+    <button
+      onClick={onClick}
+      className="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider transition-all"
+      style={isActive
+        ? { backgroundColor: '#3362FF', color: '#F4F4F6' }
+        : isDone
+          ? { backgroundColor: 'rgba(34,197,94,0.15)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.2)' }
+          : { color: '#6B7080', border: '1px solid rgba(244,244,246,0.07)' }
+      }
+    >
+      {phase}
+    </button>
+  );
+}
+
+// ── Inline field editor ────────────────────────────────────
+function InlineEdit({ value, onSave, placeholder, multiline = false, className = '' }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value || '');
+
+  useEffect(() => { setDraft(value || ''); }, [value]);
+
+  async function save() {
+    setEditing(false);
+    if (draft !== value) await onSave(draft);
+  }
+
+  if (editing) {
+    const props = {
+      autoFocus: true,
+      value: draft,
+      onChange: e => setDraft(e.target.value),
+      onBlur: save,
+      onKeyDown: e => {
+        if (!multiline && e.key === 'Enter') { e.preventDefault(); save(); }
+        if (e.key === 'Escape') { setEditing(false); setDraft(value || ''); }
+      },
+      className,
+    };
+    return multiline
+      ? <DarkTextarea rows={3} {...props} />
+      : <DarkInput type="text" {...props} placeholder={placeholder} />;
+  }
+
+  return (
+    <div
+      className={cn('group cursor-text flex items-start gap-2', className)}
+      onClick={() => setEditing(true)}
+    >
+      <span className="flex-1 text-sm leading-relaxed" style={{ color: draft ? '#F4F4F6' : '#6B7080' }}>
+        {draft || placeholder}
+      </span>
+      <Pencil className="h-3 w-3 mt-0.5 opacity-0 group-hover:opacity-40 transition-opacity shrink-0" style={{ color: '#6B7080' }} />
+    </div>
+  );
+}
+
+// ── Checklist display (Next Action / DoD) ─────────────────
 function parseChecklist(raw) {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) return parsed;
-  } catch {}
+  } catch { /* raw text */ }
   return raw.split('\n').filter(Boolean).map(text => ({ text, done: false }));
 }
 
-function NextActionDisplay({ raw, fallback, clientId, onUpdate }) {
+function ChecklistDisplay({ raw, fallback, fieldKey, clientId, accentColor = '#3362FF' }) {
   const [items, setItems] = useState([]);
   useEffect(() => { setItems(parseChecklist(raw)); }, [raw]);
 
   async function toggle(i) {
     const next = items.map((item, idx) => idx === i ? { ...item, done: !item.done } : item);
     setItems(next);
-    await supabase.from('clients').update({ next_action: JSON.stringify(next) }).eq('id', clientId);
+    await supabase.from('clients').update({ [fieldKey]: JSON.stringify(next) }).eq('id', clientId);
   }
 
-  if (!items.length) return <p className="italic text-violet-700 leading-relaxed font-bold text-sm">{fallback}</p>;
+  if (!items.length) {
+    return <p className="text-sm italic" style={{ color: '#6B7080' }}>{fallback}</p>;
+  }
   return (
     <ul className="space-y-2">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-2.5">
           <button
             onClick={() => toggle(i)}
-            className={cn(
-              "mt-0.5 h-3.5 w-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-all cursor-pointer hover:scale-110",
-              item.done ? "bg-violet-500 border-violet-500" : "border-violet-300 hover:border-violet-500"
-            )}
+            className="mt-0.5 h-3.5 w-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-all"
+            style={item.done
+              ? { backgroundColor: accentColor, borderColor: accentColor }
+              : { borderColor: accentColor + '66' }
+            }
           >
-            {item.done && <svg className="h-2 w-2 text-white" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            {item.done && <Check className="h-2 w-2" style={{ color: '#F4F4F6' }} />}
           </button>
-          <span className={cn("text-sm font-medium leading-snug select-none", item.done ? "line-through text-neutral-400" : "text-violet-800 font-bold")}>{item.text}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function DodDisplay({ raw, empty, clientId, onUpdate }) {
-  const [items, setItems] = useState([]);
-  useEffect(() => { setItems(parseChecklist(raw)); }, [raw]);
-
-  async function toggle(i) {
-    const next = items.map((item, idx) => idx === i ? { ...item, done: !item.done } : item);
-    setItems(next);
-    await supabase.from('clients').update({ definition_of_done: JSON.stringify(next) }).eq('id', clientId);
-  }
-
-  if (!items.length) return <p className="text-xs font-medium text-neutral-400 italic">{empty}</p>;
-  return (
-    <ul className="space-y-1.5">
-      {items.map((item, i) => (
-        <li
-          key={i}
-          onClick={() => toggle(i)}
-          className={cn(
-            "flex items-start gap-2 cursor-pointer transition-opacity duration-300 group/dod",
-            item.done ? "opacity-100" : "opacity-50 hover:opacity-75"
-          )}
-        >
-          <span className={cn(
-            "mt-0.5 h-3.5 w-3.5 rounded border flex-shrink-0 flex items-center justify-center transition-all",
-            item.done ? "bg-emerald-500 border-emerald-500" : "border-emerald-300 group-hover/dod:border-emerald-400"
-          )}>
-            {item.done && <svg className="h-2 w-2 text-white" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+          <span className="text-sm leading-snug select-none" style={{ color: item.done ? '#6B7080' : '#F4F4F6', textDecoration: item.done ? 'line-through' : 'none' }}>
+            {item.text}
           </span>
-          <span className={cn("text-xs font-medium leading-snug select-none", item.done ? "text-emerald-700 font-bold" : "text-emerald-900")}>{item.text}</span>
         </li>
       ))}
     </ul>
@@ -780,14 +244,717 @@ function DodDisplay({ raw, empty, clientId, onUpdate }) {
 
 function OosDisplay({ raw, empty }) {
   const items = parseChecklist(raw);
-  if (!items.length) return <p className="text-xs font-medium text-neutral-400 italic">{empty}</p>;
+  if (!items.length) return <p className="text-xs italic" style={{ color: '#6B7080' }}>{empty}</p>;
   return (
     <div className="flex flex-col gap-1.5">
       {items.map((item, i) => (
-        <div key={i} className="bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
-          <span className="text-xs font-medium text-rose-700 leading-snug">{item.text}</span>
+        <div key={i} className="px-3 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,59,92,0.08)', border: '1px solid rgba(255,59,92,0.2)' }}>
+          <span className="text-xs" style={{ color: '#FF3B5C' }}>{item.text}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── Task row ───────────────────────────────────────────────
+function TaskRow({ task, onToggle, onDelete }) {
+  const PRIO_COLORS = { high: '#FF3B5C', medium: '#F59E0B', low: '#3362FF', very_low: '#6B7080' };
+  return (
+    <div className="flex items-center gap-3 py-2 group" style={{ borderBottom: '1px solid rgba(244,244,246,0.04)' }}>
+      <button onClick={onToggle} className="shrink-0">
+        {task.done
+          ? <CheckCircle2 className="h-4 w-4" style={{ color: '#22C55E' }} />
+          : <Clock className="h-4 w-4" style={{ color: '#6B7080' }} />
+        }
+      </button>
+      <p className="flex-1 text-sm truncate" style={{ color: task.done ? '#6B7080' : '#F4F4F6', textDecoration: task.done ? 'line-through' : 'none' }}>
+        {task.title}
+      </p>
+      {task.priority && !task.done && (
+        <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: PRIO_COLORS[task.priority] ?? '#6B7080' }} />
+      )}
+      <button
+        onClick={onDelete}
+        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 shrink-0"
+        style={{ color: '#FF3B5C' }}
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+// ── Add Task form (inline) ─────────────────────────────────
+function AddTaskForm({ clientId, onSaved, onClose, language }) {
+  const [title, setTitle] = useState('');
+  const [priority, setPriority] = useState('medium');
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    if (!title.trim()) return;
+    setSaving(true);
+    await supabase.from('tasks').insert({ title: title.trim(), client_id: clientId, priority, bucket: 'this_week', done: false });
+    setSaving(false);
+    onSaved();
+    onClose();
+  }
+
+  return (
+    <div className="flex items-center gap-2 mt-2">
+      <DarkInput
+        type="text"
+        autoFocus
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        placeholder={language === 'pt' ? 'Nova tarefa...' : 'New task...'}
+        onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') onClose(); }}
+        className="flex-1"
+      />
+      <DarkSelect value={priority} onChange={e => setPriority(e.target.value)} style={{ width: '120px' }}>
+        <option value="high">{language === 'pt' ? 'Alta' : 'High'}</option>
+        <option value="medium">{language === 'pt' ? 'Média' : 'Medium'}</option>
+        <option value="low">{language === 'pt' ? 'Baixa' : 'Low'}</option>
+      </DarkSelect>
+      <button onClick={save} disabled={saving || !title.trim()} className="p-2 rounded-lg disabled:opacity-50" style={{ backgroundColor: '#3362FF', color: '#F4F4F6' }}>
+        <Check className="h-4 w-4" />
+      </button>
+      <button onClick={onClose} className="p-2 rounded-lg" style={{ color: '#6B7080' }}>
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+// ── Payment form (inline) ──────────────────────────────────
+function PaymentForm({ clientId, clientCurrency, onSaved, onClose, language }) {
+  const [form, setForm] = useState({ amount: '', description: '', currency: clientCurrency || 'BRL', is_recurring: false, recurring_start_date: new Date().toISOString().split('T')[0] });
+  const [saving, setSaving] = useState(false);
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  async function save(e) {
+    e.preventDefault();
+    if (!form.amount || !form.description) return;
+    setSaving(true);
+    await supabase.from('client_payments').insert({
+      client_id: clientId,
+      amount: parseFloat(form.amount),
+      description: form.description,
+      currency: form.currency,
+      is_paid: false,
+      is_recurring: form.is_recurring,
+      recurring_start_date: form.is_recurring ? form.recurring_start_date : null,
+    });
+    setSaving(false);
+    onSaved();
+    onClose();
+    window.dispatchEvent(new Event('financial-updated'));
+  }
+
+  return (
+    <form onSubmit={save} className="space-y-3 mt-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="sm:col-span-2">
+          <DarkInput type="text" required value={form.description} onChange={e => set('description', e.target.value)}
+            placeholder={language === 'pt' ? 'Descrição...' : 'Description...'} autoFocus />
+        </div>
+        <div className="flex gap-2">
+          <DarkInput type="number" required value={form.amount} onChange={e => set('amount', e.target.value)} placeholder="0.00" className="flex-1" />
+          <DarkSelect value={form.currency} onChange={e => set('currency', e.target.value)} style={{ width: '80px' }}>
+            <option>BRL</option><option>USD</option><option>EUR</option>
+          </DarkSelect>
+        </div>
+      </div>
+      <div className="flex items-center gap-4 flex-wrap">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={form.is_recurring} onChange={e => set('is_recurring', e.target.checked)} style={{ accentColor: '#3362FF' }} />
+          <span className="text-xs" style={{ color: '#F4F4F6' }}>{language === 'pt' ? 'Recorrente' : 'Recurring'}</span>
+        </label>
+        {form.is_recurring && (
+          <DarkInput type="date" value={form.recurring_start_date} onChange={e => set('recurring_start_date', e.target.value)} style={{ width: '160px' }} />
+        )}
+        <div className="flex items-center gap-2 ml-auto">
+          <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#6B7080', border: '1px solid rgba(244,244,246,0.07)' }}>
+            {language === 'pt' ? 'Cancelar' : 'Cancel'}
+          </button>
+          <button type="submit" disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50" style={{ backgroundColor: '#3362FF', color: '#F4F4F6' }}>
+            <Check className="h-3.5 w-3.5" /> {saving ? '...' : (language === 'pt' ? 'Adicionar' : 'Add')}
+          </button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────
+export default function ClientDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { t, language } = useLanguage();
+
+  const [client, setClient] = useState(null);
+  const [phases, setPhases] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showAddTask, setShowAddTask] = useState(false);
+
+  async function loadClientData(showSpinner = false) {
+    if (showSpinner) setLoading(true);
+    try {
+      if (!id) throw new Error('Invalid ID');
+
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients').select('*').eq('id', id).single();
+      if (clientError || !clientData) { navigate('/'); return; }
+      setClient(clientData);
+
+      const [phasesRes, paymentsRes, contactsRes, tasksRes] = await Promise.all([
+        supabase.from('client_phases').select('*, phase_fields(*)').eq('client_id', id).order('order_index'),
+        supabase.from('client_payments').select('*').eq('client_id', id).order('created_at', { ascending: false }),
+        supabase.from('contacts').select('*').eq('client_id', id).order('created_at'),
+        supabase.from('tasks').select('*').eq('client_id', id).order('created_at'),
+      ]);
+
+      if (!phasesRes.error) setPhases(phasesRes.data || []);
+      if (!paymentsRes.error) setPayments(paymentsRes.data || []);
+      setContacts(contactsRes.data || []);
+      setTasks(tasksRes.data || []);
+    } catch (err) {
+      console.error(err);
+      navigate('/');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { loadClientData(true); }, [id]);
+
+  // ── Quick-update single field ──
+  async function updateField(field, value) {
+    await supabase.from('clients').update({ [field]: value }).eq('id', id);
+    setClient(c => ({ ...c, [field]: value }));
+  }
+
+  // ── Track last contact ──
+  async function markContacted() {
+    const now = new Date().toISOString();
+    await updateField('last_contact_at', now);
+    toast.success?.(language === 'pt' ? 'Contato registrado.' : 'Contact recorded.');
+  }
+
+  // ── Status (active / archived) ──
+  async function updateStatus(status) {
+    const { error } = await supabase.from('clients').update({ status }).eq('id', id);
+    if (!error) { toast.success?.(status === 'active' ? 'Activated' : 'Archived'); loadClientData(); }
+  }
+
+  // ── Delete client ──
+  async function deleteClient() {
+    if (!window.confirm(t('client_detail.delete_confirm'))) return;
+    await supabase.from('clients').delete().eq('id', id);
+    navigate('/');
+  }
+
+  // ── Payment helpers ──
+  async function togglePaid(paymentId, current) {
+    const payment = payments.find(p => p.id === paymentId);
+    let update = { is_paid: !current };
+    if (!current && payment) {
+      const amt = parseFloat(payment.amount) || 0;
+      const usdToBRL = 5.20; const eurToBRL = 6.00;
+      let brl = payment.currency === 'USD' ? amt * usdToBRL : payment.currency === 'EUR' ? amt * eurToBRL : amt;
+      update.paid_brl_amount = Math.round(brl * 100) / 100;
+    } else {
+      update.paid_brl_amount = null;
+    }
+    await supabase.from('client_payments').update(update).eq('id', paymentId);
+    loadClientData();
+    window.dispatchEvent(new Event('financial-updated'));
+  }
+
+  async function deletePayment(paymentId) {
+    if (!window.confirm(t('client_detail.delete_record_confirm'))) return;
+    await supabase.from('client_payments').delete().eq('id', paymentId);
+    loadClientData();
+    window.dispatchEvent(new Event('financial-updated'));
+  }
+
+  async function terminateRecurring(paymentId) {
+    if (!window.confirm('Terminate this recurring fee?')) return;
+    await supabase.from('client_payments').update({ terminated_at: new Date().toISOString() }).eq('id', paymentId);
+    loadClientData();
+    window.dispatchEvent(new Event('financial-updated'));
+  }
+
+  // ── Task helpers ──
+  async function toggleTask(task) {
+    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, done: !t.done } : t));
+    await supabase.from('tasks').update({ done: !task.done }).eq('id', task.id);
+  }
+
+  async function deleteTask(taskId) {
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+    await supabase.from('tasks').delete().eq('id', taskId);
+  }
+
+  function monthsActive(startDate, terminatedAt) {
+    const start = new Date(startDate);
+    const end = terminatedAt ? new Date(terminatedAt) : new Date();
+    return Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24 * 30.44)));
+  }
+
+  function daysAgo(dateStr) {
+    if (!dateStr) return null;
+    return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+  }
+
+  function daysUntil(dateStr) {
+    if (!dateStr) return null;
+    return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
+  }
+
+  // ── Derived ──
+  const pendingTotal = payments.filter(p => !p.is_paid).reduce((s, p) => s + parseFloat(p.amount || 0), 0);
+  const lifetimeTotal = payments.reduce((s, p) => s + parseFloat(p.amount || 0), 0);
+  const openTasks = tasks.filter(t => !t.done);
+  const lastContactAge = daysAgo(client?.last_contact_at);
+  const updateDue = client?.next_update_due_at ? daysUntil(client.next_update_due_at) : null;
+  const isUpdateOverdue = updateDue !== null && updateDue <= 0;
+
+  if (loading) return (
+    <div className="h-96 flex flex-col items-center justify-center gap-4" style={{ color: '#6B7080' }}>
+      <div className="h-5 w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+      <p className="text-[10px] font-bold uppercase tracking-[0.3em]">{t('client_detail.loading_project')}</p>
+    </div>
+  );
+
+  if (!client) return (
+    <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
+      <p className="text-sm" style={{ color: '#6B7080' }}>{t('client_detail.not_found_title')}</p>
+      <Link to="/" className="text-xs font-bold" style={{ color: '#3362FF' }}>{t('client_detail.back_to_board')}</Link>
+    </div>
+  );
+
+  const currency = CURRENCY_SYMBOLS[client.currency || 'BRL'];
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+
+      {/* ── NAV BAR ── */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <Link
+          to="/"
+          className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors"
+          style={{ color: '#6B7080' }}
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          {t('client_detail.back_to_board')}
+        </Link>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            to={`/briefing/${id}`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+            style={{ backgroundColor: 'rgba(51,98,255,0.15)', color: '#3362FF', border: '1px solid rgba(51,98,255,0.3)' }}
+          >
+            <Cpu className="h-3.5 w-3.5" /> Brain
+          </Link>
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+            style={{ color: '#6B7080', border: '1px solid rgba(244,244,246,0.07)' }}
+          >
+            <Pencil className="h-3.5 w-3.5" /> {t('client_detail.edit_record')}
+          </button>
+          <button
+            onClick={() => updateStatus(client.status === 'active' ? 'archived' : 'active')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+            style={{ color: '#6B7080', border: '1px solid rgba(244,244,246,0.07)' }}
+          >
+            {client.status === 'active'
+              ? <><Archive className="h-3.5 w-3.5" /> {t('client_detail.archive')}</>
+              : <><ArchiveRestore className="h-3.5 w-3.5" /> {t('client_detail.reactivate')}</>
+            }
+          </button>
+          <button onClick={deleteClient} className="p-2 rounded-lg transition-colors" style={{ color: '#6B7080' }}>
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── HERO ── */}
+      <div>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: client.status === 'active' ? '#22C55E' : '#6B7080' }} />
+          <span className="text-[9px] font-bold uppercase tracking-[0.3em]" style={{ color: '#6B7080' }}>
+            {client.status === 'active' ? 'Active' : 'Archived'}
+          </span>
+        </div>
+        <h1 className="text-4xl sm:text-5xl font-serif tracking-tight" style={{ color: '#F4F4F6' }}>
+          {client.name}.
+        </h1>
+        <div className="flex items-center gap-4 mt-3 flex-wrap">
+          {client.email && (
+            <a href={`mailto:${client.email}`} className="flex items-center gap-1.5 text-xs" style={{ color: '#6B7080' }}>
+              <Mail className="h-3.5 w-3.5" /> {client.email}
+            </a>
+          )}
+          {client.phone && (
+            <a href={`tel:${client.phone}`} className="flex items-center gap-1.5 text-xs" style={{ color: '#6B7080' }}>
+              <Phone className="h-3.5 w-3.5" /> {client.phone}
+            </a>
+          )}
+          {client.url && (
+            <a href={client.url.startsWith('http') ? client.url : `https://${client.url}`} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs" style={{ color: '#3362FF' }}>
+              <Globe className="h-3.5 w-3.5" /> {client.url}
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* ── OPERATIONAL STATUS BAR ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+
+        {/* Health score */}
+        <CmdCard>
+          <SectionLabel>{language === 'pt' ? 'Saúde' : 'Health'}</SectionLabel>
+          <HealthDots
+            score={client.health_score || 3}
+            onChange={v => updateField('health_score', v)}
+          />
+          <p className="text-xs mt-2" style={{ color: HEALTH_COLORS[client.health_score || 3] }}>
+            {client.health_score >= 4 ? (language === 'pt' ? 'Ótimo' : 'Good') :
+             client.health_score >= 3 ? (language === 'pt' ? 'Estável' : 'Stable') :
+             (language === 'pt' ? 'Atenção' : 'Attention')}
+          </p>
+        </CmdCard>
+
+        {/* Last contact */}
+        <CmdCard>
+          <SectionLabel>{language === 'pt' ? 'Último Contato' : 'Last Contact'}</SectionLabel>
+          <p className="text-xl font-serif" style={{ color: lastContactAge === null ? '#6B7080' : lastContactAge > 7 ? '#FF3B5C' : lastContactAge > 3 ? '#F59E0B' : '#22C55E' }}>
+            {lastContactAge === null ? '—' : lastContactAge === 0 ? (language === 'pt' ? 'Hoje' : 'Today') : `${lastContactAge}d`}
+          </p>
+          <button onClick={markContacted} className="text-[9px] mt-2 font-bold uppercase tracking-wider" style={{ color: '#3362FF' }}>
+            {language === 'pt' ? '+ Registrar' : '+ Log now'}
+          </button>
+        </CmdCard>
+
+        {/* Update due */}
+        <CmdCard>
+          <SectionLabel>{language === 'pt' ? 'Update Due' : 'Update Due'}</SectionLabel>
+          <p className="text-xl font-serif" style={{ color: isUpdateOverdue ? '#FF3B5C' : '#F4F4F6' }}>
+            {updateDue === null ? '—' : updateDue === 0 ? (language === 'pt' ? 'Hoje' : 'Today') : updateDue < 0 ? `${Math.abs(updateDue)}d late` : `${updateDue}d`}
+          </p>
+          {isUpdateOverdue && (
+            <p className="text-[9px] mt-1 font-bold uppercase tracking-wider" style={{ color: '#FF3B5C' }}>
+              {language === 'pt' ? 'Atrasado' : 'Overdue'}
+            </p>
+          )}
+        </CmdCard>
+
+        {/* Pipeline phase */}
+        <CmdCard>
+          <SectionLabel>{language === 'pt' ? 'Fase' : 'Phase'}</SectionLabel>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {PHASES_PIPELINE.map(p => (
+              <PhasePill key={p} phase={p} current={client.phase || 'onboarding'} onClick={() => updateField('phase', p)} />
+            ))}
+          </div>
+        </CmdCard>
+      </div>
+
+      {/* ── MAIN GRID ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* LEFT: Next Action (most prominent) */}
+        <div className="lg:col-span-2 space-y-4">
+          <CmdCard style={{ border: '1px solid rgba(51,98,255,0.25)' }}>
+            <SectionLabel>{language === 'pt' ? 'Próxima Ação' : 'Next Action'}</SectionLabel>
+            <InlineEdit
+              value={typeof client.next_action === 'string' && client.next_action.startsWith('[') ? '' : client.next_action}
+              onSave={v => updateField('next_action', v)}
+              placeholder={language === 'pt' ? 'O que fazer agora com este cliente...' : 'What to do next for this client...'}
+              multiline
+            />
+            {client.next_action && client.next_action.startsWith('[') && (
+              <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(244,244,246,0.07)' }}>
+                <ChecklistDisplay
+                  raw={client.next_action}
+                  fallback=""
+                  fieldKey="next_action"
+                  clientId={id}
+                  accentColor="#3362FF"
+                />
+              </div>
+            )}
+          </CmdCard>
+
+          {/* Blocker */}
+          <CmdCard>
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-3.5 w-3.5" style={{ color: client.blocker_reason ? '#FF3B5C' : '#6B7080' }} />
+              <SectionLabel>{language === 'pt' ? 'Bloqueio' : 'Blocker'}</SectionLabel>
+            </div>
+            <InlineEdit
+              value={client.blocker_reason}
+              onSave={v => updateField('blocker_reason', v)}
+              placeholder={language === 'pt' ? 'Algum bloqueio? Clique para registrar...' : 'Any blocker? Click to record...'}
+            />
+          </CmdCard>
+
+          {/* What sold + Service type */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CmdCard>
+              <SectionLabel>{language === 'pt' ? 'Serviço Contratado' : 'Contracted Service'}</SectionLabel>
+              <DarkSelect
+                value={client.what_sold || ''}
+                onChange={e => updateField('what_sold', e.target.value)}
+              >
+                <option value="">{language === 'pt' ? '— Selecionar serviço —' : '— Select service —'}</option>
+                {SERVICE_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
+              </DarkSelect>
+            </CmdCard>
+            <CmdCard>
+              <SectionLabel>{language === 'pt' ? 'Definição de Pronto' : 'Definition of Done'}</SectionLabel>
+              <ChecklistDisplay
+                raw={client.definition_of_done}
+                fallback={t('client_detail.not_defined')}
+                fieldKey="definition_of_done"
+                clientId={id}
+                accentColor="#22C55E"
+              />
+            </CmdCard>
+          </div>
+
+          {/* Out of scope */}
+          <CmdCard>
+            <SectionLabel>{language === 'pt' ? 'Fora do Escopo' : 'Out of Scope'}</SectionLabel>
+            <OosDisplay raw={client.not_included} empty={t('client_detail.no_out_of_scope')} />
+          </CmdCard>
+        </div>
+
+        {/* RIGHT: Billing summary + contacts */}
+        <div className="space-y-4">
+          {/* Billing summary */}
+          <CmdCard>
+            <SectionLabel>{language === 'pt' ? 'Financeiro' : 'Financials'}</SectionLabel>
+            <div className="space-y-3">
+              <div>
+                <p className="text-[9px] uppercase tracking-wider mb-0.5" style={{ color: '#6B7080' }}>{t('client_detail.current_billing')}</p>
+                <p className="text-2xl font-serif" style={{ color: pendingTotal > 0 ? '#FF3B5C' : '#22C55E' }}>
+                  {currency} {pendingTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div>
+                <p className="text-[9px] uppercase tracking-wider mb-0.5" style={{ color: '#6B7080' }}>{t('client_detail.total_revenue')}</p>
+                <p className="text-lg font-serif" style={{ color: '#22C55E' }}>
+                  {currency} {lifetimeTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+          </CmdCard>
+
+          {/* Contacts */}
+          {contacts.length > 0 && (
+            <CmdCard>
+              <SectionLabel>{language === 'pt' ? 'Contatos' : 'Contacts'}</SectionLabel>
+              <div className="space-y-2">
+                {contacts.map(c => (
+                  <div key={c.id} className="p-3 rounded-lg" style={{ backgroundColor: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.07)' }}>
+                    {c.name && <p className="text-xs font-bold" style={{ color: '#F4F4F6' }}>{c.name}{c.role ? <span className="font-normal ml-1" style={{ color: '#6B7080' }}>· {c.role}</span> : ''}</p>}
+                    {c.phone && <p className="text-[10px] mt-0.5" style={{ color: '#6B7080' }}>{c.phone}</p>}
+                    {c.email && <p className="text-[10px] mt-0.5" style={{ color: '#6B7080' }}>{c.email}</p>}
+                  </div>
+                ))}
+              </div>
+            </CmdCard>
+          )}
+
+          {/* Tags */}
+          {client.tags?.length > 0 && (
+            <CmdCard>
+              <SectionLabel>Tags</SectionLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {client.tags.map(tag => <TagBadge key={tag} tag={tag} />)}
+              </div>
+            </CmdCard>
+          )}
+
+          {/* Next update due — edit */}
+          <CmdCard>
+            <SectionLabel>{language === 'pt' ? 'Próximo Update' : 'Next Update Due'}</SectionLabel>
+            <DarkInput
+              type="date"
+              value={client.next_update_due_at ? client.next_update_due_at.split('T')[0] : ''}
+              onChange={e => updateField('next_update_due_at', e.target.value || null)}
+            />
+          </CmdCard>
+        </div>
+      </div>
+
+      {/* ── TASKS ── */}
+      <CmdCard>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4" style={{ color: '#3362FF' }} />
+            <SectionLabel>{t('client_detail.tasks_title')}</SectionLabel>
+            {openTasks.length > 0 && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(51,98,255,0.15)', color: '#3362FF' }}>
+                {openTasks.length} {language === 'pt' ? 'abertas' : 'open'}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => setShowAddTask(v => !v)}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs"
+            style={{ color: '#3362FF', border: '1px solid rgba(51,98,255,0.3)' }}
+          >
+            <Plus className="h-3 w-3" /> {language === 'pt' ? 'Tarefa' : 'Task'}
+          </button>
+        </div>
+
+        {showAddTask && (
+          <AddTaskForm clientId={id} onSaved={loadClientData} onClose={() => setShowAddTask(false)} language={language} />
+        )}
+
+        {tasks.length === 0 && !showAddTask ? (
+          <p className="text-sm py-2" style={{ color: '#6B7080' }}>{language === 'pt' ? 'Sem tarefas.' : 'No tasks yet.'}</p>
+        ) : (
+          <div className="mt-3">
+            {tasks.map(task => (
+              <TaskRow key={task.id} task={task} onToggle={() => toggleTask(task)} onDelete={() => deleteTask(task.id)} />
+            ))}
+          </div>
+        )}
+      </CmdCard>
+
+      {/* ── DELIVERY ROADMAP (phases) ── */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-serif" style={{ color: '#F4F4F6' }}>{t('client_detail.roadmap_title')}</h2>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: '#6B7080' }}>{t('client_detail.roadmap_subtitle')}</p>
+          </div>
+        </div>
+        <div className="space-y-4">
+          {phases.map(p => (
+            <PhaseSection key={p.id} phase={p} onUpdate={loadClientData} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── BILLING ── */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-serif" style={{ color: '#F4F4F6' }}>{t('client_detail.billing_tracker_title')}</h2>
+          <button
+            onClick={() => setShowPaymentForm(v => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+            style={{ backgroundColor: 'rgba(51,98,255,0.15)', color: '#3362FF', border: '1px solid rgba(51,98,255,0.3)' }}
+          >
+            <Plus className="h-3.5 w-3.5" /> {t('client_detail.add_billable_task')}
+          </button>
+        </div>
+
+        {showPaymentForm && (
+          <CmdCard className="mb-4">
+            <PaymentForm clientId={id} clientCurrency={client.currency} onSaved={loadClientData} onClose={() => setShowPaymentForm(false)} language={language} />
+          </CmdCard>
+        )}
+
+        {payments.length === 0 ? (
+          <CmdCard>
+            <p className="text-sm text-center py-4" style={{ color: '#6B7080' }}>{t('client_detail.no_billing_records')}</p>
+          </CmdCard>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {payments.map(p => {
+              const months = p.is_recurring && p.recurring_start_date ? monthsActive(p.recurring_start_date, p.terminated_at) : null;
+              const total = months ? parseFloat(p.amount) * months : null;
+              const isTerminated = !!p.terminated_at;
+              return (
+                <CmdCard key={p.id} className={isTerminated ? 'opacity-50' : ''}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {p.is_recurring && (
+                        <span className="text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                          style={isTerminated
+                            ? { color: '#6B7080', border: '1px solid rgba(244,244,246,0.07)' }
+                            : { backgroundColor: 'rgba(51,98,255,0.15)', color: '#3362FF' }
+                          }>
+                          {isTerminated ? 'Ended' : 'Monthly'}
+                        </span>
+                      )}
+                      <span className="text-[9px] font-mono" style={{ color: '#6B7080' }}>
+                        {new Date(p.created_at).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!p.is_recurring && (
+                        <button
+                          onClick={() => togglePaid(p.id, p.is_paid)}
+                          className="text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                          style={p.is_paid
+                            ? { backgroundColor: 'rgba(34,197,94,0.15)', color: '#22C55E' }
+                            : { color: '#6B7080', border: '1px solid rgba(244,244,246,0.07)' }
+                          }
+                        >
+                          {p.is_paid ? t('financials.paid') : t('financials.pending')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-sm font-medium mb-1" style={{ color: '#F4F4F6' }}>{p.description}</p>
+                  {p.is_recurring && p.recurring_start_date && (
+                    <p className="text-[10px] mb-2" style={{ color: '#6B7080' }}>
+                      {language === 'pt' ? 'Desde' : 'Since'} {new Date(p.recurring_start_date).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}
+                      {isTerminated && ` · ${language === 'pt' ? 'Encerrado' : 'Ended'} ${new Date(p.terminated_at).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}`}
+                      {!isTerminated && <span style={{ color: '#3362FF' }}> · {months}{language === 'pt' ? ' meses' : 'mo'}</span>}
+                    </p>
+                  )}
+
+                  <div className="flex items-end justify-between pt-3" style={{ borderTop: '1px solid rgba(244,244,246,0.07)' }}>
+                    <div>
+                      <p className="text-2xl font-serif" style={{ color: '#F4F4F6' }}>
+                        {CURRENCY_SYMBOLS[p.currency || 'BRL']} {parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {p.is_recurring && <span className="text-sm font-sans ml-1" style={{ color: '#6B7080' }}>/mo</span>}
+                      </p>
+                      {total !== null && (
+                        <p className="text-[10px]" style={{ color: '#6B7080' }}>
+                          {CURRENCY_SYMBOLS[p.currency || 'BRL']} {total.toLocaleString(undefined, { minimumFractionDigits: 2 })} total
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {p.is_recurring && !isTerminated && (
+                        <button onClick={() => terminateRecurring(p.id)} className="text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg" style={{ color: '#FF3B5C', border: '1px solid rgba(255,59,92,0.2)' }}>
+                          {language === 'pt' ? 'Encerrar' : 'Terminate'}
+                        </button>
+                      )}
+                      <button onClick={() => deletePayment(p.id)} className="p-1 rounded" style={{ color: '#6B7080' }}>
+                        <Trash className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </CmdCard>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <AddClientModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onClientAdded={loadClientData}
+        editClient={client}
+      />
     </div>
   );
 }

@@ -76,7 +76,7 @@ export default function PriorityView() {
 
   const [clients, setClients]           = useState([]);
   const [tasks, setTasks]               = useState([]);
-  const [loading, setLoading]           = useState(true);
+  const [_loading, setLoading]           = useState(true);
   const [modal, setModal]               = useState({ open: false, task: null });
   const [completionModal, setCompletionModal] = useState({ open: false, task: null });
   const [showOverloadModal, setShowOverloadModal] = useState(false);

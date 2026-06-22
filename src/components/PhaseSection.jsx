@@ -143,7 +143,7 @@ function FieldRenderer({ field, saving, onChange, onBlur, onTaskListChange } ) {
     let items = [];
     try { items = JSON.parse(field.field_value || '[]'); } catch { items = []; }
 
-    const addItem = () => onTaskListChange([...items, { id: Date.now(), text: '', done: false }]);
+    const addItem = () => { const id = Date.now(); onTaskListChange([...items, { id, text: '', done: false }]); };
     const updateItem = (id, patch) => onTaskListChange(items.map(item => item.id === id ? { ...item, ...patch } : item));
     const removeItem = (id) => onTaskListChange(items.filter(item => item.id !== id));
 

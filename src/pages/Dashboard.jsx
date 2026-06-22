@@ -1,330 +1,660 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { 
-  Plus, 
-  TrendingUp, 
-  Target, 
-  Building2, 
-  CheckCircle2, 
-  Sparkles,
-  ArrowRight,
-  ChevronRight,
-  Archive,
-  BarChart3,
-  Cpu,
-  Globe,
-  Activity
+import {
+  Plus,
+  Play,
+  CheckSquare,
+  Square as UncheckedBox,
+  AlertTriangle,
+  Users,
+  Target,
+  TrendingUp,
+  Pencil,
+  Check,
+  X,
+  Flag,
+  Zap
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import TagBadge from '../components/TagBadge';
 import AddClientModal from '../components/AddClientModal';
-import DeadlinesWidget from '../components/DeadlinesWidget';
+import TaskModal from '../components/TaskModal';
 import { useToast } from '../context/ToastContext';
 import { useFinancials } from '../context/FinancialContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAvailability, availabilityMeta } from '../hooks/useAvailability';
 
-const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', BRL: 'R$' };
+const CUR_SYMBOL = { BRL: 'R$', USD: '$', EUR: '€' };
+
+function greeting(language) {
+  const h = new Date().getHours();
+  if (language === 'pt') {
+    if (h < 12) return 'Bom dia';
+    if (h < 18) return 'Boa tarde';
+    return 'Boa noite';
+  }
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function todayISO() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function weekNumber(d = new Date()) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+function daysAgo(dateStr) {
+  if (!dateStr) return null;
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+  return diff;
+}
+
+function SectionLabel({ children }) {
+  return (
+    <p className="text-[9px] font-bold uppercase tracking-[0.25em] mb-3" style={{ color: '#6B7080' }}>
+      {children}
+    </p>
+  );
+}
+
+function CmdCard({ children, className = '', accent = false }) {
+  return (
+    <div
+      className={cn('rounded-xl p-5 transition-all duration-200', className)}
+      style={{
+        backgroundColor: '#0D0F1E',
+        border: accent
+          ? '1px solid rgba(51,98,255,0.3)'
+          : '1px solid rgba(244,244,246,0.07)'
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function StatusBadge({ status }) {
+  const map = {
+    pending: { label: 'Pending', color: '#F59E0B' },
+    in_progress: { label: 'In Progress', color: '#3362FF' },
+    done: { label: 'Done', color: '#22C55E' },
+    blocked: { label: 'Blocked', color: '#FF3B5C' },
+  };
+  const s = map[status] || { label: status, color: '#6B7080' };
+  return (
+    <span className="text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+      style={{ backgroundColor: s.color + '22', color: s.color, border: `1px solid ${s.color}44` }}>
+      {s.label}
+    </span>
+  );
+}
 
 export default function Dashboard() {
-  const { payments, displayCurrency: currency, changeCurrency, toBRL, fromBRL, loading: financialsLoading } = useFinancials();
-  const { t, language } = useLanguage();
-  const [clients, setClients] = useState([]);
-  const [todayTasks, setTodayTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showArchived, setShowArchived] = useState(false);
+  const { displayCurrency: currency, toBRL, fromBRL } = useFinancials();
+  const { language } = useLanguage();
   const toast = useToast();
+  const availRule = useAvailability(todayISO());
 
-  async function loadData() {
+  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [clients, setClients] = useState([]);
+
+  // Daily plan
+  const [dailyPlan, setDailyPlan] = useState(null);
+  const [focusEdit, setFocusEdit] = useState(false);
+  const [focusDraft, setFocusDraft] = useState('');
+
+  // Rituals
+  const [rituals, setRituals] = useState([]);
+  const [ritualChecks, setRitualChecks] = useState({});
+
+  // Deadlines (tasks due in next 3 days)
+  const [deadlines, setDeadlines] = useState([]);
+
+  // Top 3 tasks
+  const [topTasks, setTopTasks] = useState([]);
+
+  // Client pressure
+  const [pressureClients, setPressureClients] = useState([]);
+
+  // Pending payments
+  const [pendingPayments, setPendingPayments] = useState([]);
+
+  // MoveOn milestones
+  const [milestones, setMilestones] = useState([]);
+
+  // Weekly outcomes
+  const [weeklyOutcomes, setWeeklyOutcomes] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+
+  const today = todayISO();
+  const dayOfWeek = new Date().getDay();
+  const weekNum = weekNumber();
+
+  const loadAll = useCallback(async () => {
     setLoading(true);
-    const [cRes, tRes] = await Promise.all([
-      supabase.from('clients').select('*').order('created_at', { ascending: false }),
-      supabase.from('tasks').select('*, clients(name)').eq('done', false).or('bucket.eq.today,priority.eq.high')
-    ]);
-    
-    if (!cRes.error) setClients(cRes.data || []);
-    if (!tRes.error) {
-      // Sort: high priority first
-      const sorted = (tRes.data || []).sort((a,b) => {
-        const pMap = { high: 3, medium: 2, low: 1, very_low: 0 };
-        return (pMap[b.priority] || 0) - (pMap[a.priority] || 0);
-      });
-      setTodayTasks(sorted.slice(0, 3)); // Show top 3
+    try {
+      const threeFromNow = new Date();
+      threeFromNow.setDate(threeFromNow.getDate() + 3);
+      const threeDays = threeFromNow.toISOString().split('T')[0];
+
+      const monday = new Date();
+      monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+      const weekStart = monday.toISOString().split('T')[0];
+
+      const [
+        clientsRes,
+        planRes,
+        ritualsRes,
+        deadlinesRes,
+        milestonesRes,
+        weeklyRes,
+        pendingPayRes,
+      ] = await Promise.allSettled([
+        supabase.from('clients').select('id, name, status, last_contact_at, next_update_due_at').eq('status', 'active'),
+        supabase.from('daily_plans').select('*').eq('date', today).maybeSingle(),
+        supabase.from('day_rituals').select('*').eq('day_of_week', dayOfWeek).eq('is_active', true),
+        supabase.from('tasks').select('*, clients(name)').eq('done', false).gte('due_date', today).lte('due_date', threeDays).order('due_date'),
+        supabase.from('company_milestones').select('*, companies(name)').order('next_review_at').limit(5),
+        supabase.from('weekly_plans').select('id').eq('week_start', weekStart).maybeSingle(),
+        supabase.from('client_payments').select('*, clients(name)').eq('is_paid', false),
+      ]);
+
+      if (clientsRes.status === 'fulfilled' && !clientsRes.value.error) {
+        const sorted = (clientsRes.value.data || []).sort((a, b) => {
+          const aAge = daysAgo(a.last_contact_at) ?? 9999;
+          const bAge = daysAgo(b.last_contact_at) ?? 9999;
+          return bAge - aAge;
+        });
+        setClients(clientsRes.value.data || []);
+        setPressureClients(sorted.slice(0, 3));
+      }
+
+      if (planRes.status === 'fulfilled' && !planRes.value.error) {
+        setDailyPlan(planRes.value.data);
+        setFocusDraft(planRes.value.data?.focus_note || '');
+      }
+
+      if (ritualsRes.status === 'fulfilled' && !ritualsRes.value.error) {
+        setRituals(ritualsRes.value.data || []);
+      }
+
+      if (deadlinesRes.status === 'fulfilled' && !deadlinesRes.value.error) {
+        setDeadlines(deadlinesRes.value.data || []);
+      }
+
+      if (milestonesRes.status === 'fulfilled' && !milestonesRes.value.error) {
+        setMilestones(milestonesRes.value.data || []);
+      }
+
+      if (weeklyRes.status === 'fulfilled' && !weeklyRes.value.error && weeklyRes.value.data?.id) {
+        const { data: outcomeData } = await supabase
+          .from('weekly_outcomes')
+          .select('*')
+          .eq('weekly_plan_id', weeklyRes.value.data.id);
+        setWeeklyOutcomes(outcomeData || []);
+      }
+
+      if (pendingPayRes.status === 'fulfilled' && !pendingPayRes.value.error) {
+        setPendingPayments(pendingPayRes.value.data || []);
+      }
+
+      // Load top 3 from daily plan tasks if plan exists
+      if (planRes.status === 'fulfilled' && planRes.value.data?.id) {
+        const { data: taskData } = await supabase
+          .from('daily_plan_tasks')
+          .select('*, tasks(*, clients(name))')
+          .eq('daily_plan_id', planRes.value.data.id)
+          .eq('is_top_three', true)
+          .limit(3);
+        setTopTasks(taskData || []);
+      } else {
+        // Fallback: high priority tasks
+        const { data: fallback } = await supabase
+          .from('tasks')
+          .select('*, clients(name)')
+          .eq('done', false)
+          .or('bucket.eq.today,priority.eq.high')
+          .order('priority')
+          .limit(3);
+        setTopTasks((fallback || []).map(t => ({ tasks: t, id: t.id })));
+      }
+    } catch (e) {
+      console.error('Dashboard load error', e);
     }
     setLoading(false);
+  }, [today, dayOfWeek]);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
+
+  async function startDay() {
+    if (dailyPlan) return;
+    const { data, error } = await supabase
+      .from('daily_plans')
+      .insert({ date: today, focus_note: '' })
+      .select()
+      .single();
+    if (!error) {
+      setDailyPlan(data);
+      toast.success?.('Day started');
+    }
   }
 
-  useEffect(() => { 
-    loadData(); 
-  }, []);
+  async function saveFocus() {
+    if (!dailyPlan) return;
+    await supabase.from('daily_plans').update({ focus_note: focusDraft }).eq('id', dailyPlan.id);
+    setDailyPlan(prev => ({ ...prev, focus_note: focusDraft }));
+    setFocusEdit(false);
+  }
 
-  const filteredClients = clients.filter(c => showArchived ? c.status === 'archived' : c.status === 'active');
-  
-  const displayedTotal = useMemo(() => {
-    const totalBRL = payments.reduce((sum, p) => {
-      const client = clients.find(c => c.id === p.client_id);
-      if (client && client.status === (showArchived ? 'archived' : 'active')) {
-        return sum + toBRL(parseFloat(p.amount) || 0, p.currency);
-      }
-      return sum;
-    }, 0);
-    return fromBRL(totalBRL, currency);
-  }, [payments, clients, showArchived, toBRL, fromBRL, currency]);
+  function toggleRitual(id) {
+    setRitualChecks(prev => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  const totalPending = pendingPayments.reduce((sum, p) => {
+    return sum + fromBRL(toBRL(parseFloat(p.amount) || 0, p.currency), currency);
+  }, 0);
+
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayNamesPt = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
   return (
-    <div className="space-y-20 animate-in fade-in duration-700">
-      {/* Editorial Hero */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
-        <div className="space-y-6">
-           <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('dashboard.tag')}</span>
-              <div className="h-[1px] w-8 bg-neutral-200" />
-           </div>
-           <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight break-words">
-             {t('dashboard.title')}
-           </h1>
-           <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
-             {t('dashboard.subtitle')}
-           </p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+
+      {/* ── HEADER ── */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] mb-2" style={{ color: '#6B7080' }}>
+            {language === 'pt' ? dayNamesPt[dayOfWeek] : dayNames[dayOfWeek]}
+            {' · '}
+            {new Date().toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            {' · '}
+            {language === 'pt' ? `Semana ${weekNum}` : `Week ${weekNum}`}
+          </p>
+          <h1 className="text-3xl font-serif tracking-tight" style={{ color: '#F4F4F6' }}>
+            {greeting(language)}, Luan.
+          </h1>
         </div>
-        
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="btn-minimal btn-primary flex items-center gap-2.5 h-12 px-8"
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setIsTaskModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            style={{ backgroundColor: 'rgba(51,98,255,0.15)', color: '#3362FF', border: '1px solid rgba(51,98,255,0.3)' }}
+          >
+            <Plus className="h-4 w-4" />
+            {language === 'pt' ? 'Nova Tarefa' : 'Add Task'}
+          </button>
+          <button
+            onClick={startDay}
+            disabled={!!dailyPlan}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ backgroundColor: dailyPlan ? 'rgba(34,197,94,0.1)' : '#3362FF', color: dailyPlan ? '#22C55E' : '#F4F4F6' }}
+          >
+            <Play className="h-4 w-4" />
+            {dailyPlan
+              ? (language === 'pt' ? 'Dia iniciado' : 'Day started')
+              : (language === 'pt' ? 'Iniciar dia' : 'Start Day')
+            }
+          </button>
+        </div>
+      </div>
+
+      {/* ── AVAILABILITY BANNER ── */}
+      {availRule !== undefined && availRule !== null && (
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl"
+          style={{
+            backgroundColor: availabilityMeta(availRule.availability_type).color + '12',
+            border: `1px solid ${availabilityMeta(availRule.availability_type).color}33`
+          }}
         >
-          <Plus className="h-4 w-4" /> 
-          <span className="text-sm font-medium">{t('portfolio.new_project')}</span>
-        </button>
-      </div>
-
-      {/* Primary Intelligence Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <StatsCard 
-          label={t('dashboard.total_revenue')} 
-          value={`${CURRENCY_SYMBOLS[currency]} ${displayedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-          subtext={t('dashboard.current_portfolio')}
-        />
-        <StatsCard 
-          label={t('dashboard.active_projects')} 
-          value={clients.filter(c => c.status === 'active').length} 
-          subtext={t('dashboard.execution_load')}
-        />
-        <div className="md:col-span-2">
-          {todayTasks.length > 0 ? (
-            <div className="surface-card p-6 md:p-8 flex flex-col justify-between h-full bg-neutral-900 text-white border-none shadow-2xl">
-               <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('dashboard.today_priorities')}</span>
-                     <Link to="/priority" className="text-[9px] font-bold text-neutral-500 hover:text-white uppercase tracking-widest flex items-center gap-1.5 transition-colors">
-                        {t('dashboard.view_all')} <ArrowRight className="h-3 w-3" />
-                     </Link>
-                  </div>
-                  <div className="space-y-4">
-                     {todayTasks.map(task => (
-                       <div key={task.id} className="flex items-start gap-3 group px-2 py-1">
-                          <div className={cn(
-                            "h-2 w-2 rounded-full mt-1.5 shrink-0",
-                            task.priority === 'high' ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" : "bg-neutral-600"
-                          )} />
-                          <div>
-                            <p className="text-sm font-medium tracking-tight group-hover:text-neutral-200 transition-colors">{task.title}</p>
-                            <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-0.5">{task.clients?.name}</p>
-                          </div>
-                       </div>
-                     ))}
-                  </div>
-               </div>
-            </div>
-          ) : (
-            <DeadlinesWidget />
-          )}
-        </div>
-      </div>
-
-      {/* Operational Interface */}
-      <div className="space-y-12">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-light)] pb-8 gap-6">
-           <div className="flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-10">
-              <h2 className="text-xl font-serif text-[var(--ink-primary)]">{t('dashboard.registry_board')}</h2>
-              
-              <div className="flex bg-[var(--accent-sand)]/40 p-1 rounded-lg">
-                 {['USD', 'EUR', 'BRL'].map(c => (
-                   <button
-                     key={c}
-                     onClick={() => changeCurrency(c)}
-                     className={cn(
-                       "px-5 py-1.5 rounded-md text-[10px] font-bold tracking-widest uppercase transition-all duration-200",
-                       currency === c 
-                         ? "bg-white text-[var(--ink-primary)] shadow-sm" 
-                         : "text-neutral-400 hover:text-neutral-600"
-                     )}
-                   >
-                     {c}
-                   </button>
-                 ))}
-              </div>
-           </div>
-
-           <button
-             onClick={() => setShowArchived(!showArchived)}
-             className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 hover:text-neutral-600 uppercase tracking-widest transition-colors"
-           >
-             <Archive className="h-3.5 w-3.5" />
-             {showArchived 
-                ? t('dashboard.active_projects_toggle')
-                : t('dashboard.archived_records_toggle')}
-           </button>
-        </div>
-
-        {loading ? (
-          <div className="py-40 flex flex-col items-center justify-center gap-4 opacity-50">
-            <div className="h-4 w-4 border-2 border-[var(--ink-charcoal)] border-t-transparent rounded-full animate-spin" />
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400">
-              {t('dashboard.loading_projects')}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredClients.map(client => (
-              <ClientEditorialCard 
-                key={client.id} 
-                client={client} 
-                payments={payments.filter(p => p.client_id === client.id)}
-                currency={currency} 
-              />
-            ))}
-            {!loading && filteredClients.length === 0 && (
-              <div className="col-span-full py-40 border-2 border-dashed border-neutral-100 rounded-2xl flex flex-col items-center justify-center text-center">
-                 <h3 className="text-xl font-serif text-neutral-300">
-                    {t('dashboard.no_projects')}
-                 </h3>
-                 <p className="text-[10px] font-bold text-neutral-300 mt-2 uppercase tracking-[0.2em]">
-                    {t('dashboard.start_new')}
-                 </p>
-              </div>
+          <Zap className="h-4 w-4 shrink-0" style={{ color: availabilityMeta(availRule.availability_type).color }} />
+          <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-bold" style={{ color: availabilityMeta(availRule.availability_type).color }}>
+              {availabilityMeta(availRule.availability_type).label[language]}
+            </span>
+            {availRule.label && (
+              <span className="text-xs" style={{ color: '#F4F4F6' }}>{availRule.label}</span>
+            )}
+            {availRule.start_time && availRule.end_time && (
+              <span className="text-xs" style={{ color: '#6B7080' }}>
+                {availRule.start_time.slice(0, 5)} – {availRule.end_time.slice(0, 5)}
+              </span>
+            )}
+            {availRule.company_scope !== 'all' && (
+              <span className="text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                style={{ color: '#6B7080', border: '1px solid rgba(244,244,246,0.12)' }}>
+                {availRule.company_scope}
+              </span>
             )}
           </div>
-        )}
-      </div>
+          <Link to="/settings/availability" className="text-[9px] font-bold uppercase tracking-wider shrink-0"
+            style={{ color: '#6B7080' }}>
+            {language === 'pt' ? 'Editar' : 'Edit'}
+          </Link>
+        </div>
+      )}
 
-      <AddClientModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onClientAdded={loadData} />
-    </div>
-  );
-}
+      {/* ── GRID: TOP ROW ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-function StatsCard({ label, value, subtext }) {
-  return (
-    <div className="surface-card p-6 md:p-10 space-y-6">
-      <div className="space-y-1">
-        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{label}</p>
-        <p className="text-[9px] font-medium text-neutral-300 uppercase tracking-[0.1em]">{subtext}</p>
-      </div>
-      <h3 className="text-xl sm:text-2xl lg:text-3xl font-serif text-ink-primary tracking-tight tabular-nums leading-tight break-words">
-        {value}
-      </h3>
-    </div>
-  );
-}
-
-function parseFirstAction(raw) {
-  if (!raw) return '';
-  try {
-    const items = JSON.parse(raw);
-    if (Array.isArray(items)) {
-      const first = items.find(i => !i.done) || items[0];
-      return first ? first.text : '';
-    }
-  } catch {}
-  return raw;
-}
-
-function ClientEditorialCard({ client, payments, currency }) {
-  const { toBRL, fromBRL } = useFinancials();
-  const { t, language } = useLanguage();
-  const totalBilled = payments.reduce((sum, p) => sum + toBRL(parseFloat(p.amount) || 0, p.currency), 0);
-  const displayRevenue = fromBRL(totalBilled, currency);
-
-  return (
-    <Link to={`/client/${client.id}`} className="group block">
-      <div className="surface-card surface-card-hover p-6 md:p-10 h-full flex flex-col justify-between">
-        <div className="space-y-8">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-2">
-              <div className={cn("h-1.5 w-1.5 rounded-full", client.status === 'active' ? "bg-[var(--success-green)]" : "bg-neutral-300")} />
-              <span className={cn("text-[9px] font-bold uppercase tracking-widest", client.status === 'active' ? "text-[var(--success-green)]" : "text-neutral-400")}>
-                {client.status === 'active' ? t('portfolio.filter_active') : t('portfolio.filter_archived')}
-              </span>
+        {/* Focus of the Day */}
+        <CmdCard className="lg:col-span-2" accent={!!dailyPlan?.focus_note}>
+          <SectionLabel>{language === 'pt' ? 'Foco do Dia' : 'Focus of the Day'}</SectionLabel>
+          {focusEdit ? (
+            <div className="flex items-start gap-3">
+              <textarea
+                autoFocus
+                value={focusDraft}
+                onChange={e => setFocusDraft(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveFocus(); } if (e.key === 'Escape') setFocusEdit(false); }}
+                className="flex-1 bg-transparent text-lg font-serif resize-none outline-none leading-snug"
+                style={{ color: '#F4F4F6', minHeight: '60px' }}
+                placeholder={language === 'pt' ? 'Qual é o objetivo principal de hoje?' : 'What is the main objective today?'}
+              />
+              <div className="flex flex-col gap-1 pt-1">
+                <button onClick={saveFocus} className="p-1.5 rounded" style={{ color: '#22C55E' }}><Check className="h-4 w-4" /></button>
+                <button onClick={() => setFocusEdit(false)} className="p-1.5 rounded" style={{ color: '#6B7080' }}><X className="h-4 w-4" /></button>
+              </div>
             </div>
-            <span className="text-[9px] font-mono text-neutral-300 uppercase">ID / {client.id.split('-')[0]}</span>
-          </div>
-          
-          <div className="space-y-2">
-            <h3 className="text-2xl font-serif text-[var(--ink-primary)] group-hover:text-black transition-colors leading-tight">
-              {client.name}
-            </h3>
-            <div className="flex flex-col gap-1">
-              {client.contact_link && (
-                <a 
-                  href={client.contact_link.startsWith('http') ? client.contact_link : `https://${client.contact_link}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-block text-[10px] font-bold text-[var(--accent-sand)] hover:underline uppercase tracking-widest mt-1"
-                  onClick={(e) => e.stopPropagation()}
+          ) : (
+            <div
+              className="group flex items-start gap-3 cursor-pointer"
+              onClick={() => { setFocusEdit(true); setFocusDraft(dailyPlan?.focus_note || ''); }}
+            >
+              <p className={cn(
+                "flex-1 text-lg font-serif leading-snug",
+                dailyPlan?.focus_note ? '' : 'opacity-30'
+              )} style={{ color: '#F4F4F6' }}>
+                {dailyPlan?.focus_note || (language === 'pt' ? 'Nenhum foco definido — clique para editar' : 'No focus set — click to edit')}
+              </p>
+              <Pencil className="h-4 w-4 opacity-0 group-hover:opacity-40 transition-opacity mt-1 shrink-0" style={{ color: '#6B7080' }} />
+            </div>
+          )}
+        </CmdCard>
+
+        {/* Today's Ritual */}
+        <CmdCard>
+          <SectionLabel>{language === 'pt' ? 'Ritual de Hoje' : "Today's Ritual"}</SectionLabel>
+          {rituals.length === 0 ? (
+            <p className="text-sm" style={{ color: '#6B7080' }}>
+              {language === 'pt' ? 'Nenhum ritual configurado.' : 'No rituals configured.'}
+            </p>
+          ) : (
+            <div className="space-y-2.5">
+              {rituals.map(r => (
+                <button
+                  key={r.id}
+                  className="w-full flex items-center gap-3 text-left group"
+                  onClick={() => toggleRitual(r.id)}
                 >
-                  {t('portfolio.contact_me')}
-                </a>
+                  {ritualChecks[r.id]
+                    ? <CheckSquare className="h-4 w-4 shrink-0" style={{ color: '#22C55E' }} />
+                    : <UncheckedBox className="h-4 w-4 shrink-0" style={{ color: '#6B7080' }} />
+                  }
+                  <span
+                    className={cn("text-sm", ritualChecks[r.id] && 'line-through')}
+                    style={{ color: ritualChecks[r.id] ? '#6B7080' : '#F4F4F6' }}
+                  >
+                    {r.title}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </CmdCard>
+      </div>
+
+      {/* ── GRID: MIDDLE ROW ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        {/* Top 3 Tasks */}
+        <CmdCard>
+          <div className="flex items-center justify-between mb-3">
+            <SectionLabel>{language === 'pt' ? 'Top 3 Tarefas' : 'Top 3 Tasks'}</SectionLabel>
+            <Link to="/priority" className="text-[9px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#6B7080' }}>
+              {language === 'pt' ? 'Ver todas' : 'View all'}
+            </Link>
+          </div>
+          {topTasks.length === 0 ? (
+            <div className="py-4 text-center">
+              <p className="text-sm mb-3" style={{ color: '#6B7080' }}>
+                {dailyPlan
+                  ? (language === 'pt' ? 'Nenhuma tarefa no plano de hoje.' : 'No tasks in today\'s plan.')
+                  : (language === 'pt' ? 'Inicie o dia para definir suas top 3.' : 'Start your day to set your top 3.')
+                }
+              </p>
+              {!dailyPlan && (
+                <button onClick={startDay} className="text-xs font-medium px-3 py-1.5 rounded-lg"
+                  style={{ backgroundColor: '#3362FF', color: '#F4F4F6' }}>
+                  {language === 'pt' ? 'Iniciar Dia' : 'Start Day'}
+                </button>
               )}
-              <p className="text-xs font-medium text-neutral-400 tracking-tight flex items-center gap-2">
-                 {client.email || t('dashboard.no_contact')}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {topTasks.map((pt, i) => {
+                const task = pt.tasks || pt;
+                return (
+                  <div key={pt.id} className="flex items-start gap-3">
+                    <span className="text-[10px] font-bold w-4 shrink-0 mt-0.5" style={{ color: '#3362FF' }}>{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: '#F4F4F6' }}>{task.title}</p>
+                      {task.clients?.name && (
+                        <p className="text-[10px] mt-0.5 truncate" style={{ color: '#6B7080' }}>{task.clients.name}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CmdCard>
+
+        {/* Deadlines (next 3 days) */}
+        <CmdCard>
+          <div className="flex items-center justify-between mb-3">
+            <SectionLabel>{language === 'pt' ? 'Prazos Próximos' : 'Upcoming Deadlines'}</SectionLabel>
+            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: '#6B7080' }}>3 days</span>
+          </div>
+          {loading ? (
+            <div className="flex items-center gap-2 py-2" style={{ color: '#6B7080' }}>
+              <div className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
+              <span className="text-xs">Loading...</span>
+            </div>
+          ) : deadlines.length === 0 ? (
+            <p className="text-sm py-2" style={{ color: '#6B7080' }}>
+              {language === 'pt' ? 'Sem prazos nos próximos 3 dias.' : 'No deadlines in the next 3 days.'}
+            </p>
+          ) : (
+            <div className="space-y-2.5">
+              {deadlines.map(task => {
+                const due = new Date(task.due_date);
+                const isToday = task.due_date === today;
+                const isTomorrow = daysAgo(task.due_date) === -1;
+                return (
+                  <div key={task.id} className="flex items-center gap-3">
+                    <AlertTriangle
+                      className="h-3.5 w-3.5 shrink-0"
+                      style={{ color: isToday ? '#FF3B5C' : isTomorrow ? '#F59E0B' : '#6B7080' }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate" style={{ color: '#F4F4F6' }}>{task.title}</p>
+                      {task.clients?.name && <p className="text-[10px]" style={{ color: '#6B7080' }}>{task.clients.name}</p>}
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-wider shrink-0 px-2 py-0.5 rounded"
+                      style={{
+                        color: isToday ? '#FF3B5C' : '#F59E0B',
+                        backgroundColor: isToday ? 'rgba(255,59,92,0.1)' : 'rgba(245,158,11,0.1)'
+                      }}>
+                      {isToday
+                        ? (language === 'pt' ? 'Hoje' : 'Today')
+                        : due.toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CmdCard>
+      </div>
+
+      {/* ── GRID: BOTTOM ROW ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+        {/* Client Pressure */}
+        <CmdCard>
+          <SectionLabel>{language === 'pt' ? 'Pressão de Clientes' : 'Client Pressure'}</SectionLabel>
+          {pressureClients.length === 0 ? (
+            <p className="text-sm" style={{ color: '#6B7080' }}>
+              {language === 'pt' ? 'Nenhum cliente ativo.' : 'No active clients.'}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {pressureClients.map(c => {
+                const age = daysAgo(c.last_contact_at);
+                const overdue = c.next_update_due_at && c.next_update_due_at < today;
+                return (
+                  <Link key={c.id} to={`/client/${c.id}`} className="flex items-center gap-3 group">
+                    <Users className="h-4 w-4 shrink-0" style={{ color: overdue ? '#FF3B5C' : '#6B7080' }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate group-hover:underline" style={{ color: '#F4F4F6' }}>{c.name}</p>
+                      <p className="text-[10px]" style={{ color: overdue ? '#FF3B5C' : '#6B7080' }}>
+                        {age === null
+                          ? (language === 'pt' ? 'Sem contato registrado' : 'No contact recorded')
+                          : age === 0
+                            ? (language === 'pt' ? 'Contato hoje' : 'Contacted today')
+                            : (language === 'pt' ? `${age}d sem contato` : `${age}d no contact`)
+                        }
+                        {overdue && (language === 'pt' ? ' · Update atrasado' : ' · Update overdue')}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </CmdCard>
+
+        {/* Money Tracking */}
+        <CmdCard>
+          <SectionLabel>{language === 'pt' ? 'Pagamentos Pendentes' : 'Pending Payments'}</SectionLabel>
+          {pendingPayments.length === 0 ? (
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#22C55E' }} />
+              <p className="text-sm" style={{ color: '#22C55E' }}>
+                {language === 'pt' ? 'Tudo em dia.' : 'All cleared.'}
               </p>
             </div>
-          </div>
-
-          {client.next_action && (
-             <div className="pt-6 border-t border-neutral-50 flex items-start gap-3">
-                <div className="h-1.5 w-1.5 rounded-full bg-[var(--accent-sand)] mt-1.5 shrink-0" />
-                <p className="text-[13px] font-medium text-neutral-500 leading-snug">
-                   {parseFirstAction(client.next_action)}
-                </p>
-             </div>
-          )}
-        </div>
-
-        <div className="pt-10 flex items-end justify-between">
-           <div className="space-y-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest">{t('dashboard.billed')}</span>
-                <span className={cn(
-                  "text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded",
-                  payments.length === 0 ? "bg-neutral-50 text-neutral-400" :
-                  payments.every(p => p.is_paid) ? "bg-emerald-50 text-emerald-600" :
-                  payments.some(p => p.is_paid) ? "bg-amber-50 text-amber-600" :
-                  "bg-rose-50 text-rose-600"
-                )}>
-                  {payments.length === 0 ? t('dashboard.no_billing') : 
-                   payments.every(p => p.is_paid) ? t('financials.paid') : 
-                   payments.some(p => p.is_paid) ? t('dashboard.paid_pending') : t('financials.not_paid')}
+          ) : (
+            <>
+              <div className="flex items-baseline gap-2 mb-3">
+                <span className="text-2xl font-serif" style={{ color: '#FF3B5C' }}>
+                  {CUR_SYMBOL[currency]} {totalPending.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                <span className="text-[10px]" style={{ color: '#6B7080' }}>
+                  {pendingPayments.length} {language === 'pt' ? 'pendente(s)' : 'pending'}
                 </span>
               </div>
-              <div className="text-xl font-serif text-success-green flex items-center gap-2 whitespace-nowrap">
-                <span className="text-[10px] font-medium text-neutral-400 not-serif">{CURRENCY_SYMBOLS[currency]}</span>
-                {displayRevenue?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div className="space-y-2">
+                {pendingPayments.slice(0, 3).map(p => (
+                  <div key={p.id} className="flex items-center justify-between">
+                    <p className="text-xs truncate flex-1" style={{ color: '#F4F4F6' }}>{p.clients?.name || '—'}</p>
+                    <span className="text-xs font-mono ml-2 shrink-0" style={{ color: '#FF3B5C' }}>
+                      {p.currency} {parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                ))}
               </div>
-           </div>
-           
-           <div className="flex flex-col items-end gap-2">
-              <p className="text-[8px] text-neutral-200/50 font-medium whitespace-nowrap">
-                {t('portfolio.created_at')} {new Date(client.created_at).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}
-              </p>
-              <div className="flex flex-wrap gap-1.5 justify-end">
-                 {client.tags?.slice(0, 2).map(t => (
-                   <span key={t} className="px-2 py-0.5 bg-neutral-50 border border-neutral-100 text-neutral-400 rounded-md text-[8px] font-bold uppercase tracking-wider">{t}</span>
-                 ))}
-              </div>
-           </div>
-        </div>
+            </>
+          )}
+        </CmdCard>
+
+        {/* MoveOn Milestones */}
+        <CmdCard>
+          <div className="flex items-center justify-between mb-3">
+            <SectionLabel>MoveOn Milestones</SectionLabel>
+            <Flag className="h-3.5 w-3.5" style={{ color: '#6B7080' }} />
+          </div>
+          {milestones.length === 0 ? (
+            <p className="text-sm" style={{ color: '#6B7080' }}>
+              {language === 'pt' ? 'Nenhum milestone registrado.' : 'No milestones recorded.'}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {milestones.map(m => (
+                <div key={m.id} className="flex items-start gap-3">
+                  <Target className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: '#3362FF' }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate" style={{ color: '#F4F4F6' }}>{m.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <StatusBadge status={m.status} />
+                      {m.next_review_at && (
+                        <span className="text-[9px]" style={{ color: '#6B7080' }}>
+                          {new Date(m.next_review_at).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CmdCard>
       </div>
-    </Link>
+
+      {/* ── WEEKLY OUTCOMES ── */}
+      {weeklyOutcomes.length > 0 && (
+        <CmdCard>
+          <div className="flex items-center justify-between mb-4">
+            <SectionLabel>{language === 'pt' ? 'Resultados da Semana' : 'Weekly Outcomes'}</SectionLabel>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" style={{ color: '#3362FF' }} />
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: '#6B7080' }}>
+                {language === 'pt' ? `Semana ${weekNum}` : `Week ${weekNum}`}
+              </span>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {weeklyOutcomes.map(o => (
+              <div key={o.id}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-sm font-medium" style={{ color: '#F4F4F6' }}>{o.title}</p>
+                  <span className="text-[10px] font-bold font-mono" style={{ color: '#3362FF' }}>
+                    {o.progress_percent ?? 0}%
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(244,244,246,0.07)' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${o.progress_percent ?? 0}%`,
+                      backgroundColor: (o.progress_percent ?? 0) >= 80 ? '#22C55E' : '#3362FF'
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CmdCard>
+      )}
+
+      {/* Modals */}
+      <AddClientModal isOpen={isAddClientOpen} onClose={() => setIsAddClientOpen(false)} onClientAdded={loadAll} />
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        onTaskSaved={() => { loadAll(); window.dispatchEvent(new Event('task-updated')); }}
+        clients={clients}
+      />
+    </div>
   );
 }

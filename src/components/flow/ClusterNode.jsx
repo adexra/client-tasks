@@ -1,6 +1,6 @@
 import { Handle, Position } from '@xyflow/react';
-import { cn } from '../../lib/utils';
 import { motion } from 'framer-motion';
+import { cn } from '../../lib/utils';
 import { Users, Tags, ArrowRightLeft } from 'lucide-react';
 
 export default function ClusterNode({ data, selected }) {

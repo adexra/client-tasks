@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
   Activity,
@@ -18,20 +18,17 @@ import { useFinancials } from '../context/FinancialContext';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Financials() {
-  const { 
-    expenses, 
-    payments, 
-    loading: financialsLoading, 
-    displayCurrency, 
-    toBRL, 
-    fromBRL, 
+  const {
+    expenses,
+    displayCurrency,
+    fromBRL,
     totals,
-    refreshData 
+    refreshData
   } = useFinancials();
-  
+
   const { t, language } = useLanguage();
   const [income, setIncome] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const toast = useToast();
 
   const [formData, setFormData] = useState({

@@ -1,8 +1,9 @@
--- LEGACY FILE — superseded by supabase/migrations/002_ad_plans.sql
--- Do not run this directly. Use supabase/migrations/ instead.
+-- ============================================================
+-- Migration 002 — Ad Plans
+-- Table: ad_plans (with RLS for public plan sharing at /plan/:id)
 -- ============================================================
 
-CREATE TABLE public.ad_plans (
+CREATE TABLE IF NOT EXISTS public.ad_plans (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
   client_id uuid REFERENCES public.clients(id) ON DELETE SET NULL,

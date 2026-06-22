@@ -1,16 +1,16 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { 
   ChevronLeft, Target, Globe, Search, ArrowRight, 
-  MousePointer2, ShieldCheck, Zap,
+  MousePointer2, ShieldCheck, Zap, Car, Lock, Info, Plus, Minus,
   TrendingUp, Calendar, Wallet, Database, Fingerprint, RefreshCcw, Network,
   Crosshair, Users, Activity, BarChart, Smartphone, Laptop,
   ShoppingCart, MessageSquare, CheckCircle2, Share2
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const SYM = { BRL: 'R$', USD: '$', EUR: '€' };
 const money = (n, sym) => `${sym} ${(parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -91,7 +91,7 @@ export default function AdPlanView() {
     return { budget, daily, days, sym, projection, type, kpiVal };
   }, [plan]);
 
-  const marketChartData = useMemo(() => {
+  const _marketChartData = useMemo(() => {
     const vol = plan?.audience?.potential_volume || 10000;
     return [
       { name: 'Semana 1', atual: vol * 0.05, potencial: vol * 0.4 },
@@ -160,42 +160,60 @@ export default function AdPlanView() {
         className="h-screen w-full overflow-y-auto snap-y snap-mandatory scroll-smooth hide-scrollbar"
       >
         
-        {/* 1. Hero (Welcome & Intro) */}
+        {/* 1. Hero (Executive First Hierarchy) */}
         <SectionContainer>
           <div className="absolute inset-0 z-0 opacity-30">
             <div className="absolute top-[20%] left-[20%] w-[40vw] h-[40vw] bg-indigo-600/30 blur-[120px] rounded-full mix-blend-screen animate-pulse-slow" />
             <div className="absolute bottom-[20%] right-[20%] w-[30vw] h-[30vw] bg-fuchsia-600/20 blur-[100px] rounded-full mix-blend-screen" />
           </div>
-          <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center text-center space-y-12">
+          <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col items-center text-center space-y-12">
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }}>
               <span className="inline-block mb-6 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">
-                Roadmap Estratégico
+                Executive Briefing
               </span>
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white tracking-tight leading-[1.1] max-w-4xl">
                 Bem-vindo ao seu <br />
-                <span className="italic text-indigo-400">Planejamento</span>.
+                <span className="italic text-indigo-400">Plano de Escala</span>.
               </h1>
               <p className="mt-8 text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-light">
                 Este é o mapa do tesouro para os próximos {stats.days} dias. Uma operação desenhada para capturar demanda e gerar lucro com precisão cirúrgica.
               </p>
             </motion.div>
             
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
-              <GlassCard>
-                <Wallet className="h-5 w-5 text-indigo-500 mb-4" />
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Investimento Total</div>
-                <div className="text-3xl font-serif text-white">{money(stats.budget, stats.sym)}</div>
-              </GlassCard>
-              <GlassCard>
-                <Target className="h-5 w-5 text-fuchsia-500 mb-4" />
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Meta {stats.type}</div>
-                <div className="text-3xl font-serif text-white">{stats.type === 'CPA' ? stats.sym : ''} {stats.kpiVal}{stats.type === 'ROAS' ? 'x' : ''}</div>
-              </GlassCard>
-              <GlassCard>
-                <TrendingUp className="h-5 w-5 text-emerald-500 mb-4" />
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Volume Projetado</div>
-                <div className="text-3xl font-serif text-white">{stats.projection}</div>
-              </GlassCard>
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} viewport={{ once: true }} className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
+              
+              <div className="bg-gradient-to-br from-indigo-500/20 to-transparent p-1 rounded-3xl">
+                <div className="bg-[#08090D] h-full w-full rounded-[23px] p-8 border border-white/5 flex flex-col items-center text-center justify-center">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">
+                    <GlossaryTooltip text="Orçamento Mensal" tooltip="O total do investimento financeiro reservado para comprar dados nas plataformas neste ciclo de 30 dias." />
+                  </div>
+                  <div className="text-5xl lg:text-6xl font-serif text-white tracking-tight">{money(stats.budget, stats.sym)}</div>
+                  <div className="mt-4 text-xs font-mono text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full">{money(stats.daily, stats.sym)} / Dia</div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-t from-emerald-500/20 to-transparent p-1 rounded-3xl group relative">
+                <div className="bg-[#08090D] h-full w-full rounded-[23px] p-8 border border-white/5 flex flex-col items-center text-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-emerald-500/0 group-hover:bg-emerald-500/5 transition-colors duration-500" />
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4 relative z-10">
+                    <GlossaryTooltip text="Volume Projetado" tooltip="A estimativa realista de receita gerada baseada na meta atingida." />
+                  </div>
+                  <div className="text-5xl lg:text-6xl font-serif text-emerald-400 tracking-tight relative z-10 group-hover:-translate-y-2 transition-transform duration-300">{stats.projection}</div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-bl from-fuchsia-500/20 to-transparent p-1 rounded-3xl group relative">
+                <div className="bg-[#08090D] h-full w-full rounded-[23px] p-8 border border-white/5 flex flex-col items-center text-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-fuchsia-500/0 group-hover:bg-fuchsia-500/5 transition-colors duration-500" />
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4 relative z-10">
+                    <GlossaryTooltip text={`Meta ${stats.type}`} tooltip="O retorno sobre investimento alvo ou custo de aquisição esperado." />
+                  </div>
+                  <div className="text-5xl lg:text-6xl font-serif text-white tracking-tight relative z-10 group-hover:-translate-y-2 transition-transform duration-300">
+                    {stats.type === 'CPA' ? stats.sym : ''} {stats.kpiVal}{stats.type === 'ROAS' ? 'x' : ''}
+                  </div>
+                </div>
+              </div>
+
             </motion.div>
           </div>
         </SectionContainer>
@@ -210,26 +228,28 @@ export default function AdPlanView() {
                 Baseado no seu perfil, mapeamos a intenção de busca. O gráfico ilustra a demanda latente pronta para ser convertida.
               </p>
               
-              <div className="mt-8 space-y-4">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/10 pb-2">Top Keywords Estratégicas</div>
-                <div className="flex flex-wrap gap-2">
-                  {primaryKeywords.map((kw, i) => (
-                    <motion.span 
-                      key={i}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-xs font-bold text-indigo-400 uppercase tracking-widest"
-                    >
-                      {kw}
-                    </motion.span>
-                  ))}
-                  {secondaryKeywords.slice(0, 5).map((kw, i) => (
-                    <span key={i} className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-slate-500">
-                      {kw}
-                    </span>
-                  ))}
+              <ExpandableSection title="Auditoria de Intenção (Keywords)">
+                <div className="space-y-4">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/10 pb-2">Top Keywords Estratégicas</div>
+                  <div className="flex flex-wrap gap-2">
+                    {primaryKeywords.map((kw, i) => (
+                      <motion.span 
+                        key={i}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-xs font-bold text-indigo-400 uppercase tracking-widest"
+                      >
+                        {kw}
+                      </motion.span>
+                    ))}
+                    {secondaryKeywords.slice(0, 5).map((kw, i) => (
+                      <span key={i} className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-slate-500">
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </ExpandableSection>
             </motion.div>
             
             <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="h-full min-h-[400px] w-full bg-[#08090D] border border-indigo-500/20 rounded-3xl p-10 backdrop-blur-sm flex flex-col justify-center items-center text-center shadow-[0_0_50px_rgba(99,102,241,0.1)] relative overflow-hidden">
@@ -248,91 +268,88 @@ export default function AdPlanView() {
           </div>
         </SectionContainer>
 
-        {/* 3. Investimento & Projeções */}
-        <SectionContainer>
-          <div className="w-full max-w-5xl mx-auto space-y-16">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="text-center">
-              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">Financials</span>
-              <h2 className="text-4xl md:text-6xl font-serif text-white leading-tight mt-4">Combustível de <span className="italic text-indigo-400">Crescimento</span></h2>
-            </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-gradient-to-br from-indigo-500/20 to-transparent p-1 rounded-3xl">
-                <div className="bg-[#08090D] h-full w-full rounded-[23px] p-10 border border-white/5 flex flex-col items-center text-center justify-center">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Orçamento Mensal</div>
-                  <div className="text-6xl font-serif text-white tracking-tight">{money(stats.budget, stats.sym)}</div>
-                </div>
-              </div>
-              <div className="bg-gradient-to-bl from-fuchsia-500/20 to-transparent p-1 rounded-3xl group relative">
-                <div className="bg-[#08090D] h-full w-full rounded-[23px] p-10 border border-white/5 flex flex-col items-center text-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 bg-fuchsia-500/0 group-hover:bg-fuchsia-500/5 transition-colors duration-500" />
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4 relative z-10">Investimento Diário</div>
-                  <div className="text-6xl font-serif text-white tracking-tight relative z-10 group-hover:-translate-y-2 transition-transform duration-300">{money(stats.daily, stats.sym)}</div>
-                  <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 bottom-6 text-[9px] text-fuchsia-400 font-mono tracking-[0.2em] uppercase text-center w-full">
-                    ≅ {Math.floor(stats.daily / (stats.kpiVal || 10))} Cliq. Qualificados
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </SectionContainer>
 
-        {/* 4. Objetivos e KPIs */}
+        {/* 4. Invisible Infrastructure & Context */}
         <SectionContainer>
-          <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-16 items-center">
-            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 space-y-6">
-              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">Indicadores</span>
-              <h2 className="text-4xl md:text-5xl font-serif text-white leading-tight">O que define o <span className="italic text-indigo-400">sucesso</span>?</h2>
-              <p className="text-slate-400 text-lg leading-relaxed font-light">
-                Não compramos cliques, compramos dados de conversão. Estes são os alvos que nosso algoritmo irá perseguir implacavelmente.
-              </p>
-            </motion.div>
+          <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-16 items-start">
             
-            <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 w-full grid grid-cols-2 gap-4">
-              <GlassCard className="col-span-2">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="h-12 w-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-                    <Crosshair className="h-6 w-6 text-indigo-400" />
+            {/* Tracking & Infrastructure */}
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 space-y-6">
+              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.3em]">Infraestrutura Invisível</span>
+              <h2 className="text-4xl md:text-5xl font-serif text-white leading-tight">Garantia de <span className="italic text-indigo-400">Rastreamento</span>.</h2>
+              <p className="text-slate-400 text-lg leading-relaxed font-light mb-8">
+                "Nós enxergamos o lead mesmo quando ele usa bloqueadores de anúncios, garantindo que seus dados sejam 100% precisos."
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <GlassCard className="bg-indigo-500/5 border-indigo-500/20">
+                  <Network className="h-6 w-6 text-indigo-400 mb-4" />
+                  <div className="text-sm font-bold text-white mb-1">Server-Side Tracking</div>
+                  <div className="text-xs text-slate-400">Bypass iOS14 & AdBlockers</div>
+                </GlassCard>
+                <GlassCard className="bg-emerald-500/5 border-emerald-500/20 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500/50"></div>
+                  <ShieldCheck className="h-6 w-6 text-emerald-400 mb-4" />
+                  <div className="text-sm font-bold text-white mb-1">CAPI Active</div>
+                  <div className="text-xs text-slate-400 flex items-center gap-2">
+                    <Lock className="h-3 w-3" /> Encrypted Data Flow
                   </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Alvo Principal</div>
-                    <div className="text-2xl font-serif text-white">{plan.conversion?.goal || 'Conversão'}</div>
+                </GlassCard>
+              </div>
+            </motion.div>
+
+            {/* Industry Specific Context (Ad Previews) */}
+            <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }} className="flex-1 w-full space-y-6">
+              <span className="text-fuchsia-400 text-[10px] font-bold uppercase tracking-[0.3em]">Creative Context</span>
+              <h2 className="text-4xl md:text-5xl font-serif text-white leading-tight">Posicionamento de <span className="italic text-fuchsia-400">Marca</span>.</h2>
+              
+              <div className="space-y-4 mt-6">
+                <div className="bg-[#08090D] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Car className="h-24 w-24 text-white" />
+                  </div>
+                  <div className="flex items-center gap-3 mb-4 relative z-10">
+                    <div className="h-8 w-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                      <Target className="h-4 w-4 text-indigo-400" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Google Search Ad</div>
+                      <div className="text-xs text-indigo-300">Intenção Alta</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2 relative z-10">
+                    <div className="text-blue-400 text-sm font-medium hover:underline cursor-pointer">Performance e Segurança para sua Família | Solo Ruedas</div>
+                    <div className="text-emerald-400/80 text-xs">Ad · soloruedas.com.br/ofertas</div>
+                    <div className="text-slate-400 text-xs leading-relaxed">Encontre os melhores pneus para o seu veículo com instalação grátis. A melhor performance e segurança garantida para a sua viagem. Aproveite as ofertas de 2026.</div>
                   </div>
                 </div>
-                <div className="text-sm text-slate-400 font-mono bg-white/5 p-3 rounded-lg">Flow: {plan.conversion?.flow || 'Anúncio -> LP -> Ação'}</div>
-              </GlassCard>
-              
-              <GlassCard>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Meta {stats.type}</div>
-                <div className="text-3xl font-serif text-white">{stats.type === 'CPA' ? stats.sym : ''} {stats.kpiVal}{stats.type === 'ROAS' ? 'x' : ''}</div>
-              </GlassCard>
-              
-              <GlassCard>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Modelos (Atribuição & Tracking)</div>
-                <div className="text-lg font-serif text-white pt-2">{plan.conversion?.attribution || 'Data-Driven'}</div>
-                <div className="text-xs text-indigo-400 font-mono mt-1">{plan.conversion?.tracking || 'GA4 + GTM'}</div>
-              </GlassCard>
-              
-              <GlassCard className="col-span-2 mt-4 bg-[#08090D] border-indigo-500/20">
-                <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                  <Fingerprint className="h-4 w-4" />
-                  Creative & Copywriting Setup
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <div className="text-xs text-slate-500 font-medium mb-1">Formatos</div>
-                    <div className="text-sm text-white">{plan.creative?.formats || 'Múltiplos Formatos'}</div>
+
+                <div className="bg-[#08090D] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <ShieldCheck className="h-24 w-24 text-white" />
                   </div>
-                  <div>
-                    <div className="text-xs text-slate-500 font-medium mb-1">Gatilho (Hook)</div>
-                    <div className="text-sm text-white">{plan.creative?.hook || 'Oferta Direta'}</div>
+                  <div className="flex items-center gap-3 mb-4 relative z-10">
+                    <div className="h-8 w-8 rounded-full bg-fuchsia-500/20 flex items-center justify-center">
+                      <Share2 className="h-4 w-4 text-fuchsia-400" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Meta Video Ad</div>
+                      <div className="text-xs text-fuchsia-300">Descoberta / Retenção</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-xs text-slate-500 font-medium mb-1">Call to Action</div>
-                    <div className="text-sm text-indigo-300 font-bold">{plan.creative?.cta || 'Comprar Agora'}</div>
+                  <div className="space-y-2 relative z-10">
+                    <div className="text-white text-sm font-medium">Os melhores Pneus para 2026.</div>
+                    <div className="text-slate-400 text-xs leading-relaxed">Não arrisque na estrada. Troque seus pneus antes da viagem de fim de ano com condições exclusivas na Solo Ruedas.</div>
+                    <div className="mt-4 h-24 w-full rounded-xl bg-slate-800 flex items-center justify-center border border-white/5">
+                      <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md">
+                        <div className="w-0 h-0 border-t-4 border-t-transparent border-l-[6px] border-l-white border-b-4 border-b-transparent ml-1"></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </GlassCard>
+
+              </div>
             </motion.div>
           </div>
         </SectionContainer>
@@ -397,9 +414,9 @@ export default function AdPlanView() {
             </motion.div>
 
             <div className="w-full max-w-4xl relative py-12">
-              <SmartFlow flowString={plan?.conversion?.flow || "Google Search -> Landing Page -> Compra"} />
-
-              <motion.p className="text-sm text-slate-500 font-mono mt-20 bg-white/5 py-3 px-6 rounded-full border border-white/10">
+              <PipelineFlow flowString={plan?.conversion?.flow || "Google Search -> Landing Page -> Compra"} />
+              
+              <motion.p className="text-sm text-slate-500 font-mono mt-20 bg-white/5 py-3 px-6 rounded-full border border-white/10 relative z-10">
                 Logística do Funil: {plan?.conversion?.flow || "Tráfego Direto → Conversão"}
               </motion.p>
             </div>
@@ -590,19 +607,48 @@ const iconMap = {
   meta: Share2,
 };
 
-export function SmartFlow({ flowString }) {
+export function PipelineFlow({ flowString }) {
   const steps = flowString?.split(/->|→/).map(s => s.trim()) || [];
 
   return (
-    <div className="w-full overflow-x-auto pb-16 pt-4 hide-scrollbar snap-x flex justify-start md:justify-center">
-      <div className="flex items-center min-w-max px-8">
+    <div className="w-full overflow-x-auto pb-32 pt-16 hide-scrollbar snap-x flex justify-start md:justify-center relative">
+      <div className="flex items-center min-w-max px-8 relative">
+        {/* Recovery Loop Arrow (SVG) */}
+        {steps.length > 2 && (
+          <svg className="absolute left-0 top-full -mt-20 w-full h-32 pointer-events-none z-0" preserveAspectRatio="none">
+            <path 
+              d={`M 150 0 C 150 80, ${steps.length * 150 - 50} 80, ${steps.length * 150 - 50} 0`} 
+              fill="transparent" 
+              stroke="url(#remarketing-grad)" 
+              strokeWidth="2" 
+              strokeDasharray="4 4"
+              className="animate-pulse-slow"
+            />
+            <defs>
+              <linearGradient id="remarketing-grad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#ec4899" stopOpacity="0.2" />
+                <stop offset="50%" stopColor="#a855f7" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#6366f1" stopOpacity="0.2" />
+              </linearGradient>
+            </defs>
+          </svg>
+        )}
+
         {steps.map((step, i) => {
           const matchedKey = Object.keys(iconMap).find(k => step.toLowerCase().includes(k));
           const Icon = matchedKey ? iconMap[matchedKey] : CheckCircle2;
           const isLast = i === steps.length - 1;
 
           return (
-            <div key={i} className="flex items-center snap-center">
+            <div key={i} className="flex items-center snap-center relative">
+              {/* Drop-off visualization (Leak) */}
+              {!isLast && i > 0 && (
+                <div className="absolute -bottom-16 left-full -translate-x-1/2 flex flex-col items-center opacity-50 z-0">
+                  <div className="h-8 w-px bg-gradient-to-b from-rose-500/50 to-transparent"></div>
+                  <span className="text-[8px] font-mono text-rose-500 uppercase mt-1">Drop-off</span>
+                </div>
+              )}
+
               {/* Node */}
               <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -610,7 +656,14 @@ export function SmartFlow({ flowString }) {
                 transition={{ delay: i * 0.1 }}
                 className="relative group z-10 flex flex-col items-center"
               >
-                <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl bg-[#08090D] border border-white/10 flex items-center justify-center backdrop-blur-xl group-hover:border-indigo-500/50 transition-colors duration-500 shadow-xl">
+                {/* Live Indicator */}
+                {i === 1 && (
+                  <span className="absolute -top-3 right-0 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                  </span>
+                )}
+                <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl bg-[#08090D] border border-white/10 flex items-center justify-center backdrop-blur-xl group-hover:border-indigo-500/50 transition-colors duration-500 shadow-xl relative z-20">
                   <Icon className="h-6 w-6 md:h-8 md:w-8 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
                 </div>
                 <p className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center w-32 leading-tight">
@@ -618,11 +671,11 @@ export function SmartFlow({ flowString }) {
                 </p>
               </motion.div>
 
-              {/* Connector (Liquid Line) */}
+              {/* Connector (Pipeline Line) */}
               {!isLast && (
-                <div className="h-1 w-8 md:w-16 bg-white/5 relative overflow-hidden mx-2 md:mx-4 -z-0 rounded-full">
+                <div className="h-2 w-12 md:w-20 bg-[#08090D] border-y border-white/10 relative overflow-hidden mx-2 md:mx-4 -z-0">
                   <motion.div 
-                    className="absolute top-0 left-0 h-full w-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50"
+                    className="absolute top-0 left-0 h-full w-full bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"
                     animate={{ left: ['-100%', '100%'] }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                   />
@@ -631,6 +684,12 @@ export function SmartFlow({ flowString }) {
             </div>
           );
         })}
+        {steps.length > 2 && (
+          <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-8 flex items-center gap-2 text-xs font-mono text-fuchsia-400/80">
+            <RefreshCcw className="h-3 w-3" />
+            Rede de Segurança (Remarketing Loop)
+          </div>
+        )}
       </div>
     </div>
   );
@@ -660,5 +719,45 @@ function FlowNode({ step, title, desc, icon: Icon }) {
       <h3 className="text-lg font-serif text-white mb-1">{title}</h3>
       <p className="text-xs text-slate-400">{desc}</p>
     </div>
+  );
+}
+
+function ExpandableSection({ title, children }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="w-full bg-[#08090D] border border-white/10 rounded-3xl overflow-hidden mt-8 transition-all duration-500">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-6 md:p-8 hover:bg-white/5 transition-colors"
+      >
+        <span className="text-lg md:text-xl font-serif text-white">{title}</span>
+        {isOpen ? <Minus className="h-5 w-5 text-indigo-400" /> : <Plus className="h-5 w-5 text-indigo-400" />}
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="p-6 md:p-8 pt-0 border-t border-white/5">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function GlossaryTooltip({ text, tooltip }) {
+  return (
+    <span className="relative group inline-flex items-center cursor-help border-b border-dashed border-indigo-500/50 hover:border-indigo-400 hover:text-indigo-300 transition-colors">
+      {text}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 border border-white/10 rounded-xl text-xs text-slate-300 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
+        {tooltip}
+      </div>
+    </span>
   );
 }

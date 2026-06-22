@@ -1,76 +1,70 @@
--- LEGACY FILE — superseded by supabase/migrations/003_brain_system.sql
--- Do not run this directly. Use supabase/migrations/ instead.
+-- ============================================================
+-- Migration 003 — Brain System
+-- Tables: brain_agents, brain_memory, brain_rag, brain_sessions, brain_messages
+-- Includes: seed data for 5 default AI agents
 -- ============================================================
 
--- ============================================================
--- BRAIN SYSTEM — Full Migration
--- ============================================================
-
--- Agents: each has a name, role description, system prompt, model choice
-create table if not exists brain_agents (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  role text not null,
+CREATE TABLE IF NOT EXISTS brain_agents (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  role text NOT NULL,
   description text,
-  system_prompt text not null default '',
-  model text not null default 'gpt-4o-mini', -- 'gpt-4o' | 'gpt-4o-mini'
-  color text default '#6366f1',
-  icon text default 'Bot',
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  system_prompt text NOT NULL DEFAULT '',
+  model text NOT NULL DEFAULT 'gpt-4o-mini',
+  color text DEFAULT '#6366f1',
+  icon text DEFAULT 'Bot',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
--- Memory buckets: named blobs of context (brand voice, niche rules, etc.)
-create table if not exists brain_memory (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  type text not null default 'general', -- brand | niche | seo | technical | client | general
-  content text not null default '',
-  tags text[] default '{}',
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+CREATE TABLE IF NOT EXISTS brain_memory (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  type text NOT NULL DEFAULT 'general',
+  content text NOT NULL DEFAULT '',
+  tags text[] DEFAULT '{}',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
--- RAG documents: long-form docs chunked for retrieval
-create table if not exists brain_rag (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  content text not null default '',
-  tags text[] default '{}',
-  chunks jsonb default '[]', -- array of {text, embedding} after processing
-  embedding_status text default 'pending', -- pending | processing | done | error
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+CREATE TABLE IF NOT EXISTS brain_rag (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  content text NOT NULL DEFAULT '',
+  tags text[] DEFAULT '{}',
+  chunks jsonb DEFAULT '[]',
+  embedding_status text DEFAULT 'pending',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
--- Briefing sessions: one per client conversation thread
-create table if not exists brain_sessions (
-  id uuid primary key default gen_random_uuid(),
-  client_id uuid references clients(id) on delete cascade,
-  title text default 'New Briefing',
-  briefing_text text default '',
-  extracted_json jsonb default '{}',
-  memory_bucket_ids uuid[] default '{}',
-  rag_doc_ids uuid[] default '{}',
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+CREATE TABLE IF NOT EXISTS brain_sessions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid REFERENCES clients(id) ON DELETE CASCADE,
+  title text DEFAULT 'New Briefing',
+  briefing_text text DEFAULT '',
+  extracted_json jsonb DEFAULT '{}',
+  memory_bucket_ids uuid[] DEFAULT '{}',
+  rag_doc_ids uuid[] DEFAULT '{}',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
--- Messages within a session
-create table if not exists brain_messages (
-  id uuid primary key default gen_random_uuid(),
-  session_id uuid references brain_sessions(id) on delete cascade,
-  role text not null, -- user | assistant | agent_webdev | agent_seo | agent_copy | agent_brain
-  agent_id uuid references brain_agents(id) on delete set null,
-  content text not null default '',
-  json_delta jsonb default null, -- patch applied to extracted_json after this message
+CREATE TABLE IF NOT EXISTS brain_messages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id uuid REFERENCES brain_sessions(id) ON DELETE CASCADE,
+  role text NOT NULL,
+  agent_id uuid REFERENCES brain_agents(id) ON DELETE SET NULL,
+  content text NOT NULL DEFAULT '',
+  json_delta jsonb DEFAULT NULL,
   model_used text,
   tokens_used int,
-  created_at timestamptz default now()
+  created_at timestamptz DEFAULT now()
 );
 
--- Seed default agents
-insert into brain_agents (name, role, description, system_prompt, model, color, icon) values
+-- Seed default agents (idempotent via ON CONFLICT DO NOTHING requires a unique constraint)
+-- Run once — re-running will duplicate agents if no unique constraint exists
+INSERT INTO brain_agents (name, role, description, system_prompt, model, color, icon) VALUES
 (
   'Brain',
   'Orchestrator',

@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { User, Shield, Building, Zap, ChevronRight, Globe } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useLanguage } from '../context/LanguageContext';

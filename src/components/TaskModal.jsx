@@ -85,7 +85,6 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
         scheduled_date: finalScheduledDate
       };
 
-      let error;
       try {
         let savedTaskId = editTask ? editTask.id : null;
         

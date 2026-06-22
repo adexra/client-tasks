@@ -11,7 +11,7 @@ function parseChecklist(raw) {
   try {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) return parsed.map(i => typeof i === 'string' ? { text: i, done: false } : i);
-  } catch {}
+  } catch { /* intentional — raw value is not valid JSON */ }
   // Legacy plain text — convert each line to a checklist item
   return raw.split('\n').filter(Boolean).map(text => ({ text, done: false }));
 }
@@ -97,7 +97,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
     };
 
     // remove fields that don't belong to the clients table
-    const { main_delivery, is_recurring, recurring_start_date, contacts: _contacts, ...clientDBPayload } = dataToSave;
+    const { main_delivery: _main_delivery, is_recurring: _is_recurring, recurring_start_date: _recurring_start_date, contacts: _contacts, ...clientDBPayload } = dataToSave;
 
     let error;
     let newClient;

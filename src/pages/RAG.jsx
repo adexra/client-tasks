@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { getEmbedding } from '../lib/azure';
 import { Plus, Trash2, Download, Edit3, Save, X, Tag, Database, Loader, CheckCircle2, AlertCircle } from 'lucide-react';
-import { cn } from '../lib/utils';
 import { useToast } from '../context/ToastContext';
 
 const STATUS_ICONS = {

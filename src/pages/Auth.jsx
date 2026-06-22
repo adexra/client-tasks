@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { Activity, Lock, ArrowRight } from 'lucide-react';
 
 export default function Auth() {
-  const { t } = useLanguage();
   const toast = useToast();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);

@@ -1,16 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-paper: #F7F6F3;
-  --color-surface-white: #FFFFFF;
-  --color-ink-primary: #1A1A1A;
-  --color-ink-secondary: #475569;
-  --color-ink-muted: #64748B;
-  --color-ink-placeholder: #64748B;
-  --color-accent-sand: #E8E4DC;
-  --color-ink-charcoal: #111111;
-  --color-success-green: #15803D;
-  --color-border-light: #E2E8F0;
+  /* Adexra Dark Brand — Sprint 2 */
+  --color-bg-paper: #01020E;
+  --color-surface-white: #0D0F1E;
+  --color-ink-primary: #F4F4F6;
+  --color-ink-secondary: #6B7080;
+  --color-ink-muted: #6B7080;
+  --color-ink-placeholder: #6B7080;
+  --color-accent-sand: #3362FF;
+  --color-ink-charcoal: #0D0F1E;
+  --color-success-green: #22C55E;
+  --color-border-light: rgba(244, 244, 246, 0.07);
+
+  /* Brand extras */
+  --color-accent-blue: #3362FF;
+  --color-accent-soft: rgba(51, 98, 255, 0.12);
+  --color-accent-border: rgba(51, 98, 255, 0.3);
+  --color-surface-border: rgba(244, 244, 246, 0.07);
+  --color-surface-border-strong: rgba(244, 244, 246, 0.14);
+  --color-error: #FF3B5C;
 
   --font-serif: "DM Serif Display", serif;
   --font-sans: "DM Sans", sans-serif;
@@ -19,7 +28,9 @@
 
 @layer base {
   body {
-    @apply bg-bg-paper text-ink-primary antialiased;
+    background-color: #01020E;
+    color: #F4F4F6;
+    @apply antialiased;
     font-family: var(--font-sans);
     font-weight: 400;
   }
@@ -35,17 +46,26 @@
   }
 
   input::placeholder, textarea::placeholder {
-    @apply text-ink-placeholder italic;
+    color: #6B7080;
+    font-style: italic;
+  }
+
+  input, textarea, select {
+    background-color: #0D0F1E;
+    color: #F4F4F6;
+    border-color: rgba(244, 244, 246, 0.07);
   }
 }
 
 @layer components {
   .surface-card {
-    @apply bg-surface-white border border-border-light rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-200;
+    background-color: #0D0F1E;
+    border: 1px solid rgba(244, 244, 246, 0.07);
+    @apply rounded-[12px] transition-all duration-200;
   }
 
   .surface-card-hover {
-    @apply hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:bg-accent-sand/20;
+    @apply hover:border-[rgba(51,98,255,0.3)] hover:shadow-[0_0_0_1px_rgba(51,98,255,0.15)];
   }
 
   .btn-minimal {
@@ -53,38 +73,58 @@
   }
 
   .btn-primary {
-    @apply bg-ink-charcoal text-white hover:bg-ink-primary;
+    background-color: #3362FF;
+    color: #F4F4F6;
+    @apply hover:opacity-90;
   }
 
   .btn-secondary {
-    @apply bg-accent-sand text-ink-primary hover:bg-neutral-200;
+    background-color: rgba(51, 98, 255, 0.12);
+    color: #F4F4F6;
+    border-color: rgba(51, 98, 255, 0.3);
+    @apply hover:bg-[rgba(51,98,255,0.2)];
   }
 
   .stat-label {
-    @apply text-[10px] font-bold uppercase tracking-[0.15em] text-ink-muted;
+    @apply text-[10px] font-bold uppercase tracking-[0.15em];
+    color: #6B7080;
   }
 
   .stat-value {
-    @apply text-3xl font-serif text-ink-primary;
+    @apply text-3xl font-serif;
+    color: #F4F4F6;
   }
 
   .glass-card {
     @apply bg-slate-900/40 backdrop-blur-[20px] border-t border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)];
   }
+
+  /* Command Center section card */
+  .cmd-card {
+    background-color: #0D0F1E;
+    border: 1px solid rgba(244, 244, 246, 0.07);
+    @apply rounded-xl p-5 transition-all duration-200;
+  }
+
+  .cmd-label {
+    @apply text-[9px] font-bold uppercase tracking-[0.25em];
+    color: #6B7080;
+  }
 }
 
-/* Custom Scrollbar - Minimal */
+/* Custom Scrollbar — Minimal brand */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 3px;
+  height: 3px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-neutral-200 rounded-full hover:bg-neutral-300 transition-colors;
+  background: #3362FF;
+  border-radius: 9999px;
 }
 
 /* Editorial Page Transitions */

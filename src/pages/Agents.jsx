@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 import { Bot, Code, PenTool, TrendingUp, Layout, Plus, ChevronRight, Cpu } from 'lucide-react';
-import { cn } from '../lib/utils';
 import { useToast } from '../context/ToastContext';
 
 const ICON_MAP = { Brain: Cpu, Code, PenTool, TrendingUp, Layout, Bot };

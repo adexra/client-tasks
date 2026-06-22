@@ -1,6 +1,6 @@
 import { Handle, Position } from '@xyflow/react';
-import { cn } from '../../lib/utils';
 import { motion } from 'framer-motion';
+import { cn } from '../../lib/utils';
 import { Search, MonitorSmartphone, PlaySquare, Briefcase } from 'lucide-react';
 
 export default function PlatformNode({ data }) {

@@ -18,7 +18,6 @@ function MemoryCard({ bucket, onSave, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: bucket.name, type: bucket.type, content: bucket.content, tags: bucket.tags?.join(', ') || '' });
   const [saving, setSaving] = useState(false);
-  const toast = useToast();
 
   async function save() {
     setSaving(true);

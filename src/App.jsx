@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { FinancialProvider } from './context/FinancialContext';
@@ -11,13 +12,26 @@ import Clients from './pages/Clients';
 import Financials from './pages/Financials';
 import Account from './pages/Account';
 import Auth from './pages/Auth';
-import AdPlanning from './pages/AdPlanning';
-import AdPlanView from './pages/AdPlanView';
-import Agents from './pages/Agents';
-import AgentEditor from './pages/AgentEditor';
-import Memory from './pages/Memory';
-import RAG from './pages/RAG';
-import Briefing from './pages/Briefing';
+
+const AdPlanning   = lazy(() => import('./pages/AdPlanning'));
+const AdPlanView   = lazy(() => import('./pages/AdPlanView'));
+const Agents       = lazy(() => import('./pages/Agents'));
+const AgentEditor  = lazy(() => import('./pages/AgentEditor'));
+const Memory       = lazy(() => import('./pages/Memory'));
+const RAG          = lazy(() => import('./pages/RAG'));
+const Briefing     = lazy(() => import('./pages/Briefing'));
+const Availability = lazy(() => import('./pages/Availability'));
+const Weekly       = lazy(() => import('./pages/Weekly'));
+const Today        = lazy(() => import('./pages/Today'));
+const MoveOn       = lazy(() => import('./pages/MoveOn'));
+
+function PageFallback() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="h-5 w-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -63,24 +77,30 @@ export default function App() {
         <AuthProvider>
           <FinancialProvider>
             <BrowserRouter>
-              <Routes>
-                <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
-                <Route path="/plan/:id" element={<AdPlanView />} />
-                <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="clients" element={<Clients />} />
-                  <Route path="client/:id" element={<ClientDetail />} />
-                  <Route path="priority" element={<PriorityView />} />
-                  <Route path="financials" element={<Financials />} />
-                  <Route path="account" element={<Account />} />
-                  <Route path="ads" element={<AdPlanning />} />
-                  <Route path="agents" element={<Agents />} />
-                  <Route path="agents/:id" element={<AgentEditor />} />
-                  <Route path="memory" element={<Memory />} />
-                  <Route path="rag" element={<RAG />} />
-                  <Route path="briefing/:clientId" element={<Briefing />} />
-                </Route>
-              </Routes>
+              <Suspense fallback={<PageFallback />}>
+                <Routes>
+                  <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+                  <Route path="/plan/:id" element={<AdPlanView />} />
+                  <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="clients" element={<Clients />} />
+                    <Route path="client/:id" element={<ClientDetail />} />
+                    <Route path="priority" element={<PriorityView />} />
+                    <Route path="financials" element={<Financials />} />
+                    <Route path="account" element={<Account />} />
+                    <Route path="ads" element={<AdPlanning />} />
+                    <Route path="agents" element={<Agents />} />
+                    <Route path="agents/:id" element={<AgentEditor />} />
+                    <Route path="memory" element={<Memory />} />
+                    <Route path="rag" element={<RAG />} />
+                    <Route path="briefing/:clientId" element={<Briefing />} />
+                    <Route path="settings/availability" element={<Availability />} />
+                    <Route path="weekly" element={<Weekly />} />
+                    <Route path="today" element={<Today />} />
+                    <Route path="moveon" element={<MoveOn />} />
+                  </Route>
+                </Routes>
+              </Suspense>
             </BrowserRouter>
           </FinancialProvider>
         </AuthProvider>

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
 
 export default function ProjectionNode({ data }) {
-  const { kpi, result, sym } = data;
+  const { kpi, result, sym: _sym } = data;
   
   return (
     <motion.div 
