@@ -293,6 +293,7 @@ export const translations = {
             none: 'None (Blank Project)',
             framer_site: 'Framer Website',
             automation: 'Process Automation',
+            whatsapp_bot: 'WhatsApp Bot',
             advertising: 'Paid Advertising',
             update: 'System Update'
         },
@@ -664,6 +665,7 @@ export const translations = {
             none: 'Nenhum (Projeto em Branco)',
             framer_site: 'Site no Framer',
             automation: 'Automação de Processos',
+            whatsapp_bot: 'Bot de WhatsApp',
             advertising: 'Tráfego Pago',
             update: 'Atualização de Sistema'
         },

@@ -31,7 +31,7 @@ const di = {
   transition: 'border-color 0.2s',
 };
 
-const ds = { ...di, fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', appearance: 'none' };
+const ds = { ...di, fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', appearance: 'none', colorScheme: 'dark' };
 
 function DLabel({ children }) {
   return (
@@ -398,6 +398,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                       <option value="none">{t('project_modal.main_delivery.none')}</option>
                       <option value="framer_site">{t('project_modal.main_delivery.framer_site')}</option>
                       <option value="automation">{t('project_modal.main_delivery.automation')}</option>
+                      <option value="whatsapp_bot">{t('project_modal.main_delivery.whatsapp_bot')}</option>
                       <option value="advertising">{t('project_modal.main_delivery.advertising')}</option>
                       <option value="update">{t('project_modal.main_delivery.update')}</option>
                     </select>
