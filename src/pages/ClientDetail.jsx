@@ -23,7 +23,13 @@ import {
   CalendarClock,
   ChevronDown,
   X,
-  Check
+  Check,
+  Link2,
+  ExternalLink,
+  FileText,
+  FolderOpen,
+  Video,
+  Image,
 } from 'lucide-react';
 import TagBadge from '../components/TagBadge';
 import AddClientModal from '../components/AddClientModal';
@@ -385,6 +391,71 @@ function PaymentForm({ clientId, clientCurrency, onSaved, onClose, language }) {
   );
 }
 
+// ── Link type metadata ─────────────────────────────────────
+const LINK_TYPES = [
+  { value: 'contract',  label: 'Contract',   Icon: FileText },
+  { value: 'drive',     label: 'Drive',      Icon: FolderOpen },
+  { value: 'design',    label: 'Design',     Icon: Image },
+  { value: 'video',     label: 'Video',      Icon: Video },
+  { value: 'website',   label: 'Website',    Icon: Globe },
+  { value: 'other',     label: 'Other',      Icon: Link2 },
+];
+
+function getLinkIcon(type) {
+  return (LINK_TYPES.find(t => t.value === type) || LINK_TYPES[LINK_TYPES.length - 1]).Icon;
+}
+
+// ── Add Link form (inline) ─────────────────────────────────
+function AddLinkForm({ onAdd, onClose, language }) {
+  const [form, setForm] = useState({ label: '', url: '', type: 'other' });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  function submit(e) {
+    e.preventDefault();
+    if (!form.url.trim()) return;
+    const url = form.url.startsWith('http') ? form.url.trim() : `https://${form.url.trim()}`;
+    onAdd({ id: Date.now(), label: form.label.trim() || url, url, type: form.type });
+    onClose();
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3 mt-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="sm:col-span-2">
+          <DarkInput
+            type="url"
+            required
+            autoFocus
+            value={form.url}
+            onChange={e => set('url', e.target.value)}
+            placeholder="https://drive.google.com/…"
+          />
+        </div>
+        <DarkSelect value={form.type} onChange={e => set('type', e.target.value)}>
+          {LINK_TYPES.map(t => (
+            <option key={t.value} value={t.value} style={{ background: '#0D0F1E', color: '#F4F4F6' }}>{t.label}</option>
+          ))}
+        </DarkSelect>
+      </div>
+      <div className="flex items-center gap-3">
+        <DarkInput
+          type="text"
+          value={form.label}
+          onChange={e => set('label', e.target.value)}
+          placeholder={language === 'pt' ? 'Rótulo (opcional)…' : 'Label (optional)…'}
+          className="flex-1"
+        />
+        <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#6B7080', border: '1px solid rgba(244,244,246,0.07)' }}>
+          {language === 'pt' ? 'Cancelar' : 'Cancel'}
+        </button>
+        <button type="submit" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: '#3362FF', color: '#F4F4F6' }}>
+          <Check className="h-3.5 w-3.5" /> {language === 'pt' ? 'Adicionar' : 'Add'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 // ── Main Page ──────────────────────────────────────────────
 export default function ClientDetail() {
   const { id } = useParams();
@@ -401,6 +472,7 @@ export default function ClientDetail() {
   const [payments, setPayments] = useState([]);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
+  const [showAddLink, setShowAddLink] = useState(false);
 
   async function loadClientData(showSpinner = false) {
     if (showSpinner) setLoading(true);
@@ -499,6 +571,21 @@ export default function ClientDetail() {
   async function deleteTask(taskId) {
     setTasks(prev => prev.filter(t => t.id !== taskId));
     await supabase.from('tasks').delete().eq('id', taskId);
+  }
+
+  // ── Link helpers ──
+  const links = Array.isArray(client?.links) ? client.links : [];
+
+  async function addLink(link) {
+    const next = [...links, link];
+    await supabase.from('clients').update({ links: next }).eq('id', id);
+    setClient(c => ({ ...c, links: next }));
+  }
+
+  async function deleteLink(linkId) {
+    const next = links.filter(l => l.id !== linkId);
+    await supabase.from('clients').update({ links: next }).eq('id', id);
+    setClient(c => ({ ...c, links: next }));
   }
 
   function monthsActive(startDate, terminatedAt) {
@@ -829,6 +916,65 @@ export default function ClientDetail() {
             {tasks.map(task => (
               <TaskRow key={task.id} task={task} onToggle={() => toggleTask(task)} onDelete={() => deleteTask(task.id)} />
             ))}
+          </div>
+        )}
+      </CmdCard>
+
+      {/* ── LINKS & FILES ── */}
+      <CmdCard>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4" style={{ color: '#3362FF' }} />
+            <SectionLabel>{language === 'pt' ? 'Links & Arquivos' : 'Links & Files'}</SectionLabel>
+            {links.length > 0 && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(51,98,255,0.15)', color: '#3362FF' }}>
+                {links.length}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => setShowAddLink(v => !v)}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs"
+            style={{ color: '#3362FF', border: '1px solid rgba(51,98,255,0.3)' }}
+          >
+            <Plus className="h-3 w-3" /> {language === 'pt' ? 'Link' : 'Link'}
+          </button>
+        </div>
+
+        {showAddLink && (
+          <AddLinkForm onAdd={addLink} onClose={() => setShowAddLink(false)} language={language} />
+        )}
+
+        {links.length === 0 && !showAddLink ? (
+          <p className="text-sm py-2" style={{ color: '#6B7080' }}>
+            {language === 'pt' ? 'Nenhum link ainda. Adicione contratos, Drive, Figma, etc.' : 'No links yet. Add contracts, Drive folders, Figma files, etc.'}
+          </p>
+        ) : (
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {links.map(link => {
+              const Icon = getLinkIcon(link.type);
+              const typeMeta = LINK_TYPES.find(t => t.value === link.type) || LINK_TYPES[LINK_TYPES.length - 1];
+              return (
+                <div key={link.id} className="group flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ background: 'rgba(244,244,246,0.03)', border: '1px solid rgba(244,244,246,0.07)' }}>
+                  <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(51,98,255,0.12)' }}>
+                    <Icon className="h-3.5 w-3.5" style={{ color: '#3362FF' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate" style={{ color: '#F4F4F6' }}>{link.label}</p>
+                    <p className="text-[10px] truncate" style={{ color: '#6B7080' }}>{typeMeta.label}</p>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a href={link.url} target="_blank" rel="noopener noreferrer"
+                      className="p-1.5 rounded-lg" style={{ color: '#3362FF' }}>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                    <button onClick={() => deleteLink(link.id)} className="p-1.5 rounded-lg" style={{ color: '#FF3B5C' }}>
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </CmdCard>
