@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
@@ -111,17 +111,56 @@ function DarkTextarea({ className = '', ...props }) {
   );
 }
 
-function DarkSelect({ children, ...props }) {
+function DarkSelect({ children, value, onChange, style = {} }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const options = [];
+  React.Children.forEach(children, child => {
+    if (child?.type === 'option') options.push({ value: child.props.value ?? '', label: child.props.children });
+  });
+  const selected = options.find(o => String(o.value) === String(value));
+  useEffect(() => {
+    function handle(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
   return (
-    <div className="relative">
-      <select
-        className="w-full px-3 py-2 rounded-lg text-sm outline-none appearance-none pr-8"
-        style={{ backgroundColor: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.1)', color: '#F4F4F6' }}
-        {...props}
+    <div ref={ref} style={{ position: 'relative', ...style }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'rgba(244,244,246,0.04)', border: `1px solid ${open ? 'rgba(51,98,255,0.5)' : 'rgba(244,244,246,0.1)'}`,
+          borderRadius: '8px', padding: '6px 10px', fontSize: '13px', color: '#F4F4F6', cursor: 'pointer', gap: '6px',
+        }}
       >
-        {children}
-      </select>
-      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none" style={{ color: '#6B7080' }} />
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected?.label ?? value}</span>
+        <ChevronDown style={{ width: 12, height: 12, color: '#6B7080', flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 300,
+          background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.15)', borderRadius: '10px',
+          overflow: 'hidden', boxShadow: '0 16px 40px rgba(0,0,0,0.6)', minWidth: '140px',
+        }}>
+          {options.map(o => (
+            <button
+              key={o.value}
+              type="button"
+              onClick={() => { onChange({ target: { value: o.value } }); setOpen(false); }}
+              style={{
+                width: '100%', textAlign: 'left', padding: '9px 12px', fontSize: '13px',
+                color: String(o.value) === String(value) ? '#F4F4F6' : '#6B7080',
+                background: String(o.value) === String(value) ? 'rgba(51,98,255,0.15)' : 'transparent',
+                border: 'none', cursor: 'pointer',
+              }}
+              onMouseEnter={e => { if (String(o.value) !== String(value)) e.currentTarget.style.background = 'rgba(244,244,246,0.05)'; }}
+              onMouseLeave={e => { if (String(o.value) !== String(value)) e.currentTarget.style.background = 'transparent'; }}
+            >{o.label}</button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -274,9 +313,16 @@ function TaskRow({ task, onToggle, onDelete }) {
           : <Clock className="h-4 w-4" style={{ color: '#6B7080' }} />
         }
       </button>
-      <p className="flex-1 text-sm truncate" style={{ color: task.done ? '#6B7080' : '#F4F4F6', textDecoration: task.done ? 'line-through' : 'none' }}>
-        {task.title}
-      </p>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm truncate" style={{ color: task.done ? '#6B7080' : '#F4F4F6', textDecoration: task.done ? 'line-through' : 'none' }}>
+          {task.title}
+        </p>
+        {(task.due_date || task.scheduled_date) && !task.done && (
+          <p className="text-[10px] mt-0.5" style={{ color: '#6B7080' }}>
+            {new Date((task.due_date || task.scheduled_date) + 'T00:00:00').toLocaleDateString('pt-BR')}
+          </p>
+        )}
+      </div>
       {task.priority && !task.done && (
         <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: PRIO_COLORS[task.priority] ?? '#6B7080' }} />
       )}
@@ -295,39 +341,46 @@ function TaskRow({ task, onToggle, onDelete }) {
 function AddTaskForm({ clientId, onSaved, onClose, language }) {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState('medium');
+  const [dueDate, setDueDate] = useState('');
   const [saving, setSaving] = useState(false);
 
   async function save() {
     if (!title.trim()) return;
     setSaving(true);
-    await supabase.from('tasks').insert({ title: title.trim(), client_id: clientId, priority, bucket: 'this_week', done: false });
+    await supabase.from('tasks').insert({
+      title: title.trim(), client_id: clientId, priority, bucket: 'this_week', done: false,
+      due_date: dueDate || null, scheduled_date: dueDate || null,
+    });
     setSaving(false);
     onSaved();
     onClose();
   }
 
   return (
-    <div className="flex items-center gap-2 mt-2">
-      <DarkInput
-        type="text"
-        autoFocus
-        value={title}
-        onChange={e => setTitle(e.target.value)}
-        placeholder={language === 'pt' ? 'Nova tarefa...' : 'New task...'}
-        onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') onClose(); }}
-        className="flex-1"
-      />
-      <DarkSelect value={priority} onChange={e => setPriority(e.target.value)} style={{ width: '120px' }}>
-        <option value="high">{language === 'pt' ? 'Alta' : 'High'}</option>
-        <option value="medium">{language === 'pt' ? 'Média' : 'Medium'}</option>
-        <option value="low">{language === 'pt' ? 'Baixa' : 'Low'}</option>
-      </DarkSelect>
-      <button onClick={save} disabled={saving || !title.trim()} className="p-2 rounded-lg disabled:opacity-50" style={{ backgroundColor: '#3362FF', color: '#F4F4F6' }}>
-        <Check className="h-4 w-4" />
-      </button>
-      <button onClick={onClose} className="p-2 rounded-lg" style={{ color: '#6B7080' }}>
-        <X className="h-4 w-4" />
-      </button>
+    <div className="flex flex-col gap-2 mt-2">
+      <div className="flex items-center gap-2">
+        <DarkInput
+          type="text"
+          autoFocus
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          placeholder={language === 'pt' ? 'Nova tarefa...' : 'New task...'}
+          onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') onClose(); }}
+          className="flex-1"
+        />
+        <DarkSelect value={priority} onChange={e => setPriority(e.target.value)} style={{ width: '110px' }}>
+          <option value="high">{language === 'pt' ? 'Alta' : 'High'}</option>
+          <option value="medium">{language === 'pt' ? 'Média' : 'Medium'}</option>
+          <option value="low">{language === 'pt' ? 'Baixa' : 'Low'}</option>
+        </DarkSelect>
+        <DarkInput type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={{ width: '140px' }} />
+        <button onClick={save} disabled={saving || !title.trim()} className="p-2 rounded-lg disabled:opacity-50" style={{ backgroundColor: '#3362FF', color: '#F4F4F6' }}>
+          <Check className="h-4 w-4" />
+        </button>
+        <button onClick={onClose} className="p-2 rounded-lg" style={{ color: '#6B7080' }}>
+          <X className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
