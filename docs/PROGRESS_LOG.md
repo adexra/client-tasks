@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-06-22 — QA Checkpoint — All sprints complete, dark theme verified
+
+### Summary
+Full QA pass across all pages. Lint: 0 errors, 37 warnings (all React Compiler opinions, intentional). Build: ✅ clean. All pages verified on dark Adexra brand (#01020E / #0D0F1E). Git checkpoint tag `checkpoint-sprints-1-9-complete` created.
+
+**Pages audited:**
+- Dashboard, Today, Weekly, MoveOn, Availability, ClientDetail, Financials, Briefing, Agents, AgentEditor, Memory, RAG, Auth — clean
+- PriorityView, Clients, Account, AdPlanning — all converted to dark brand in this session
+
+**Final fix:** Removed unused `cn` import from `Account.jsx` (was causing the 1 lint error).
+
+### Files Modified
+- `src/pages/Account.jsx` — removed unused `cn` import
+- `docs/PROGRESS_LOG.md` — this entry
+
+---
+
 ## 2026-06-22 — Cleanup — All open issues resolved
 
 ### Summary

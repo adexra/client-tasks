@@ -68,10 +68,10 @@ export default function PriorityView() {
   const { t, language } = useLanguage();
 
   const PRIORITY_META = {
-    high:     { label: t('execution.critical'),  color: 'text-rose-500',    bg: 'bg-rose-50',    weight: 3 },
-    medium:   { label: t('execution.high'),      color: 'text-amber-500',   bg: 'bg-amber-50',   weight: 2 },
-    low:      { label: t('execution.support'),   color: 'text-ink-muted',   bg: 'bg-neutral-50', weight: 1 },
-    very_low: { label: t('execution.internal'),  color: 'text-ink-secondary', bg: 'bg-neutral-50', weight: 0 },
+    high:     { label: t('execution.critical'),  color: '#FF3B5C',  bg: 'rgba(255,59,92,0.1)',    weight: 3 },
+    medium:   { label: t('execution.high'),      color: '#F59E0B',  bg: 'rgba(245,158,11,0.1)',   weight: 2 },
+    low:      { label: t('execution.support'),   color: '#6B7080',  bg: 'rgba(107,112,128,0.1)', weight: 1 },
+    very_low: { label: t('execution.internal'),  color: '#6B7080',  bg: 'rgba(107,112,128,0.1)', weight: 0 },
   };
 
   const [clients, setClients]           = useState([]);
@@ -97,7 +97,7 @@ export default function PriorityView() {
       supabase.from('subtasks').select('*')
     ]);
     if (!cRes.error) setClients(cRes.data || []);
-    
+
     let allSubtasks = sRes.data || [];
 
     let allTasks = tRes.data || [];
@@ -291,28 +291,32 @@ export default function PriorityView() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
         <div className="space-y-6">
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">{t('execution.tag')}</span>
-            <div className="h-[1px] w-8 bg-neutral-200" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: '#6B7080' }}>{t('execution.tag')}</span>
+            <div className="h-[1px] w-8" style={{ background: 'rgba(244,244,246,0.1)' }} />
           </div>
-          <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--ink-primary)] leading-tight tracking-tight break-words">
+          <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-serif leading-tight tracking-tight break-words" style={{ color: '#F4F4F6' }}>
             {t('execution.title')}
           </h1>
-          <p className="text-neutral-500 font-medium max-w-lg text-base leading-relaxed">
+          <p className="font-medium max-w-lg text-base leading-relaxed" style={{ color: '#6B7080' }}>
             {t('execution.subtitle')}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-          <div className={cn(
-            "px-4 sm:px-6 py-2 sm:py-3 rounded-xl border text-[9px] sm:text-[10px] font-bold tracking-[0.1em] uppercase flex items-center gap-2 sm:gap-3 transition-colors",
-            isTodayOverloaded ? "border-rose-100 bg-rose-50 text-rose-500" : "border-neutral-100 text-neutral-400"
-          )}>
+          <div
+            className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl border text-[9px] sm:text-[10px] font-bold tracking-[0.1em] uppercase flex items-center gap-2 sm:gap-3 transition-colors"
+            style={isTodayOverloaded
+              ? { borderColor: 'rgba(255,59,92,0.3)', background: 'rgba(255,59,92,0.08)', color: '#FF3B5C' }
+              : { borderColor: 'rgba(244,244,246,0.1)', color: '#6B7080' }
+            }
+          >
             <Target className="h-4 w-4" />
             <span className="hidden xs:inline">{t('execution.task_load')}:</span> {todayTasks.length} / 5
           </div>
           <button
             onClick={() => setModal({ open: true, task: null })}
-            className="btn-minimal btn-primary flex items-center gap-2.5 h-10 sm:h-12 px-6 sm:px-8"
+            className="flex items-center gap-2.5 h-10 sm:h-12 px-6 sm:px-8 rounded-xl text-sm font-medium transition-all"
+            style={{ background: '#3362FF', color: '#F4F4F6', border: 'none' }}
           >
             <Plus className="h-4 w-4" />
             <span className="text-sm font-medium">{t('execution.new_task')}</span>
@@ -328,7 +332,7 @@ export default function PriorityView() {
           <div className="space-y-6">
             {clients.map(client => <ClientMinimalCard key={client.id} client={client} />)}
             {clients.length === 0 && (
-              <p className="text-xs text-neutral-300 italic text-center py-20 uppercase tracking-widest">
+              <p className="text-xs italic text-center py-20 uppercase tracking-widest" style={{ color: 'rgba(244,244,246,0.2)' }}>
                 {t('execution.no_active_projects')}
               </p>
             )}
@@ -341,18 +345,21 @@ export default function PriorityView() {
 
             {/* TODAY */}
             <div className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                <p className="text-[10px] font-bold text-ink-muted uppercase tracking-[0.1em]">
+              <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid rgba(244,244,246,0.07)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: '#6B7080' }}>
                   {t('execution.today_tasks')}
                 </p>
                 <div className="flex items-center gap-2">
                   {isTodayOverloaded && (
-                    <span className="text-[8px] font-bold text-rose-500 uppercase">{t('execution.attention_needed')}</span>
+                    <span className="text-[8px] font-bold uppercase" style={{ color: '#FF3B5C' }}>{t('execution.attention_needed')}</span>
                   )}
                   {todayTasks.length > 0 && !rearrangeMode && (
                     <button
                       onClick={() => setRearrangeMode(true)}
-                      className="text-[8px] font-bold text-neutral-300 hover:text-neutral-500 uppercase tracking-widest flex items-center gap-1 transition-colors"
+                      className="text-[8px] font-bold uppercase tracking-widest flex items-center gap-1 transition-colors"
+                      style={{ color: 'rgba(244,244,246,0.25)' }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#6B7080'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'rgba(244,244,246,0.25)'}
                     >
                       <Move className="h-3 w-3" /> Rearrange
                     </button>
@@ -360,7 +367,8 @@ export default function PriorityView() {
                   {rearrangeMode && (
                     <button
                       onClick={() => { setRearrangeMode(false); setSelectedTaskIds(new Set()); }}
-                      className="text-[8px] font-bold text-neutral-400 hover:text-neutral-600 uppercase tracking-widest flex items-center gap-1 transition-colors"
+                      className="text-[8px] font-bold uppercase tracking-widest flex items-center gap-1 transition-colors"
+                      style={{ color: '#6B7080' }}
                     >
                       <X className="h-3 w-3" /> Done
                     </button>
@@ -371,17 +379,17 @@ export default function PriorityView() {
               {/* Hours bar */}
               {todayTotalMinutes > 0 && (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-widest text-neutral-400">
+                  <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>
                     <span className="flex items-center gap-1.5">
                       <Clock className="h-3 w-3" />
                       {formatMinutes(todayRemainingMins)} remaining
                     </span>
                     <span>{completionPct}% done · {formatMinutes(todayTotalMinutes)} total</span>
                   </div>
-                  <div className="h-1.5 w-full bg-neutral-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'rgba(244,244,246,0.07)' }}>
                     <div
-                      className="h-full bg-[var(--success-green)] rounded-full transition-all duration-700"
-                      style={{ width: `${completionPct}%` }}
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${completionPct}%`, background: '#22C55E' }}
                     />
                   </div>
                 </div>
@@ -389,12 +397,13 @@ export default function PriorityView() {
 
               {/* Rearrange controls */}
               {rearrangeMode && (
-                <div className="flex items-center gap-3 p-4 bg-amber-50/50 border border-amber-100 rounded-xl animate-in slide-in-from-top-2 duration-300">
-                  <Calendar className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                <div className="flex items-center gap-3 p-4 rounded-xl animate-in slide-in-from-top-2 duration-300" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                  <Calendar className="h-3.5 w-3.5 shrink-0" style={{ color: '#F59E0B' }} />
                   <select
                     value={moveTargetDate}
                     onChange={e => setMoveTargetDate(e.target.value)}
-                    className="flex-1 bg-white border border-neutral-100 rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 focus:outline-none"
+                    className="flex-1 rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-widest focus:outline-none"
+                    style={{ background: 'rgba(244,244,246,0.05)', border: '1px solid rgba(244,244,246,0.1)', color: '#6B7080' }}
                   >
                     <option value="">Move to…</option>
                     {weekDaysForPicker.map(d => (
@@ -404,7 +413,8 @@ export default function PriorityView() {
                   <button
                     onClick={moveSelectedTasks}
                     disabled={!moveTargetDate || selectedTaskIds.size === 0 || moving}
-                    className="px-4 py-2 bg-[var(--ink-primary)] text-white rounded-lg text-[9px] font-bold uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-black"
+                    className="px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all"
+                    style={{ background: '#3362FF', color: '#F4F4F6', opacity: (!moveTargetDate || selectedTaskIds.size === 0 || moving) ? 0.3 : 1 }}
                   >
                     Move {selectedTaskIds.size > 0 ? `(${selectedTaskIds.size})` : ''}
                   </button>
@@ -429,7 +439,7 @@ export default function PriorityView() {
                   />
                 ))}
                 {todayTasks.length === 0 && (
-                  <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex flex-col items-center justify-center text-neutral-200">
+                  <div className="py-20 rounded-2xl flex flex-col items-center justify-center" style={{ border: '2px dashed rgba(244,244,246,0.1)', color: 'rgba(244,244,246,0.15)' }}>
                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] italic">{t('execution.no_today_tasks')}</p>
                   </div>
                 )}
@@ -438,16 +448,16 @@ export default function PriorityView() {
 
             {/* THIS WEEK — grouped by day */}
             <div className="space-y-6">
-              <div className="pb-3 border-b border-neutral-100">
-                <p className="text-[10px] font-bold text-ink-muted uppercase tracking-[0.1em]">{t('execution.weekly_tasks')}</p>
+              <div className="pb-3" style={{ borderBottom: '1px solid rgba(244,244,246,0.07)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: '#6B7080' }}>{t('execution.weekly_tasks')}</p>
               </div>
               {Object.entries(weekTasksByDay).length === 0 && (
-                <p className="text-[10px] text-neutral-200 italic uppercase tracking-widest text-center py-8">No upcoming tasks</p>
+                <p className="text-[10px] italic uppercase tracking-widest text-center py-8" style={{ color: 'rgba(244,244,246,0.15)' }}>No upcoming tasks</p>
               )}
               {Object.entries(weekTasksByDay).map(([dateKey, dayTasks]) => (
                 <div key={dateKey} className="space-y-3">
-                  <p className="text-[9px] font-bold text-ink-muted uppercase tracking-[0.15em] flex items-center gap-2">
-                    <span className="h-[1px] w-4 bg-neutral-200 inline-block" />
+                  <p className="text-[9px] font-bold uppercase tracking-[0.15em] flex items-center gap-2" style={{ color: '#6B7080' }}>
+                    <span className="h-[1px] w-4 inline-block" style={{ background: 'rgba(244,244,246,0.1)' }} />
                     {formatDayLabel(dateKey, language)}
                   </p>
                   {dayTasks.map(task => (
@@ -490,7 +500,7 @@ export default function PriorityView() {
               />
             ))}
             {backlogTasks.length === 0 && (
-              <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">
+              <div className="py-20 rounded-2xl flex items-center justify-center uppercase tracking-widest text-[9px] italic" style={{ border: '2px dashed rgba(244,244,246,0.1)', color: 'rgba(244,244,246,0.15)' }}>
                 {t('execution.backlog_clear')}
               </div>
             )}
@@ -516,7 +526,7 @@ export default function PriorityView() {
               />
             ))}
             {doneTasks.length === 0 && (
-              <div className="py-20 border-2 border-dashed border-neutral-100 rounded-2xl flex items-center justify-center text-neutral-200 uppercase tracking-widest text-[9px] italic">
+              <div className="py-20 rounded-2xl flex items-center justify-center uppercase tracking-widest text-[9px] italic" style={{ border: '2px dashed rgba(244,244,246,0.1)', color: 'rgba(244,244,246,0.15)' }}>
                 {t('execution.no_completions')}
               </div>
             )}
@@ -564,8 +574,8 @@ function Column({ label, icon: Icon, children }) {
   return (
     <div className="space-y-10 min-h-[600px]">
       <div className="flex items-center gap-4">
-        <Icon className="h-4 w-4 text-ink-muted" />
-        <h2 className="text-xl font-serif text-[var(--ink-primary)]">{label}.</h2>
+        <Icon className="h-4 w-4" style={{ color: '#6B7080' }} />
+        <h2 className="text-xl font-serif" style={{ color: '#F4F4F6' }}>{label}.</h2>
       </div>
       <div className="px-1">{children}</div>
     </div>
@@ -575,14 +585,14 @@ function Column({ label, icon: Icon, children }) {
 function ClientMinimalCard({ client }) {
   return (
     <Link to={`/client/${client.id}`} className="block group">
-      <div className="surface-card surface-card-hover p-6 md:p-8 space-y-4 transition-all">
+      <div className="p-6 md:p-8 space-y-4 transition-all rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
         <div className="flex justify-between items-start">
-          <h3 className="text-lg font-serif text-[var(--ink-primary)] group-hover:text-black transition-colors truncate">{client.name}</h3>
-          <ChevronRight className="h-4 w-4 text-neutral-200 group-hover:text-neutral-400 transition-transform group-hover:translate-x-1" />
+          <h3 className="text-lg font-serif truncate transition-colors" style={{ color: '#F4F4F6' }}>{client.name}</h3>
+          <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" style={{ color: 'rgba(244,244,246,0.2)' }} />
         </div>
         {client.next_action && (
-          <div className="pt-4 border-t border-neutral-50">
-            <p className="text-xs font-semibold text-ink-muted leading-snug italic">{client.next_action}</p>
+          <div className="pt-4" style={{ borderTop: '1px solid rgba(244,244,246,0.07)' }}>
+            <p className="text-xs font-semibold leading-snug italic" style={{ color: '#6B7080' }}>{client.next_action}</p>
           </div>
         )}
         <div className="flex flex-wrap gap-1.5">
@@ -603,7 +613,7 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, language, PR
   const p = PRIORITY_META[task.priority] || PRIORITY_META.low;
 
   const accentClass = (() => {
-    if (!task.client_id) return 'border-neutral-100';
+    if (!task.client_id) return 'border-[rgba(244,244,246,0.1)]';
     const sum = task.client_id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
     return CLIENT_ACCENTS[sum % CLIENT_ACCENTS.length];
   })();
@@ -614,32 +624,35 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, language, PR
   } : null;
 
   return (
-    <div className={cn(
-      "surface-card p-6 flex items-start gap-4 group transition-all border-l-4",
-      accentClass,
-      task.done && "opacity-40 grayscale-[0.5]",
-      isSelected && "ring-2 ring-amber-300 ring-offset-1"
-    )}>
+    <div
+      className={cn(
+        "p-6 flex items-start gap-4 group transition-all border-l-4 rounded-2xl",
+        accentClass,
+        task.done && "opacity-40 grayscale-[0.5]",
+        isSelected && "ring-2 ring-amber-300 ring-offset-1"
+      )}
+      style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)', borderLeftWidth: '4px' }}
+    >
       {/* Checkbox: rearrange selector OR done toggle */}
       {rearrangeMode ? (
         <button
           onClick={(e) => { e.stopPropagation(); onSelect(); }}
-          className={cn(
-            "mt-1 h-5 w-5 rounded border flex items-center justify-center transition-all duration-200 shrink-0",
-            isSelected ? "bg-amber-400 border-amber-400" : "border-neutral-200 bg-neutral-50 hover:border-amber-300"
-          )}
+          className="mt-1 h-5 w-5 rounded border flex items-center justify-center transition-all duration-200 shrink-0"
+          style={isSelected
+            ? { background: '#F59E0B', borderColor: '#F59E0B' }
+            : { background: 'rgba(244,244,246,0.05)', borderColor: 'rgba(244,244,246,0.15)' }
+          }
         >
           {isSelected && <span className="text-white text-[10px] font-black">✓</span>}
         </button>
       ) : (
         <button
           onClick={(e) => { e.stopPropagation(); onToggleDone(task); }}
-          className={cn(
-            "mt-1 h-5 w-5 rounded border flex items-center justify-center transition-all duration-300 shrink-0",
-            task.done
-              ? "bg-[var(--success-green)] border-[var(--success-green)]"
-              : "border-neutral-200 bg-neutral-50 hover:border-neutral-400"
-          )}
+          className="mt-1 h-5 w-5 rounded border flex items-center justify-center transition-all duration-300 shrink-0"
+          style={task.done
+            ? { background: '#22C55E', borderColor: '#22C55E' }
+            : { background: 'rgba(244,244,246,0.05)', borderColor: 'rgba(244,244,246,0.15)' }
+          }
         >
           {task.done && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
         </button>
@@ -647,10 +660,10 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, language, PR
 
       <div className="flex-1 min-w-0" onClick={() => !rearrangeMode && onEdit(task)}>
         <div className="flex items-center justify-between gap-3 mb-3">
-          <span className={cn(
-            "text-[8px] font-bold px-2 py-0.5 rounded uppercase tracking-[0.1em] border transition-all",
-            p.bg, p.color, "border-neutral-100"
-          )}>
+          <span
+            className="text-[8px] font-bold px-2 py-0.5 rounded uppercase tracking-[0.1em] border transition-all"
+            style={{ color: p.color, background: p.bg, borderColor: 'rgba(244,244,246,0.07)' }}
+          >
             {p.label}
           </span>
           {!rearrangeMode && (
@@ -659,7 +672,8 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, language, PR
                 <button
                   key={b}
                   onClick={(e) => { e.stopPropagation(); onMove(task.id, b); }}
-                  className="text-[8px] font-bold text-neutral-400 hover:text-neutral-600 uppercase tracking-widest px-1.5 py-0.5 border border-neutral-100 rounded bg-white shadow-sm"
+                  className="text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded transition-colors"
+                  style={{ color: '#6B7080', border: '1px solid rgba(244,244,246,0.1)', background: 'rgba(244,244,246,0.04)' }}
                 >
                   {b === 'this_week' ? t('execution.week_bucket') : b === 'backlog' ? t('execution.archive_bucket') : t('execution.today_bucket')}
                 </button>
@@ -668,20 +682,20 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, language, PR
           )}
         </div>
 
-        <p className={cn(
-          "text-sm font-medium leading-normal tracking-tight transition-all",
-          task.done ? "line-through text-neutral-400" : "text-[var(--ink-primary)]"
-        )}>{task.title}</p>
+        <p
+          className="text-sm font-medium leading-normal tracking-tight transition-all"
+          style={{ color: task.done ? '#6B7080' : '#F4F4F6', textDecoration: task.done ? 'line-through' : 'none' }}
+        >{task.title}</p>
 
         {subStats && (
           <div className="mt-3 flex items-center gap-2">
-            <div className="flex-1 h-1 bg-neutral-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-emerald-400 transition-all duration-500" 
-                style={{ width: `${Math.round((subStats.done / subStats.total) * 100)}%` }}
+            <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(244,244,246,0.07)' }}>
+              <div
+                className="h-full transition-all duration-500"
+                style={{ width: `${Math.round((subStats.done / subStats.total) * 100)}%`, background: '#22C55E' }}
               />
             </div>
-            <span className="text-[8px] font-bold text-ink-muted uppercase tracking-widest whitespace-nowrap">
+            <span className="text-[8px] font-bold uppercase tracking-widest whitespace-nowrap" style={{ color: '#6B7080' }}>
               {subStats.done} / {subStats.total} Steps
             </span>
           </div>
@@ -690,24 +704,24 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, language, PR
         <div className="flex items-center justify-between mt-3 gap-2">
           <div className="flex items-center gap-3 min-w-0">
             {task.clients?.name && (
-              <p className={cn("text-[9px] font-bold uppercase tracking-widest truncate", task.done ? "text-neutral-300" : "text-ink-muted")}>
+              <p className="text-[9px] font-bold uppercase tracking-widest truncate" style={{ color: task.done ? 'rgba(244,244,246,0.2)' : '#6B7080' }}>
                 {task.clients.name}
               </p>
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {task.created_at && (
-              <span className="text-[8px] font-mono text-neutral-300">
+              <span className="text-[8px] font-mono" style={{ color: 'rgba(244,244,246,0.2)' }}>
                 {formatCreatedDate(task.created_at, language)}
               </span>
             )}
             {task.estimated_minutes > 0 && (
-              <span className="text-[8px] font-mono text-neutral-300 flex items-center gap-0.5">
+              <span className="text-[8px] font-mono flex items-center gap-0.5" style={{ color: 'rgba(244,244,246,0.2)' }}>
                 <Clock className="h-2.5 w-2.5" />{formatMinutes(task.estimated_minutes)}
               </span>
             )}
             {task.actual_minutes > 0 && (
-              <span className="text-[8px] font-mono text-[var(--success-green)]">
+              <span className="text-[8px] font-mono" style={{ color: '#22C55E' }}>
                 ✓{task.actual_minutes}m
               </span>
             )}
@@ -723,28 +737,30 @@ function TaskEditorialCard({ task, onMove, onEdit, onToggleDone, t, language, PR
 function OverloadModal({ isOpen, taskCount, onStickToIt, onRearrange }) {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="w-full max-w-md surface-card p-12 space-y-10 shadow-2xl border-neutral-100 animate-in zoom-in-95 duration-400">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in duration-300" style={{ background: 'rgba(1,2,14,0.85)' }}>
+      <div className="w-full max-w-md p-12 space-y-10 shadow-2xl rounded-2xl animate-in zoom-in-95 duration-400" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
         <div className="space-y-4 text-center">
-          <div className="h-16 w-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto">
-            <AlertTriangle className="h-8 w-8 text-amber-500" />
+          <div className="h-16 w-16 rounded-2xl flex items-center justify-center mx-auto" style={{ background: 'rgba(245,158,11,0.12)' }}>
+            <AlertTriangle className="h-8 w-8" style={{ color: '#F59E0B' }} />
           </div>
-          <h3 className="text-3xl font-serif text-[var(--ink-primary)]">Heavy plate today.</h3>
-          <p className="text-sm font-medium text-neutral-500 leading-relaxed">
-            You have <strong className="text-[var(--ink-primary)]">{taskCount} tasks</strong> lined up today — more than the recommended 5. Want to power through or shuffle some around?
+          <h3 className="text-3xl font-serif" style={{ color: '#F4F4F6' }}>Heavy plate today.</h3>
+          <p className="text-sm font-medium leading-relaxed" style={{ color: '#6B7080' }}>
+            You have <strong style={{ color: '#F4F4F6' }}>{taskCount} tasks</strong> lined up today — more than the recommended 5. Want to power through or shuffle some around?
           </p>
         </div>
         <div className="flex flex-col gap-3">
           <button
             onClick={onRearrange}
-            className="w-full btn-minimal h-14 bg-[var(--ink-primary)] text-white hover:bg-black flex items-center justify-center gap-3 transition-all"
+            className="w-full h-14 flex items-center justify-center gap-3 transition-all rounded-xl"
+            style={{ background: '#3362FF', color: '#F4F4F6', border: 'none' }}
           >
             <Move className="h-4 w-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Let me rearrange</span>
           </button>
           <button
             onClick={onStickToIt}
-            className="w-full py-4 text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:text-black transition-all"
+            className="w-full py-4 text-[10px] font-bold uppercase tracking-widest transition-all"
+            style={{ color: '#6B7080' }}
           >
             I'll handle all {taskCount} today
           </button>
@@ -760,19 +776,19 @@ function TaskCompletionModal({ isOpen, onClose, onComplete, task, t }) {
   const [minutes, setMinutes] = useState('');
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="w-full max-w-sm surface-card p-12 space-y-10 shadow-2xl border-neutral-100">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in duration-300" style={{ background: 'rgba(1,2,14,0.85)' }}>
+      <div className="w-full max-w-sm p-12 space-y-10 shadow-2xl rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
         <div className="space-y-4 text-center">
-          <div className="h-16 w-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+          <div className="h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(34,197,94,0.1)' }}>
+            <CheckCircle2 className="h-8 w-8" style={{ color: '#22C55E' }} />
           </div>
-          <h3 className="text-3xl font-serif text-[var(--ink-primary)]">{t('execution.good_job')}</h3>
-          <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">{t('execution.task_finished')}</p>
+          <h3 className="text-3xl font-serif" style={{ color: '#F4F4F6' }}>{t('execution.good_job')}</h3>
+          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>{t('execution.task_finished')}</p>
         </div>
 
         <div className="space-y-8">
           <div className="space-y-3">
-            <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{t('execution.actual_time_question')}</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest ml-1" style={{ color: '#6B7080' }}>{t('execution.actual_time_question')}</label>
             <div className="relative">
               <input
                 type="number"
@@ -780,26 +796,28 @@ function TaskCompletionModal({ isOpen, onClose, onComplete, task, t }) {
                 value={minutes}
                 onChange={e => setMinutes(e.target.value)}
                 placeholder={t('execution.minutes_placeholder')}
-                className="w-full bg-neutral-50/50 border border-neutral-100 rounded-xl px-6 py-4 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-neutral-200 transition-all"
+                className="w-full rounded-xl px-6 py-4 text-sm font-medium focus:outline-none transition-all"
+                style={{ background: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.1)', color: '#F4F4F6' }}
               />
-              <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-bold text-neutral-300 uppercase">min</span>
+              <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase" style={{ color: 'rgba(244,244,246,0.2)' }}>min</span>
             </div>
           </div>
-          <div className="p-6 bg-amber-50/30 border border-amber-100 rounded-xl flex items-start gap-4">
-            <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
-            <p className="text-[11px] font-medium text-amber-900 leading-relaxed italic">{t('execution.qa_reminder')}</p>
+          <div className="p-6 rounded-xl flex items-start gap-4" style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}>
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: '#F59E0B' }} />
+            <p className="text-[11px] font-medium leading-relaxed italic" style={{ color: 'rgba(245,158,11,0.8)' }}>{t('execution.qa_reminder')}</p>
           </div>
         </div>
 
         <div className="flex flex-col gap-3">
           <button
             onClick={() => { onComplete(task.id, minutes); setMinutes(''); }}
-            className="w-full btn-minimal h-14 bg-ink-charcoal text-white hover:bg-black flex items-center justify-center gap-3 transition-all cursor-pointer"
+            className="w-full h-14 flex items-center justify-center gap-3 transition-all cursor-pointer rounded-xl"
+            style={{ background: '#3362FF', color: '#F4F4F6', border: 'none' }}
           >
             <span className="text-xs font-bold uppercase tracking-widest">{t('execution.finish_task')}</span>
             <TrendingUp className="h-4 w-4" />
           </button>
-          <button onClick={onClose} className="w-full py-4 text-[10px] font-bold uppercase tracking-widest text-neutral-300 hover:text-black transition-all">
+          <button onClick={onClose} className="w-full py-4 text-[10px] font-bold uppercase tracking-widest transition-all" style={{ color: '#6B7080' }}>
             {t('common.cancel')}
           </button>
         </div>

@@ -95,18 +95,26 @@ function toggleStage(funnel, stage) {
 
 const F = ({ label, children }) => (
   <div className="space-y-1.5">
-    <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest ml-1">{label}</p>
+    <p className="text-[9px] font-bold uppercase tracking-widest ml-1" style={{ color: '#6B7080' }}>{label}</p>
     {children}
   </div>
 );
-const ic = 'w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm font-medium text-ink-primary focus:outline-none focus:ring-1 focus:ring-neutral-300';
+
+const ic = 'w-full bg-[rgba(244,244,246,0.04)] border border-[rgba(244,244,246,0.1)] rounded-xl px-4 py-3 text-sm font-medium text-[#F4F4F6] focus:outline-none focus:ring-1 focus:ring-[rgba(244,244,246,0.2)]';
 const sc = ic + ' cursor-pointer appearance-none';
 
 // Extracted OUTSIDE the parent component to prevent remount on every render
 function Toggle({ checked, onChange }) {
   return (
-    <div onClick={onChange} className={cn('h-5 w-9 rounded-full transition-all relative cursor-pointer shrink-0', checked ? 'bg-ink-charcoal' : 'bg-neutral-200')}>
-      <div className={cn('absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all', checked ? 'left-4' : 'left-0.5')} />
+    <div
+      onClick={onChange}
+      className="h-5 w-9 rounded-full transition-all relative cursor-pointer shrink-0"
+      style={{ background: checked ? '#3362FF' : 'rgba(244,244,246,0.1)' }}
+    >
+      <div
+        className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all"
+        style={{ left: checked ? '16px' : '2px' }}
+      />
     </div>
   );
 }
@@ -114,11 +122,11 @@ function Toggle({ checked, onChange }) {
 function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onToggle, onPctChange, onUnlock, onFieldChange, onPlatformToggle }) {
   const s = stageData;
   return (
-    <div className={cn('surface-card p-6 space-y-5 border-t-2', color)}>
+    <div className={cn('p-6 space-y-5 border-t-2 rounded-2xl', color)} style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)', borderTopWidth: '2px' }}>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">{label}</p>
-          <p className="text-sm font-semibold text-ink-primary mt-0.5">{s.focus}</p>
+          <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>{label}</p>
+          <p className="text-sm font-semibold mt-0.5" style={{ color: '#F4F4F6' }}>{s.focus}</p>
         </div>
         <Toggle checked={s.enabled} onChange={onToggle} />
       </div>
@@ -128,32 +136,30 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
             <input
               type="number" min={0} max={100} value={s.budget_pct}
               onChange={e => onPctChange(+e.target.value)}
-              className={cn(
-                'w-20 border rounded-xl px-3 py-2.5 text-sm font-mono text-center focus:outline-none focus:ring-1 transition-all',
-                s.locked
-                  ? 'bg-ink-charcoal text-white border-ink-charcoal font-bold focus:ring-neutral-600'
-                  : 'bg-white border-neutral-200 text-ink-primary focus:ring-neutral-300'
-              )}
+              className="w-20 rounded-xl px-3 py-2.5 text-sm font-mono text-center focus:outline-none focus:ring-1 transition-all"
+              style={s.locked
+                ? { background: '#3362FF', color: '#fff', border: '1px solid #3362FF', fontWeight: 'bold' }
+                : { background: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.1)', color: '#F4F4F6' }
+              }
             />
             <button
               onClick={onUnlock}
               title={s.locked ? 'Locked — click to unlock and make auto' : 'Unlocked — auto-adjusts'}
-              className={cn('p-1.5 rounded-lg transition-all shrink-0',
-                s.locked ? 'text-ink-primary hover:text-rose-400' : 'text-neutral-300 hover:text-neutral-400'
-              )}
+              className="p-1.5 rounded-lg transition-all shrink-0"
+              style={{ color: s.locked ? '#F4F4F6' : '#6B7080' }}
             >
               {s.locked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
             </button>
-            <div className="text-xs text-neutral-400 font-medium leading-relaxed">
-              {!s.locked && <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">auto · </span>}
-              <span className="text-ink-primary font-semibold">
+            <div className="text-xs font-medium leading-relaxed" style={{ color: '#6B7080' }}>
+              {!s.locked && <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#F59E0B' }}>auto · </span>}
+              <span className="font-semibold" style={{ color: '#F4F4F6' }}>
                 {sym} {(budget * s.budget_pct / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total
                 &nbsp;·&nbsp;
                 {sym} {(daily * s.budget_pct / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/day
               </span>
             </div>
           </div>
-          
+
           <F label="Canais Ativos">
             <div className="flex flex-wrap gap-2 mt-1">
               {PLATFORMS.map(p => {
@@ -164,10 +170,11 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
                     onClick={() => onPlatformToggle?.(p.key)}
                     className={cn(
                       'px-3 py-1.5 rounded-lg text-xs font-bold transition-all border',
-                      active 
-                        ? cn(p.color, 'text-white border-transparent shadow-sm') 
-                        : 'bg-white border-neutral-200 text-neutral-400 hover:border-neutral-300 hover:text-neutral-600'
+                      active
+                        ? cn(p.color, 'text-white border-transparent shadow-sm')
+                        : ''
                     )}
+                    style={!active ? { background: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.1)', color: '#6B7080' } : {}}
                   >
                     {p.label}
                   </button>
@@ -178,9 +185,9 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <F label="Objetivo da Etapa"><input value={s.objective || ''} onChange={e => onFieldChange('objective', e.target.value)} className={ic} placeholder="Ex: Reconhecimento, Captura..." /></F>
             <F label="Tipo de Campanha">
-              <select 
-                value={s.campaign_type || ''} 
-                onChange={e => onFieldChange('campaign_type', e.target.value)} 
+              <select
+                value={s.campaign_type || ''}
+                onChange={e => onFieldChange('campaign_type', e.target.value)}
                 className={ic + ' cursor-pointer appearance-none'}
               >
                 <option value="" disabled>Selecione...</option>
@@ -248,18 +255,18 @@ export default function AdPlanning() {
     onFieldChange: (field, v) => setForm(f => ({ ...f, funnel: { ...f.funnel, [stage]: { ...f.funnel[stage], [field]: v } } })),
     onPlatformToggle: (plat) => setForm(f => {
       const stagePlats = f.funnel[stage].platforms || { google: false, meta: false, tiktok: false, linkedin: false };
-      return { 
-        ...f, 
-        funnel: { 
-          ...f.funnel, 
-          [stage]: { 
-            ...f.funnel[stage], 
-            platforms: { 
-              ...stagePlats, 
-              [plat]: !stagePlats[plat] 
-            } 
-          } 
-        } 
+      return {
+        ...f,
+        funnel: {
+          ...f.funnel,
+          [stage]: {
+            ...f.funnel[stage],
+            platforms: {
+              ...stagePlats,
+              [plat]: !stagePlats[plat]
+            }
+          }
+        }
       };
     }),
   });
@@ -290,7 +297,7 @@ export default function AdPlanning() {
     if (!form.name.trim()) return toast.error('Plan name is required');
     if (totalPct !== 100) return toast.error('Funnel budget must sum to exactly 100%');
     setSaving(true);
-    
+
     const payload = {
       name: form.name, client_id: form.client_id || null, currency: form.currency,
       total_budget: Math.round(budget * 100) / 100,
@@ -298,8 +305,8 @@ export default function AdPlanning() {
       target_kpi: { type: form.target_kpi.type, value: Number(form.target_kpi.value) },
       funnel: form.funnel, mediums: form.mediums,
       keywords: form.keywords,
-      conversion: { ...form.conversion, _creative: form.creative }, 
-      audience: { ...form.audience, potential_volume: Number(form.audience?.potential_volume || 50000) }, 
+      conversion: { ...form.conversion, _creative: form.creative },
+      audience: { ...form.audience, potential_volume: Number(form.audience?.potential_volume || 50000) },
     };
 
     let data, error;
@@ -365,30 +372,39 @@ export default function AdPlanning() {
       {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Advertising Intelligence</span>
-          <div className="h-px w-8 bg-neutral-200" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: '#6B7080' }}>Advertising Intelligence</span>
+          <div className="h-px w-8" style={{ background: 'rgba(244,244,246,0.1)' }} />
         </div>
-        <h1 className="text-5xl font-serif text-ink-primary tracking-tight">Ads Planning</h1>
-        <p className="text-neutral-500 text-base max-w-xl">Build structured campaign briefs. Share a live plan URL with clients — no login required.</p>
+        <h1 className="text-5xl font-serif tracking-tight" style={{ color: '#F4F4F6' }}>Ads Planning</h1>
+        <p className="text-base max-w-xl" style={{ color: '#6B7080' }}>Build structured campaign briefs. Share a live plan URL with clients — no login required.</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-border-light">
+      <div className="flex gap-1" style={{ borderBottom: '1px solid rgba(244,244,246,0.07)' }}>
         <button onClick={handleCreateNew}
-          className={cn('px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 -mb-px transition-all',
-            tab === 'builder' && !editingId ? 'border-ink-charcoal text-ink-primary' : 'border-transparent text-neutral-400 hover:text-neutral-600')}>
+          className="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 -mb-px transition-all"
+          style={tab === 'builder' && !editingId
+            ? { borderColor: '#3362FF', color: '#F4F4F6' }
+            : { borderColor: 'transparent', color: '#6B7080' }
+          }>
           New Plan
         </button>
         {editingId && (
           <button onClick={() => setTab('builder')}
-            className={cn('px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 -mb-px transition-all',
-              tab === 'builder' && editingId ? 'border-amber-500 text-amber-600' : 'border-transparent text-amber-400 hover:text-amber-500')}>
+            className="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 -mb-px transition-all"
+            style={tab === 'builder' && editingId
+              ? { borderColor: '#F59E0B', color: '#F59E0B' }
+              : { borderColor: 'transparent', color: 'rgba(245,158,11,0.6)' }
+            }>
             Edit Plan
           </button>
         )}
         <button onClick={() => setTab('plans')}
-          className={cn('px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 -mb-px transition-all',
-            tab === 'plans' ? 'border-ink-charcoal text-ink-primary' : 'border-transparent text-neutral-400 hover:text-neutral-600')}>
+          className="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 -mb-px transition-all"
+          style={tab === 'plans'
+            ? { borderColor: '#3362FF', color: '#F4F4F6' }
+            : { borderColor: 'transparent', color: '#6B7080' }
+          }>
           Saved Plans ({plans.length})
         </button>
       </div>
@@ -397,20 +413,26 @@ export default function AdPlanning() {
       {tab === 'plans' && (
         <div className="space-y-4">
           {plans.length === 0 && (
-            <div className="surface-card p-20 text-center space-y-4">
-              <Megaphone className="h-8 w-8 text-neutral-200 mx-auto" />
-              <p className="text-[11px] font-bold text-neutral-300 uppercase tracking-widest">No plans saved yet</p>
-              <button onClick={() => setTab('builder')} className="btn-minimal btn-primary text-xs mt-2">Create Your First Plan</button>
+            <div className="p-20 text-center space-y-4 rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
+              <Megaphone className="h-8 w-8 mx-auto" style={{ color: 'rgba(244,244,246,0.15)' }} />
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'rgba(244,244,246,0.2)' }}>No plans saved yet</p>
+              <button
+                onClick={() => setTab('builder')}
+                className="text-xs mt-2 px-6 py-3 rounded-xl transition-all"
+                style={{ background: '#3362FF', color: '#F4F4F6', border: 'none' }}
+              >
+                Create Your First Plan
+              </button>
             </div>
           )}
           {plans.map(p => (
-            <div key={p.id} className="surface-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div key={p.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <div className={cn('h-2 w-2 rounded-full', p.is_active ? 'bg-emerald-500' : 'bg-neutral-300')} />
-                  <p className="text-base font-semibold text-ink-primary">{p.name}</p>
+                  <div className="h-2 w-2 rounded-full" style={{ background: p.is_active ? '#22C55E' : 'rgba(244,244,246,0.2)' }} />
+                  <p className="text-base font-semibold" style={{ color: '#F4F4F6' }}>{p.name}</p>
                 </div>
-                <p className="text-[10px] text-neutral-400 font-medium">
+                <p className="text-[10px] font-medium" style={{ color: '#6B7080' }}>
                   {SYM[p.currency] || 'R$'} {parseFloat(p.total_budget).toLocaleString()} · {p.days} days · Created {new Date(p.created_at).toLocaleDateString('pt-BR')}
                 </p>
               </div>
@@ -418,25 +440,27 @@ export default function AdPlanning() {
                 <button
                   onClick={() => toggleActive(p.id, p.is_active)}
                   title={p.is_active ? 'Link is active — click to deactivate' : 'Link is inactive — click to activate'}
-                  className={cn('text-[10px] font-bold px-3 py-2 rounded-lg border transition-all',
-                    p.is_active
-                      ? 'text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
-                      : 'text-neutral-400 border-neutral-200 bg-neutral-50 hover:bg-neutral-100'
-                  )}>
+                  className="text-[10px] font-bold px-3 py-2 rounded-lg transition-all"
+                  style={p.is_active
+                    ? { color: '#22C55E', border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.08)' }
+                    : { color: '#6B7080', border: '1px solid rgba(244,244,246,0.1)', background: 'rgba(244,244,246,0.04)' }
+                  }>
                   {p.is_active ? 'Link Active' : 'Link Off'}
                 </button>
                 <button onClick={() => copyLink(p.id)}
-                  className="flex items-center gap-2 text-[10px] font-bold text-neutral-500 hover:text-ink-primary border border-border-light rounded-lg px-3 py-2 transition-all hover:border-neutral-300">
-                  {copiedId === p.id ? <><Check className="h-3.5 w-3.5 text-emerald-500" />Copied!</> : <><Copy className="h-3.5 w-3.5" />Copy Link</>}
+                  className="flex items-center gap-2 text-[10px] font-bold rounded-lg px-3 py-2 transition-all"
+                  style={{ color: '#6B7080', border: '1px solid rgba(244,244,246,0.1)', background: 'rgba(244,244,246,0.04)' }}>
+                  {copiedId === p.id ? <><Check className="h-3.5 w-3.5" style={{ color: '#22C55E' }} />Copied!</> : <><Copy className="h-3.5 w-3.5" />Copy Link</>}
                 </button>
-                <button onClick={() => handleEdit(p)} className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-indigo-500 hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-all">
+                <button onClick={() => handleEdit(p)} className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold rounded-lg transition-all" style={{ color: '#818cf8', border: '1px solid rgba(129,140,248,0.3)', background: 'rgba(129,140,248,0.06)' }}>
                   Edit
                 </button>
                 <a href={`/plan/${p.id}`} target="_blank" rel="noreferrer"
-                  className="p-2 text-neutral-400 hover:text-ink-primary border border-border-light rounded-lg transition-all hover:border-neutral-300">
+                  className="p-2 rounded-lg transition-all"
+                  style={{ color: '#6B7080', border: '1px solid rgba(244,244,246,0.1)' }}>
                   <ExternalLink className="h-4 w-4" />
                 </a>
-                <button onClick={() => deletePlan(p.id)} className="p-2 text-neutral-300 hover:text-rose-500 transition-colors">
+                <button onClick={() => deletePlan(p.id)} className="p-2 transition-colors" style={{ color: 'rgba(244,244,246,0.2)' }}>
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -452,10 +476,10 @@ export default function AdPlanning() {
           <div className="lg:col-span-2 space-y-8">
 
             {/* A: Meta */}
-            <div className="surface-card p-8 space-y-6">
+            <div className="p-8 space-y-6 rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
               <div>
-                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Section A</p>
-                <h3 className="text-xl font-serif text-ink-primary mt-1">Campaign Meta & Financials</h3>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>Section A</p>
+                <h3 className="text-xl font-serif mt-1" style={{ color: '#F4F4F6' }}>Campaign Meta &amp; Financials</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <F label="Plan / Campaign Name">
@@ -469,7 +493,7 @@ export default function AdPlanning() {
                 </F>
                 <F label="Orçamento Total">
                   <div className="flex gap-2">
-                    <select value={form.currency} onChange={e => set('currency', e.target.value)} className="bg-white border border-neutral-200 rounded-xl px-3 py-3 text-[10px] font-bold uppercase focus:outline-none w-24 cursor-pointer">
+                    <select value={form.currency} onChange={e => set('currency', e.target.value)} className="rounded-xl px-3 py-3 text-[10px] font-bold uppercase focus:outline-none w-24 cursor-pointer" style={{ background: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.1)', color: '#F4F4F6' }}>
                       {['BRL', 'USD', 'EUR'].map(c => <option key={c}>{c}</option>)}
                     </select>
                     <input type="number" value={form.total_budget} onChange={e => set('total_budget', e.target.value)} className={ic} placeholder="5000.00" />
@@ -483,7 +507,7 @@ export default function AdPlanning() {
                 </F>
                 <F label="KPI Alvo">
                   <div className="flex gap-2">
-                    <select value={form.target_kpi.type} onChange={e => set('target_kpi.type', e.target.value)} className="bg-white border border-neutral-200 rounded-xl px-3 py-3 text-[10px] font-bold uppercase focus:outline-none w-32 cursor-pointer">
+                    <select value={form.target_kpi.type} onChange={e => set('target_kpi.type', e.target.value)} className="rounded-xl px-3 py-3 text-[10px] font-bold uppercase focus:outline-none w-32 cursor-pointer" style={{ background: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.1)', color: '#F4F4F6' }}>
                       {['CPA', 'ROAS', 'Leads', 'CPL'].map(t => <option key={t}>{t}</option>)}
                     </select>
                     <input type="number" value={form.target_kpi.value} onChange={e => set('target_kpi.value', e.target.value)} className={ic} placeholder={form.target_kpi.type === 'ROAS' ? 'Ex: 4' : 'Ex: 50'} />
@@ -496,11 +520,11 @@ export default function AdPlanning() {
             </div>
 
             {/* A2: Advertising Mediums */}
-            <div className="surface-card p-8 space-y-5">
+            <div className="p-8 space-y-5 rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
               <div>
-                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Seção A2</p>
-                <h3 className="text-xl font-serif text-ink-primary mt-1">Canais de Mídia</h3>
-                <p className="text-xs text-neutral-400 mt-1">Selecione todas as plataformas onde a campanha será veiculada.</p>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>Seção A2</p>
+                <h3 className="text-xl font-serif mt-1" style={{ color: '#F4F4F6' }}>Canais de Mídia</h3>
+                <p className="text-xs mt-1" style={{ color: '#6B7080' }}>Selecione todas as plataformas onde a campanha será veiculada.</p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {PLATFORMS.map(p => {
@@ -510,14 +534,13 @@ export default function AdPlanning() {
                       key={p.key}
                       type="button"
                       onClick={() => setForm(f => ({ ...f, mediums: { ...f.mediums, [p.key]: !f.mediums?.[p.key] } }))}
-                      className={cn(
-                        'flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left transition-all',
-                        active
-                          ? 'bg-ink-charcoal text-white border-ink-charcoal shadow-sm'
-                          : 'bg-white text-neutral-400 border-neutral-200 hover:border-neutral-300'
-                      )}
+                      className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all"
+                      style={active
+                        ? { background: '#3362FF', color: '#F4F4F6', border: '1px solid #3362FF' }
+                        : { background: 'rgba(244,244,246,0.04)', color: '#6B7080', border: '1px solid rgba(244,244,246,0.1)' }
+                      }
                     >
-                      <div className={cn('h-2 w-2 rounded-full shrink-0', active ? 'bg-white' : 'bg-neutral-200')} />
+                      <div className="h-2 w-2 rounded-full shrink-0" style={{ background: active ? '#F4F4F6' : 'rgba(244,244,246,0.2)' }} />
                       <span className="text-[11px] font-bold uppercase tracking-widest leading-tight">{p.label}</span>
                     </button>
                   );
@@ -527,11 +550,11 @@ export default function AdPlanning() {
 
 
             {/* A3: Keywords */}
-            <div className="surface-card p-8 space-y-6">
+            <div className="p-8 space-y-6 rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
               <div>
-                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Seção A3</p>
-                <h3 className="text-xl font-serif text-ink-primary mt-1">Palavras-chave da Campanha</h3>
-                <p className="text-xs text-neutral-400 mt-1">Uma palavra-chave por linha, ou separada por vírgula.</p>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>Seção A3</p>
+                <h3 className="text-xl font-serif mt-1" style={{ color: '#F4F4F6' }}>Palavras-chave da Campanha</h3>
+                <p className="text-xs mt-1" style={{ color: '#6B7080' }}>Uma palavra-chave por linha, ou separada por vírgula.</p>
               </div>
               <div className="space-y-5">
                 <F label="🎯 Palavras-chave Principais — Alta intenção, lance alto">
@@ -563,11 +586,16 @@ export default function AdPlanning() {
 
             <div className="space-y-3">
               <div>
-                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Section B</p>
-                <h3 className="text-xl font-serif text-ink-primary mt-1">Funnel Architecture & Allocation</h3>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>Section B</p>
+                <h3 className="text-xl font-serif mt-1" style={{ color: '#F4F4F6' }}>Funnel Architecture &amp; Allocation</h3>
               </div>
-              <div className={cn('text-[10px] font-bold rounded-xl px-4 py-3 flex items-center gap-2',
-                totalPct === 100 ? 'bg-emerald-50 text-emerald-700' : totalPct > 100 ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-700')}>
+              <div className={cn('text-[10px] font-bold rounded-xl px-4 py-3 flex items-center gap-2')}
+                style={totalPct === 100
+                  ? { background: 'rgba(34,197,94,0.08)', color: '#22C55E' }
+                  : totalPct > 100
+                    ? { background: 'rgba(255,59,92,0.08)', color: '#FF3B5C' }
+                    : { background: 'rgba(245,158,11,0.08)', color: '#F59E0B' }
+                }>
                 {totalPct !== 100 && <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
                 {totalPct === 100 ? '✓ Budget fully allocated (100%)' : totalPct > 100 ? `Over-allocated by ${totalPct - 100}% — reduce allocation` : `${100 - totalPct}% unallocated — assign remaining budget`}
               </div>
@@ -577,10 +605,10 @@ export default function AdPlanning() {
             </div>
 
             {/* C: Conversion */}
-            <div className="surface-card p-8 space-y-6">
+            <div className="p-8 space-y-6 rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
               <div>
-                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Section C</p>
-                <h3 className="text-xl font-serif text-ink-primary mt-1">Conversion Flow</h3>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>Section C</p>
+                <h3 className="text-xl font-serif mt-1" style={{ color: '#F4F4F6' }}>Conversion Flow</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <F label="Primary Goal">
@@ -605,10 +633,10 @@ export default function AdPlanning() {
             </div>
 
             {/* D: Audience */}
-            <div className="surface-card p-8 space-y-6">
+            <div className="p-8 space-y-6 rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
               <div>
-                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Section D</p>
-                <h3 className="text-xl font-serif text-ink-primary mt-1">Audience Targeting</h3>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>Section D</p>
+                <h3 className="text-xl font-serif mt-1" style={{ color: '#F4F4F6' }}>Audience Targeting</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <F label="Age Range"><input value={form.audience.age} onChange={e => set('audience.age', e.target.value)} className={ic} placeholder="25–54" /></F>
@@ -624,7 +652,7 @@ export default function AdPlanning() {
                   </select>
                 </F>
                 <div className="sm:col-span-2">
-                  <F label="Interests & Intent Audiences">
+                  <F label="Interests &amp; Intent Audiences">
                     <textarea value={form.audience.interests} onChange={e => set('audience.interests', e.target.value)} rows={2} className={ic + ' resize-none'} placeholder="In-market: Real Estate, Business Services, Financial Products..." />
                   </F>
                 </div>
@@ -632,10 +660,10 @@ export default function AdPlanning() {
             </div>
 
             {/* E: Creative */}
-            <div className="surface-card p-8 space-y-6">
+            <div className="p-8 space-y-6 rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
               <div>
-                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Section E</p>
-                <h3 className="text-xl font-serif text-ink-primary mt-1">Creative Notes</h3>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>Section E</p>
+                <h3 className="text-xl font-serif mt-1" style={{ color: '#F4F4F6' }}>Creative Notes</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <F label="Ad Formats"><input value={form.creative.formats} onChange={e => set('creative.formats', e.target.value)} className={ic} placeholder="Responsive Search, Display Banners, Video" /></F>
@@ -648,12 +676,13 @@ export default function AdPlanning() {
             </div>
 
             <button onClick={handleSave} disabled={saving || totalPct !== 100}
-              className={cn(
-                'w-full h-16 flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-black/5 rounded-2xl transition-all',
-                totalPct === 100 && !saving
-                  ? (editingId ? 'bg-amber-400 hover:bg-amber-500 text-ink-charcoal cursor-pointer' : 'btn-minimal btn-primary cursor-pointer')
-                  : 'bg-neutral-100 text-neutral-300 cursor-not-allowed'
-              )}>
+              className="w-full h-16 flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-widest rounded-2xl transition-all"
+              style={totalPct === 100 && !saving
+                ? editingId
+                  ? { background: '#F59E0B', color: '#0D0F1E', cursor: 'pointer' }
+                  : { background: '#3362FF', color: '#F4F4F6', cursor: 'pointer' }
+                : { background: 'rgba(244,244,246,0.06)', color: 'rgba(244,244,246,0.2)', cursor: 'not-allowed' }
+              }>
               {saving ? 'Saving...' : totalPct !== 100 ? `Allocate remaining ${100 - totalPct}% before saving` : (editingId ? 'Update Plan & Keep Link Active' : 'Save Plan & Generate Share Link')}
             </button>
           </div>
@@ -661,38 +690,38 @@ export default function AdPlanning() {
           {/* Calc Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-28 space-y-6">
-              <div className="surface-card p-6 space-y-6">
-                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Live Budget Breakdown</p>
+              <div className="p-6 space-y-6 rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>Live Budget Breakdown</p>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-end border-b border-neutral-50 pb-3">
-                    <span className="text-xs text-neutral-500">Total</span>
-                    <span className="font-serif text-2xl text-ink-primary">{money(budget, sym)}</span>
+                  <div className="flex justify-between items-end pb-3" style={{ borderBottom: '1px solid rgba(244,244,246,0.07)' }}>
+                    <span className="text-xs" style={{ color: '#6B7080' }}>Total</span>
+                    <span className="font-serif text-2xl" style={{ color: '#F4F4F6' }}>{money(budget, sym)}</span>
                   </div>
                   <div className="flex justify-between items-end">
-                    <span className="text-xs text-neutral-500">Daily</span>
-                    <span className="font-serif text-xl text-ink-primary">{money(daily, sym)}</span>
+                    <span className="text-xs" style={{ color: '#6B7080' }}>Daily</span>
+                    <span className="font-serif text-xl" style={{ color: '#F4F4F6' }}>{money(daily, sym)}</span>
                   </div>
                   <div className="flex justify-between items-end">
-                    <span className="text-xs text-neutral-500">Duration</span>
-                    <span className="text-sm font-medium text-ink-primary">{days} days</span>
+                    <span className="text-xs" style={{ color: '#6B7080' }}>Duration</span>
+                    <span className="text-sm font-medium" style={{ color: '#F4F4F6' }}>{days} days</span>
                   </div>
                 </div>
-                <div className="space-y-3 pt-2 border-t border-border-light">
+                <div className="space-y-3 pt-2" style={{ borderTop: '1px solid rgba(244,244,246,0.07)' }}>
                   {[
-                    { stage: 'tofu', label: 'TOFU', color: 'bg-sky-400' },
-                    { stage: 'mofu', label: 'MOFU', color: 'bg-violet-400' },
-                    { stage: 'bofu', label: 'BOFU', color: 'bg-emerald-500' },
+                    { stage: 'tofu', label: 'TOFU', color: '#38bdf8' },
+                    { stage: 'mofu', label: 'MOFU', color: '#a78bfa' },
+                    { stage: 'bofu', label: 'BOFU', color: '#10b981' },
                   ].map(({ stage, label, color }) => {
                     const s = form.funnel[stage];
                     if (!s.enabled) return null;
                     return (
                       <div key={stage} className="space-y-1.5">
                         <div className="flex justify-between text-[10px]">
-                          <span className="font-bold text-neutral-600">{label} ({s.budget_pct}%)</span>
-                          <span className="text-neutral-400">{money(daily * s.budget_pct / 100, sym)}/day</span>
+                          <span className="font-bold" style={{ color: '#F4F4F6' }}>{label} ({s.budget_pct}%)</span>
+                          <span style={{ color: '#6B7080' }}>{money(daily * s.budget_pct / 100, sym)}/day</span>
                         </div>
-                        <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">
-                          <div className={cn('h-full rounded-full', color)} style={{ width: `${Math.min(s.budget_pct, 100)}%` }} />
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(244,244,246,0.07)' }}>
+                          <div className="h-full rounded-full" style={{ width: `${Math.min(s.budget_pct, 100)}%`, background: color }} />
                         </div>
                       </div>
                     );
@@ -701,26 +730,26 @@ export default function AdPlanning() {
               </div>
 
               {(projConversions || projROAS) && (
-                <div className="surface-card p-6 space-y-4">
-                  <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Projections</p>
+                <div className="p-6 space-y-4 rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
+                  <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>Projections</p>
                   {projConversions && (
                     <div className="space-y-1">
-                      <p className="text-3xl font-serif text-emerald-600">{projConversions.toLocaleString()}</p>
-                      <p className="text-[10px] text-neutral-400 font-medium uppercase tracking-widest">Est. Conversions (BOFU @ {sym}{kpiVal} CPA)</p>
+                      <p className="text-3xl font-serif" style={{ color: '#22C55E' }}>{projConversions.toLocaleString()}</p>
+                      <p className="text-[10px] font-medium uppercase tracking-widest" style={{ color: '#6B7080' }}>Est. Conversions (BOFU @ {sym}{kpiVal} CPA)</p>
                     </div>
                   )}
                   {projROAS && (
                     <div className="space-y-1">
-                      <p className="text-3xl font-serif text-emerald-600">{money(projROAS, sym)}</p>
-                      <p className="text-[10px] text-neutral-400 font-medium uppercase tracking-widest">Est. Revenue (BOFU @ {kpiVal}x ROAS)</p>
+                      <p className="text-3xl font-serif" style={{ color: '#22C55E' }}>{money(projROAS, sym)}</p>
+                      <p className="text-[10px] font-medium uppercase tracking-widest" style={{ color: '#6B7080' }}>Est. Revenue (BOFU @ {kpiVal}x ROAS)</p>
                     </div>
                   )}
                 </div>
               )}
 
               {totalPct > 0 && (
-                <div className="surface-card p-6 space-y-4">
-                  <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Alocação de Funil</p>
+                <div className="p-6 space-y-4 rounded-2xl" style={{ background: '#0D0F1E', border: '1px solid rgba(244,244,246,0.07)' }}>
+                  <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>Alocação de Funil</p>
                   <div className="h-40">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -742,9 +771,9 @@ export default function AdPlanning() {
                 </div>
               )}
 
-              <div className="surface-card p-6 space-y-3 bg-neutral-50/50">
-                <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">How Sharing Works</p>
-                <p className="text-xs text-neutral-500 leading-relaxed">After saving, you get a unique URL your client can open — no login required. The plan is read-only and renders as a premium branded brief.</p>
+              <div className="p-6 space-y-3 rounded-2xl" style={{ background: 'rgba(244,244,246,0.03)', border: '1px solid rgba(244,244,246,0.07)' }}>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#6B7080' }}>How Sharing Works</p>
+                <p className="text-xs leading-relaxed" style={{ color: '#6B7080' }}>After saving, you get a unique URL your client can open — no login required. The plan is read-only and renders as a premium branded brief.</p>
               </div>
             </div>
           </div>
