@@ -1,9 +1,9 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { FinancialProvider } from './context/FinancialContext';
 import { LanguageProvider } from './context/LanguageContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import ClientDetail from './pages/ClientDetail';
@@ -33,42 +33,6 @@ function PageFallback() {
   );
 }
 
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  const location = useLocation();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <div className="h-6 w-6 border-2 border-black border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
-  }
-
-  return children;
-}
-
-function AuthRoute({ children }) {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <div className="h-6 w-6 border-2 border-black border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (user) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-}
 
 export default function App() {
   return (
@@ -79,9 +43,9 @@ export default function App() {
             <BrowserRouter>
               <Suspense fallback={<PageFallback />}>
                 <Routes>
-                  <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+                  <Route path="/auth" element={<Auth />} />
                   <Route path="/plan/:id" element={<AdPlanView />} />
-                  <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                  <Route path="/" element={<Layout />}>
                     <Route index element={<Dashboard />} />
                     <Route path="clients" element={<Clients />} />
                     <Route path="client/:id" element={<ClientDetail />} />
