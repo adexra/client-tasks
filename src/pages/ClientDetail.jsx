@@ -60,7 +60,7 @@ const HEALTH_COLORS = {
   5: '#22C55E',
 };
 
-const PHASES_PIPELINE = ['onboarding', 'delivery', 'review', 'done', 'churned'];
+const PHASES_PIPELINE = ['onboarding', 'active', 'review', 'done', 'churned'];
 
 // ── Sub-components ─────────────────────────────────────────
 function CmdCard({ children, className = '', style = {} }) {

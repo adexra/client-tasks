@@ -303,9 +303,10 @@ export const translations = {
         phase_label: 'Current Phase',
         phases: {
             onboarding: 'Onboarding',
-            delivery: 'Delivery',
-            qa: 'QA',
-            update: 'Updates'
+            active: 'Active',
+            review: 'Review',
+            done: 'Done',
+            churned: 'Churned'
         },
         scope_section: 'Project Scope & Next Action',
         description_label: 'Project Description',
@@ -677,10 +678,11 @@ export const translations = {
         },
         phase_label: 'Fase Atual',
         phases: {
-            onboarding: 'Integração',
-            delivery: 'Entrega',
-            qa: 'QA',
-            update: 'Atualizações'
+            onboarding: 'Onboarding',
+            active: 'Ativo',
+            review: 'Revisão',
+            done: 'Concluído',
+            churned: 'Churned'
         },
         scope_section: 'Escopo do Projeto e Próxima Ação',
         description_label: 'Descrição do Projeto',

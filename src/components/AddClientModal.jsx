@@ -422,9 +422,10 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                     {[
                       { id: 'onboarding', label: t('project_modal.phases.onboarding') },
-                      { id: 'delivery',   label: t('project_modal.phases.delivery') },
-                      { id: 'qa',         label: t('project_modal.phases.qa') },
-                      { id: 'update',     label: t('project_modal.phases.update') },
+                      { id: 'active',     label: t('project_modal.phases.active') },
+                      { id: 'review',     label: t('project_modal.phases.review') },
+                      { id: 'done',       label: t('project_modal.phases.done') },
+                      { id: 'churned',    label: t('project_modal.phases.churned') },
                     ].map(p => (
                       <button
                         key={p.id}
