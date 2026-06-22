@@ -161,13 +161,11 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
         }
       }
     }
-    if (!error && !editClient && formData.revenue > 0 && newClient) {
+    if (!error && !editClient && parseFloat(formData.revenue) > 0 && newClient) {
       await supabase.from('client_payments').insert([{
         client_id: newClient.id, amount: parseFloat(formData.revenue),
         description: formData.is_recurring ? 'Monthly Retainer' : 'Initial Project Fee',
         currency: formData.currency, is_paid: false,
-        is_recurring: formData.is_recurring,
-        recurring_start_date: formData.is_recurring ? formData.recurring_start_date : null,
       }]);
     }
     if (!error && !editClient && formData.main_delivery !== 'none' && newClient) {
