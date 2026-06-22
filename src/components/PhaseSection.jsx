@@ -73,9 +73,9 @@ export default function PhaseSection({ phase, onUpdate }) {
       }}
     >
       {/* Header */}
-      <button
-        type="button"
-        className="w-full flex items-center gap-6 px-8 py-6 text-left transition-colors"
+      <div
+        role="button"
+        className="w-full flex items-center gap-6 px-8 py-6 text-left transition-colors cursor-pointer"
         style={{ background: 'transparent' }}
         onMouseEnter={e => e.currentTarget.style.background = 'rgba(244,244,246,0.02)'}
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -134,7 +134,7 @@ export default function PhaseSection({ phase, onUpdate }) {
             : <ChevronRight className="h-4 w-4" style={{ color: '#6B7080' }} />
           }
         </div>
-      </button>
+      </div>
 
       {/* Expanded */}
       {isOpen && (

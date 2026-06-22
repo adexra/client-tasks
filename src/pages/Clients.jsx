@@ -165,8 +165,9 @@ export default function Clients() {
       <AddClientModal
         isOpen={showAdd}
         onClose={() => setShowAdd(false)}
-        onClientAdded={newClient => {
-          setClients(prev => [...prev, newClient].sort((a, b) => a.name.localeCompare(b.name)));
+        onClientAdded={async () => {
+          const { data } = await supabase.from('clients').select('*').order('name');
+          if (data) setClients(data);
           setShowAdd(false);
         }}
       />
