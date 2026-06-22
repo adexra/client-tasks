@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 import { Bot, Code, PenTool, TrendingUp, Layout, Plus, ChevronRight, Cpu } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import PageHeader from '../components/PageHeader';
 
 const ICON_MAP = { Brain: Cpu, Code, PenTool, TrendingUp, Layout, Bot };
 const MODEL_LABELS = { 'gpt-4o': 'GPT-4o', 'gpt-4o-mini': 'GPT-4o mini' };
@@ -40,27 +41,18 @@ export default function Agents() {
   }
 
   return (
-    <div className="space-y-16 animate-in fade-in duration-700 pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
-        <div className="space-y-6">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '10px', fontWeight: '700', color: '#6B7080', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Brain System</span>
-            <div style={{ height: '1px', width: '32px', background: 'rgba(244,244,246,0.1)' }} />
-          </div>
-          <h1 style={{ fontSize: '60px', fontFamily: 'serif', color: '#F4F4F6', lineHeight: '1.1', margin: 0 }}>Agents</h1>
-          <p style={{ color: '#6B7080', fontSize: '16px', lineHeight: '1.6', maxWidth: '480px', margin: 0 }}>
-            Each agent is a specialist with its own system prompt, model, and role. They run in parallel and report to Brain.
-          </p>
-        </div>
-        <button
-          onClick={createAgent}
-          disabled={creating}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: creating ? 'not-allowed' : 'pointer', opacity: creating ? 0.5 : 1 }}
-        >
-          <Plus className="h-4 w-4" />
-          New Agent
-        </button>
-      </div>
+    <div className="space-y-8 animate-in fade-in duration-700 pb-20">
+      <PageHeader
+        eyebrow="Brain System"
+        title="Agents"
+        description="Each agent is a specialist with its own system prompt, model, and role. They run in parallel."
+        actions={
+          <button onClick={createAgent} disabled={creating}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '500', cursor: creating ? 'not-allowed' : 'pointer', opacity: creating ? 0.5 : 1 }}>
+            <Plus className="h-3.5 w-3.5" /> New Agent
+          </button>
+        }
+      />
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

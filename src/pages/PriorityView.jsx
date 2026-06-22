@@ -11,6 +11,7 @@ import TagBadge from '../components/TagBadge';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
 import TaskModal from '../components/TaskModal';
+import PageHeader from '../components/PageHeader';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -286,43 +287,32 @@ export default function PriorityView() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-20 animate-in fade-in duration-700">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: '#6B7080' }}>{t('execution.tag')}</span>
-            <div className="h-[1px] w-8" style={{ background: 'rgba(244,244,246,0.1)' }} />
-          </div>
-          <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-serif leading-tight tracking-tight break-words" style={{ color: '#F4F4F6' }}>
-            {t('execution.title')}
-          </h1>
-          <p className="font-medium max-w-lg text-base leading-relaxed" style={{ color: '#6B7080' }}>
-            {t('execution.subtitle')}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-4">
-          <div
-            className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl border text-[9px] sm:text-[10px] font-bold tracking-[0.1em] uppercase flex items-center gap-2 sm:gap-3 transition-colors"
-            style={isTodayOverloaded
-              ? { borderColor: 'rgba(255,59,92,0.3)', background: 'rgba(255,59,92,0.08)', color: '#FF3B5C' }
-              : { borderColor: 'rgba(244,244,246,0.1)', color: '#6B7080' }
-            }
-          >
-            <Target className="h-4 w-4" />
-            <span className="hidden xs:inline">{t('execution.task_load')}:</span> {todayTasks.length} / 5
-          </div>
-          <button
-            onClick={() => setModal({ open: true, task: null })}
-            className="flex items-center gap-2.5 h-10 sm:h-12 px-6 sm:px-8 rounded-xl text-sm font-medium transition-all"
-            style={{ background: '#3362FF', color: '#F4F4F6', border: 'none' }}
-          >
-            <Plus className="h-4 w-4" />
-            <span className="text-sm font-medium">{t('execution.new_task')}</span>
-          </button>
-        </div>
-      </div>
+    <div className="space-y-12 animate-in fade-in duration-700">
+      <PageHeader
+        eyebrow={t('execution.tag')}
+        title={t('execution.title')}
+        description={t('execution.subtitle')}
+        actions={
+          <>
+            <div
+              style={isTodayOverloaded
+                ? { padding: '6px 12px', borderRadius: '10px', border: '1px solid rgba(255,59,92,0.3)', background: 'rgba(255,59,92,0.08)', color: '#FF3B5C', fontSize: '11px', fontWeight: '700', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }
+                : { padding: '6px 12px', borderRadius: '10px', border: '1px solid rgba(244,244,246,0.1)', color: '#6B7080', fontSize: '11px', fontWeight: '700', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }
+              }
+            >
+              <Target className="h-3.5 w-3.5" />
+              {todayTasks.length} / 5
+            </div>
+            <button
+              onClick={() => setModal({ open: true, task: null })}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {t('execution.new_task')}
+            </button>
+          </>
+        }
+      />
 
       {/* Board */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 items-start">

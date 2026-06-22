@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Trash2, Download, Edit3, Save, X, Tag, BookOpen } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import PageHeader from '../components/PageHeader';
 
 const TYPES = ['general', 'brand', 'niche', 'seo', 'technical', 'client'];
 
@@ -216,29 +217,24 @@ export default function Memory() {
   }
 
   return (
-    <div className="space-y-16 animate-in fade-in duration-700 pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
-        <div className="space-y-6">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '10px', fontWeight: '700', color: '#6B7080', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Brain System</span>
-            <div style={{ height: '1px', width: '32px', background: 'rgba(244,244,246,0.1)' }} />
-          </div>
-          <h1 style={{ fontSize: '60px', fontFamily: 'serif', color: '#F4F4F6', lineHeight: '1.1', margin: 0 }}>Memory</h1>
-          <p style={{ color: '#6B7080', fontSize: '16px', lineHeight: '1.6', maxWidth: '480px', margin: 0 }}>
-            Named knowledge buckets injected into conversations. Brand voice, niche rules, SEO constraints — anything the agents should always know.
-          </p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button onClick={exportAll}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'transparent', color: '#6B7080', border: '1px solid rgba(244,244,246,0.12)', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
-            <Download className="h-4 w-4" /> Export All
-          </button>
-          <button onClick={create}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
-            <Plus className="h-4 w-4" /> New Bucket
-          </button>
-        </div>
-      </div>
+    <div className="space-y-8 animate-in fade-in duration-700 pb-20">
+      <PageHeader
+        eyebrow="Brain System"
+        title="Memory"
+        description="Named knowledge buckets injected into conversations. Brand voice, niche rules, SEO constraints."
+        actions={
+          <>
+            <button onClick={exportAll}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: 'transparent', color: '#6B7080', border: '1px solid rgba(244,244,246,0.12)', borderRadius: '10px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
+              <Download className="h-3.5 w-3.5" /> Export All
+            </button>
+            <button onClick={create}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#3362FF', color: '#F4F4F6', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
+              <Plus className="h-3.5 w-3.5" /> New Bucket
+            </button>
+          </>
+        }
+      />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
         {['all', ...TYPES].map(t => (

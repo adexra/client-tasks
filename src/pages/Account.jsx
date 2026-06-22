@@ -1,23 +1,17 @@
 import { User, Shield, Building, Zap, Globe } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import PageHeader from '../components/PageHeader';
 
 export default function Account() {
   const { language, setLanguage, t } = useLanguage();
 
   return (
-    <div className="space-y-20 animate-in fade-in duration-700 pb-20">
-      <div className="space-y-6">
-         <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: '#6B7080' }}>{t('account.tag')}</span>
-            <div className="h-[1px] w-8" style={{ background: 'rgba(244,244,246,0.1)' }} />
-         </div>
-         <h1 className="text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-serif leading-tight tracking-tight break-words" style={{ color: '#F4F4F6' }}>
-           {t('account.title')}
-         </h1>
-         <p className="font-medium max-w-lg text-base leading-relaxed" style={{ color: '#6B7080' }}>
-           {t('account.subtitle')}
-         </p>
-      </div>
+    <div className="space-y-12 animate-in fade-in duration-700 pb-20">
+      <PageHeader
+        eyebrow={t('account.tag')}
+        title={t('account.title')}
+        description={t('account.subtitle')}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
         <div className="lg:col-span-2 space-y-12">

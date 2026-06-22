@@ -2,6 +2,59 @@
 
 ---
 
+## 2026-06-22 — Fix: Giant wrapping page titles replaced with PageHeader component
+
+### Summary
+All page hero sections using `text-6xl font-serif` (60px, wraps into 3 lines on narrower viewports) replaced with a new shared `PageHeader` component at 28px with `whiteSpace: nowrap` and `textOverflow: ellipsis`.
+
+**New component:** `src/components/PageHeader.jsx` — props: `eyebrow`, `title`, `description`, `actions`.
+
+**Pages updated:**
+- `Clients.jsx` — Diretório de Projetos title fixed
+- `Memory.jsx` — Brain System / Memory
+- `RAG.jsx` — Brain System / RAG Documents
+- `Agents.jsx` — Brain System / Agents
+- `Account.jsx` — Account / Settings
+- `PriorityView.jsx` — Execution Board
+
+Also added: Links & Files section on ClientDetail (`addLink`/`deleteLink` using JSONB on `clients` table). Requires manual DB migration: `ALTER TABLE clients ADD COLUMN IF NOT EXISTS links JSONB DEFAULT '[]'::jsonb;`
+
+Build: ✅ clean. Pushed to production.
+
+### Files Modified
+- `src/components/PageHeader.jsx` (new)
+- `src/pages/Clients.jsx`, `Memory.jsx`, `RAG.jsx`, `Agents.jsx`, `Account.jsx`, `PriorityView.jsx`
+- `src/pages/ClientDetail.jsx` — links & files feature
+
+---
+
+## 2026-06-22 — Fix: Dark brand contrast — eliminated all white-on-white buttons
+
+### Summary
+Full dark-theme pass on remaining pages. Root cause: `--ink-primary` CSS variable undefined in current Tailwind setup, causing `bg-ink-primary text-white` buttons to render white-on-white (invisible). Same for `border-border-light`, `text-ink-muted`, `text-ink-placeholder`, `bg-ink-charcoal`.
+
+**Pages/components rewritten:**
+- `Memory.jsx` — cards, filter tabs, save/cancel buttons, export buttons
+- `RAG.jsx` — cards, embed button, save/cancel buttons
+- `Agents.jsx` — agent cards, New Agent button
+- `AgentEditor.jsx` — all panels, form inputs, test chat, send button
+- `Briefing.jsx` — session tabs, config panel, status panel, report cards, chat, all buttons
+- `DeadlinesWidget.jsx` — bucket labels and deadline link cards
+- `FocusTimer.jsx` — container, controls, input
+
+**Strategy:** Replaced all Tailwind utility classes using undefined CSS variables with explicit inline `style` props using Adexra brand hex values (`#3362FF`, `#0D0F1E`, `#F4F4F6`, `#6B7080`, `#FF3B5C`, `#22C55E`).
+
+Also removed auth gate from App.jsx (single-user tool, no login needed).
+
+Build: ✅ clean. Pushed to production.
+
+### Files Modified
+- `src/pages/Memory.jsx`, `RAG.jsx`, `Agents.jsx`, `AgentEditor.jsx`, `Briefing.jsx`
+- `src/components/DeadlinesWidget.jsx`, `FocusTimer.jsx`
+- `src/App.jsx` — auth gate removed
+
+---
+
 ## 2026-06-22 — QA Checkpoint — All sprints complete, dark theme verified
 
 ### Summary

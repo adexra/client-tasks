@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import TagBadge from '../components/TagBadge';
 import { useLanguage } from '../context/LanguageContext';
+import PageHeader from '../components/PageHeader';
 
 export default function Clients() {
   const { t, language } = useLanguage();
@@ -39,22 +40,14 @@ export default function Clients() {
   });
 
   return (
-    <div className="space-y-16 animate-in fade-in duration-700 pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-12">
-        <div className="space-y-6">
-           <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: '#6B7080' }}>{t('portfolio.tag')}</span>
-              <div className="h-[1px] w-8" style={{ background: 'rgba(244,244,246,0.1)' }} />
-           </div>
-           <h1 className="text-6xl font-serif leading-tight tracking-tight" style={{ color: '#F4F4F6' }}>
-             {t('portfolio.title')}
-           </h1>
-           <p className="font-medium max-w-lg text-base leading-relaxed" style={{ color: '#6B7080' }}>
-             {t('portfolio.subtitle')}
-           </p>
-        </div>
+    <div className="space-y-8 animate-in fade-in duration-700 pb-20">
+      <PageHeader
+        eyebrow={t('portfolio.tag')}
+        title={t('portfolio.title')}
+        description={t('portfolio.subtitle')}
+      />
 
-        <div className="flex flex-col sm:flex-row items-center gap-6">
+      <div className="flex flex-col sm:flex-row items-center gap-6">
            <div className="relative w-full sm:w-80 group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors" style={{ color: 'rgba(244,244,246,0.2)' }} />
               <input
@@ -88,7 +81,6 @@ export default function Clients() {
               ))}
            </div>
         </div>
-      </div>
 
       {loading ? (
         <div className="h-96 flex flex-col items-center justify-center gap-6" style={{ color: 'rgba(244,244,246,0.15)' }}>
