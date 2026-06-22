@@ -348,8 +348,6 @@ function PaymentForm({ clientId, clientCurrency, onSaved, onClose, language }) {
       description: form.description,
       currency: form.currency,
       is_paid: false,
-      is_recurring: form.is_recurring,
-      recurring_start_date: form.is_recurring ? form.recurring_start_date : null,
     });
     setSaving(false);
     onSaved();
@@ -372,13 +370,6 @@ function PaymentForm({ clientId, clientCurrency, onSaved, onClose, language }) {
         </div>
       </div>
       <div className="flex items-center gap-4 flex-wrap">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" checked={form.is_recurring} onChange={e => set('is_recurring', e.target.checked)} style={{ accentColor: '#3362FF' }} />
-          <span className="text-xs" style={{ color: '#F4F4F6' }}>{language === 'pt' ? 'Recorrente' : 'Recurring'}</span>
-        </label>
-        {form.is_recurring && (
-          <DarkInput type="date" value={form.recurring_start_date} onChange={e => set('recurring_start_date', e.target.value)} style={{ width: '160px' }} />
-        )}
         <div className="flex items-center gap-2 ml-auto">
           <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#6B7080', border: '1px solid rgba(244,244,246,0.07)' }}>
             {language === 'pt' ? 'Cancelar' : 'Cancel'}
