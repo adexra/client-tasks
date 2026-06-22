@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import CustomSelect from '../components/CustomSelect';
 import { supabase } from '../lib/supabase';
 import { Plus, Trash2, Download, Edit3, Save, X, Tag, BookOpen } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
@@ -80,9 +81,7 @@ function MemoryCard({ bucket, onSave, onDelete }) {
               style={{ ...di, gridColumn: '1 / -1' }} placeholder="Bucket name"
               onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}
               onBlur={e => e.target.style.borderColor = 'rgba(244,244,246,0.12)'} />
-            <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} style={ds}>
-              {TYPES.map(t => <option key={t} value={t} style={{ background: '#0D0F1E', color: '#F4F4F6' }}>{t}</option>)}
-            </select>
+            <CustomSelect value={form.type} onChange={v => setForm(f => ({ ...f, type: v }))} options={TYPES.map(t => ({ value: t, label: t }))} />
             <input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
               style={di} placeholder="tags, comma, separated"
               onFocus={e => e.target.style.borderColor = 'rgba(51,98,255,0.5)'}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import CustomSelect from '../components/CustomSelect';
 import { supabase } from '../lib/supabase';
 import {
   TrendingUp,
@@ -525,15 +526,12 @@ export default function Financials() {
                     placeholder="0.00"
                     className="flex-1"
                   />
-                  <DarkSelect
+                  <CustomSelect
                     value={expenseForm.currency}
-                    onChange={e => setExpenseForm(f => ({ ...f, currency: e.target.value }))}
+                    onChange={v => setExpenseForm(f => ({ ...f, currency: v }))}
                     style={{ width: '90px' }}
-                  >
-                    <option>BRL</option>
-                    <option>USD</option>
-                    <option>EUR</option>
-                  </DarkSelect>
+                    options={[{ value: 'BRL', label: 'BRL' }, { value: 'USD', label: 'USD' }, { value: 'EUR', label: 'EUR' }]}
+                  />
                 </div>
                 <div className="flex items-center gap-4 pt-1">
                   <label className="flex items-center gap-2 cursor-pointer">

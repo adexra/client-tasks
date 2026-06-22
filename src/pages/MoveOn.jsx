@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import CustomSelect from '../components/CustomSelect';
 import { supabase } from '../lib/supabase';
 import {
   Plus,
@@ -174,11 +175,7 @@ function MilestoneForm({ initial, companyId, onSave, onCancel, language }) {
           />
         </Field>
         <Field label={language === 'pt' ? 'Status' : 'Status'}>
-          <SelectEl value={form.status} onChange={e => set('status', e.target.value)}>
-            {STATUSES.map(s => (
-              <option key={s.value} value={s.value}>{s.label[language]}</option>
-            ))}
-          </SelectEl>
+          <CustomSelect value={form.status} onChange={v => set('status', v)} options={STATUSES.map(s => ({ value: s.value, label: s.label[language] }))} />
         </Field>
         <Field label={language === 'pt' ? `Confiança: ${form.confidence}%` : `Confidence: ${form.confidence}%`}>
           <input
@@ -190,12 +187,12 @@ function MilestoneForm({ initial, companyId, onSave, onCancel, language }) {
           />
         </Field>
         <Field label={language === 'pt' ? 'Frequência de revisão' : 'Review frequency'}>
-          <SelectEl value={form.review_frequency} onChange={e => set('review_frequency', e.target.value)}>
-            <option value="daily">{language === 'pt' ? 'Diária' : 'Daily'}</option>
-            <option value="weekly">{language === 'pt' ? 'Semanal' : 'Weekly'}</option>
-            <option value="biweekly">{language === 'pt' ? 'Quinzenal' : 'Biweekly'}</option>
-            <option value="monthly">{language === 'pt' ? 'Mensal' : 'Monthly'}</option>
-          </SelectEl>
+          <CustomSelect value={form.review_frequency} onChange={v => set('review_frequency', v)} options={[
+            { value: 'daily', label: language === 'pt' ? 'Diária' : 'Daily' },
+            { value: 'weekly', label: language === 'pt' ? 'Semanal' : 'Weekly' },
+            { value: 'biweekly', label: language === 'pt' ? 'Quinzenal' : 'Biweekly' },
+            { value: 'monthly', label: language === 'pt' ? 'Mensal' : 'Monthly' },
+          ]} />
         </Field>
         <Field label={language === 'pt' ? 'Métrica de sucesso' : 'Success metric'}>
           <Input

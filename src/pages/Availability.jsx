@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import CustomSelect from '../components/CustomSelect';
 import { supabase } from '../lib/supabase';
 import {
   Plus,
@@ -204,25 +205,13 @@ function AvailabilityForm({ initial, onSave, onCancel, language }) {
           <Input type="date" value={form.date} onChange={e => set('date', e.target.value)} />
         </Field>
         <Field label={language === 'pt' ? 'Dia da semana (recorrente)' : 'Day of week (recurring)'}>
-          <Select value={form.day_of_week} onChange={e => set('day_of_week', e.target.value)}>
-            <option value="">{language === 'pt' ? '— Nenhum —' : '— None —'}</option>
-            {DAYS.map(d => (
-              <option key={d.value} value={d.value}>{d[language]}</option>
-            ))}
-          </Select>
+          <CustomSelect value={String(form.day_of_week)} onChange={v => set('day_of_week', v)} options={[{ value: '', label: language === 'pt' ? '— Nenhum —' : '— None —' }, ...DAYS.map(d => ({ value: String(d.value), label: d[language] }))]} />
         </Field>
         <Field label={language === 'pt' ? 'Tipo' : 'Type'}>
-          <Select value={form.availability_type} onChange={e => set('availability_type', e.target.value)}>
-            {AVAILABILITY_TYPES.map(a => (
-              <option key={a.value} value={a.value}>{a.label[language]}</option>
-            ))}
-          </Select>
+          <CustomSelect value={form.availability_type} onChange={v => set('availability_type', v)} options={AVAILABILITY_TYPES.map(a => ({ value: a.value, label: a.label[language] }))} />
         </Field>
         <Field label={language === 'pt' ? 'Escopo' : 'Scope'}>
-          <Select value={form.company_scope} onChange={e => set('company_scope', e.target.value)}>
-            {SCOPES.map(s => (
-              <option key={s.value} value={s.value}>{s.label[language]}</option>
-            ))}
+          <CustomSelect value={form.company_scope} onChange={v => set('company_scope', v)} options={SCOPES.map(s => ({ value: s.value, label: s.label[language] }))}
           </Select>
         </Field>
         <Field label={language === 'pt' ? 'Início' : 'Start time'}>
@@ -310,25 +299,13 @@ function RitualForm({ initial, onSave, onCancel, language }) {
           />
         </Field>
         <Field label={language === 'pt' ? 'Tipo' : 'Type'}>
-          <Select value={form.ritual_type} onChange={e => set('ritual_type', e.target.value)}>
-            {RITUAL_TYPES.map(r => (
-              <option key={r.value} value={r.value}>{r.label[language]}</option>
-            ))}
-          </Select>
+          <CustomSelect value={form.ritual_type} onChange={v => set('ritual_type', v)} options={RITUAL_TYPES.map(r => ({ value: r.value, label: r.label[language] }))} />
         </Field>
         <Field label={language === 'pt' ? 'Dia da semana' : 'Day of week'}>
-          <Select value={form.day_of_week} onChange={e => set('day_of_week', e.target.value)}>
-            <option value="">{language === 'pt' ? '— Todo dia —' : '— Every day —'}</option>
-            {DAYS.map(d => (
-              <option key={d.value} value={d.value}>{d[language]}</option>
-            ))}
-          </Select>
+          <CustomSelect value={String(form.day_of_week)} onChange={v => set('day_of_week', v)} options={[{ value: '', label: language === 'pt' ? '— Todo dia —' : '— Every day —' }, ...DAYS.map(d => ({ value: String(d.value), label: d[language] }))]} />
         </Field>
         <Field label={language === 'pt' ? 'Escopo' : 'Scope'}>
-          <Select value={form.company_scope} onChange={e => set('company_scope', e.target.value)}>
-            {SCOPES.map(s => (
-              <option key={s.value} value={s.value}>{s.label[language]}</option>
-            ))}
+          <CustomSelect value={form.company_scope} onChange={v => set('company_scope', v)} options={SCOPES.map(s => ({ value: s.value, label: s.label[language] }))}
           </Select>
         </Field>
         <Field label={language === 'pt' ? 'Descrição' : 'Description'}>

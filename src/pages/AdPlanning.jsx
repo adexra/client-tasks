@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import CustomSelect from '../components/CustomSelect';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { cn } from '../lib/utils';
@@ -185,22 +186,22 @@ function FunnelCard({ stage, label, color, stageData, budget, daily, sym, onTogg
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <F label="Objetivo da Etapa"><input value={s.objective || ''} onChange={e => onFieldChange('objective', e.target.value)} className={ic} placeholder="Ex: Reconhecimento, Captura..." /></F>
             <F label="Tipo de Campanha">
-              <select
+              <CustomSelect
                 value={s.campaign_type || ''}
-                onChange={e => onFieldChange('campaign_type', e.target.value)}
-                className={ic + ' cursor-pointer appearance-none'}
-              >
-                <option value="" disabled>Selecione...</option>
-                <option value="Pesquisa (Search)">Pesquisa (Search)</option>
-                <option value="Performance Max">Performance Max</option>
-                <option value="Display / Rede de Display">Display / Rede de Display</option>
-                <option value="Vídeo (YouTube / Reels)">Vídeo (YouTube / Reels)</option>
-                <option value="Shopping / E-commerce">Shopping / E-commerce</option>
-                <option value="Engajamento (Social)">Engajamento (Social)</option>
-                <option value="Geração de Cadastros (Lead)">Geração de Cadastros (Lead)</option>
-                <option value="Mensagens (WhatsApp)">Mensagens (WhatsApp)</option>
-                <option value="Remarketing Dinâmico">Remarketing Dinâmico</option>
-              </select>
+                onChange={v => onFieldChange('campaign_type', v)}
+                placeholder="Selecione..."
+                options={[
+                  { value: 'Pesquisa (Search)', label: 'Pesquisa (Search)' },
+                  { value: 'Performance Max', label: 'Performance Max' },
+                  { value: 'Display / Rede de Display', label: 'Display / Rede de Display' },
+                  { value: 'Vídeo (YouTube / Reels)', label: 'Vídeo (YouTube / Reels)' },
+                  { value: 'Shopping / E-commerce', label: 'Shopping / E-commerce' },
+                  { value: 'Engajamento (Social)', label: 'Engajamento (Social)' },
+                  { value: 'Geração de Cadastros (Lead)', label: 'Geração de Cadastros (Lead)' },
+                  { value: 'Mensagens (WhatsApp)', label: 'Mensagens (WhatsApp)' },
+                  { value: 'Remarketing Dinâmico', label: 'Remarketing Dinâmico' },
+                ]}
+              />
             </F>
             <F label="Tipo de Criativo"><input value={s.creative_type || ''} onChange={e => onFieldChange('creative_type', e.target.value)} className={ic} placeholder="Ex: Vídeo Reels, Banner Estático..." /></F>
             <F label="Ação de Conversão"><input value={s.conversion_action || ''} onChange={e => onFieldChange('conversion_action', e.target.value)} className={ic} placeholder="Ex: Clique no Link, Compra..." /></F>
@@ -486,16 +487,11 @@ export default function AdPlanning() {
                   <input value={form.name} onChange={e => set('name', e.target.value)} className={ic} placeholder="Q2 Lead Gen — Brand X" />
                 </F>
                 <F label="Client">
-                  <select value={form.client_id} onChange={e => set('client_id', e.target.value)} className={sc}>
-                    <option value="">— General / No client —</option>
-                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
+                  <CustomSelect value={form.client_id} onChange={v => set('client_id', v)} options={[{ value: '', label: '— General / No client —' }, ...clients.map(c => ({ value: c.id, label: c.name }))]} />
                 </F>
                 <F label="Orçamento Total">
                   <div className="flex gap-2">
-                    <select value={form.currency} onChange={e => set('currency', e.target.value)} className="rounded-xl px-3 py-3 text-[10px] font-bold uppercase focus:outline-none w-24 cursor-pointer" style={{ background: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.1)', color: '#F4F4F6' }}>
-                      {['BRL', 'USD', 'EUR'].map(c => <option key={c}>{c}</option>)}
-                    </select>
+                    <CustomSelect value={form.currency} onChange={v => set('currency', v)} style={{ width: '90px' }} options={[{ value: 'BRL', label: 'BRL' }, { value: 'USD', label: 'USD' }, { value: 'EUR', label: 'EUR' }]} />
                     <input type="number" value={form.total_budget} onChange={e => set('total_budget', e.target.value)} className={ic} placeholder="5000.00" />
                   </div>
                 </F>
@@ -507,9 +503,7 @@ export default function AdPlanning() {
                 </F>
                 <F label="KPI Alvo">
                   <div className="flex gap-2">
-                    <select value={form.target_kpi.type} onChange={e => set('target_kpi.type', e.target.value)} className="rounded-xl px-3 py-3 text-[10px] font-bold uppercase focus:outline-none w-32 cursor-pointer" style={{ background: 'rgba(244,244,246,0.04)', border: '1px solid rgba(244,244,246,0.1)', color: '#F4F4F6' }}>
-                      {['CPA', 'ROAS', 'Leads', 'CPL'].map(t => <option key={t}>{t}</option>)}
-                    </select>
+                    <CustomSelect value={form.target_kpi.type} onChange={v => set('target_kpi.type', v)} style={{ width: '100px' }} options={['CPA', 'ROAS', 'Leads', 'CPL'].map(t => ({ value: t, label: t }))} />
                     <input type="number" value={form.target_kpi.value} onChange={e => set('target_kpi.value', e.target.value)} className={ic} placeholder={form.target_kpi.type === 'ROAS' ? 'Ex: 4' : 'Ex: 50'} />
                   </div>
                 </F>
@@ -612,19 +606,13 @@ export default function AdPlanning() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <F label="Primary Goal">
-                  <select value={form.conversion.goal} onChange={e => set('conversion.goal', e.target.value)} className={sc}>
-                    {['Lead', 'Purchase', 'Call', 'Form Submit', 'App Install'].map(g => <option key={g}>{g}</option>)}
-                  </select>
+                  <CustomSelect value={form.conversion.goal} onChange={v => set('conversion.goal', v)} options={['Lead', 'Purchase', 'Call', 'Form Submit', 'App Install'].map(g => ({ value: g, label: g }))} />
                 </F>
                 <F label="Attribution Model">
-                  <select value={form.conversion.attribution} onChange={e => set('conversion.attribution', e.target.value)} className={sc}>
-                    {['Data-Driven', 'Last Click', 'Linear', 'First Click', 'Time Decay'].map(a => <option key={a}>{a}</option>)}
-                  </select>
+                  <CustomSelect value={form.conversion.attribution} onChange={v => set('conversion.attribution', v)} options={['Data-Driven', 'Last Click', 'Linear', 'First Click', 'Time Decay'].map(a => ({ value: a, label: a }))} />
                 </F>
                 <F label="Tracking Setup">
-                  <select value={form.conversion.tracking} onChange={e => set('conversion.tracking', e.target.value)} className={sc}>
-                    {['GA4 + GTM', 'Meta Pixel', 'GA4 Only', 'GTM Only', 'Custom'].map(t => <option key={t}>{t}</option>)}
-                  </select>
+                  <CustomSelect value={form.conversion.tracking} onChange={v => set('conversion.tracking', v)} options={['GA4 + GTM', 'Meta Pixel', 'GA4 Only', 'GTM Only', 'Custom'].map(t => ({ value: t, label: t }))} />
                 </F>
                 <F label="Conversion Flow Path">
                   <input value={form.conversion.flow} onChange={e => set('conversion.flow', e.target.value)} className={ic} placeholder="Ex: Pesquisa Google → Página do Produto → Compra → Obrigado → Tracking" />
@@ -641,15 +629,11 @@ export default function AdPlanning() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <F label="Age Range"><input value={form.audience.age} onChange={e => set('audience.age', e.target.value)} className={ic} placeholder="25–54" /></F>
                 <F label="Gender">
-                  <select value={form.audience.gender} onChange={e => set('audience.gender', e.target.value)} className={sc}>
-                    {['All', 'Male', 'Female'].map(g => <option key={g}>{g}</option>)}
-                  </select>
+                  <CustomSelect value={form.audience.gender} onChange={v => set('audience.gender', v)} options={['All', 'Male', 'Female'].map(g => ({ value: g, label: g }))} />
                 </F>
                 <F label="Location"><input value={form.audience.location} onChange={e => set('audience.location', e.target.value)} className={ic} placeholder="São Paulo, SP — Brazil" /></F>
                 <F label="Devices">
-                  <select value={form.audience.devices} onChange={e => set('audience.devices', e.target.value)} className={sc}>
-                    {['All Devices', 'Mobile Only', 'Desktop Only', 'Mobile + Tablet'].map(d => <option key={d}>{d}</option>)}
-                  </select>
+                  <CustomSelect value={form.audience.devices} onChange={v => set('audience.devices', v)} options={['All Devices', 'Mobile Only', 'Desktop Only', 'Mobile + Tablet'].map(d => ({ value: d, label: d }))} />
                 </F>
                 <div className="sm:col-span-2">
                   <F label="Interests &amp; Intent Audiences">

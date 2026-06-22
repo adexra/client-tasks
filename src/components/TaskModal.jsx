@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Clock, Trash2 } from 'lucide-react';
+import CustomSelect from './CustomSelect';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import { cn } from '../lib/utils';
@@ -224,28 +225,28 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <DLabel>{t('task_modal.list_label')}</DLabel>
-              <select
+              <CustomSelect
                 value={formData.bucket}
-                onChange={e => set('bucket')(e.target.value)}
-                style={ds}
-              >
-                <option value="today">{t('task_modal.buckets.today')}</option>
-                <option value="this_week">{t('task_modal.buckets.this_week')}</option>
-                <option value="backlog">{t('task_modal.buckets.backlog')}</option>
-              </select>
+                onChange={v => set('bucket')(v)}
+                options={[
+                  { value: 'today', label: t('task_modal.buckets.today') },
+                  { value: 'this_week', label: t('task_modal.buckets.this_week') },
+                  { value: 'backlog', label: t('task_modal.buckets.backlog') },
+                ]}
+              />
             </div>
             <div className="space-y-2">
               <DLabel>{t('task_modal.priority_label')}</DLabel>
-              <select
+              <CustomSelect
                 value={formData.priority}
-                onChange={e => set('priority')(e.target.value)}
-                style={ds}
-              >
-                <option value="high">{t('task_modal.priorities.high')}</option>
-                <option value="medium">{t('task_modal.priorities.medium')}</option>
-                <option value="low">{t('task_modal.priorities.low')}</option>
-                <option value="very_low">{t('task_modal.priorities.very_low')}</option>
-              </select>
+                onChange={v => set('priority')(v)}
+                options={[
+                  { value: 'high', label: t('task_modal.priorities.high') },
+                  { value: 'medium', label: t('task_modal.priorities.medium') },
+                  { value: 'low', label: t('task_modal.priorities.low') },
+                  { value: 'very_low', label: t('task_modal.priorities.very_low') },
+                ]}
+              />
             </div>
           </div>
 
@@ -264,16 +265,11 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
             </div>
             <div className="space-y-2">
               <DLabel>{t('task_modal.link_project')}</DLabel>
-              <select
+              <CustomSelect
                 value={formData.client_id}
-                onChange={e => { set('client_id')(e.target.value); set('contact_id')(''); }}
-                style={ds}
-              >
-                <option value="">{t('task_modal.general_task')}</option>
-                {clients.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                onChange={v => { set('client_id')(v); set('contact_id')(''); }}
+                options={[{ value: '', label: t('task_modal.general_task') }, ...clients.map(c => ({ value: c.id, label: c.name }))]}
+              />
             </div>
           </div>
 
@@ -281,16 +277,11 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
           {clientContacts.length > 0 && (
             <div className="space-y-2">
               <DLabel>Assign Contact</DLabel>
-              <select
+              <CustomSelect
                 value={formData.contact_id}
-                onChange={e => set('contact_id')(e.target.value)}
-                style={ds}
-              >
-                <option value="">— No contact —</option>
-                {clientContacts.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}{c.role ? ` · ${c.role}` : ''}</option>
-                ))}
-              </select>
+                onChange={v => set('contact_id')(v)}
+                options={[{ value: '', label: '— No contact —' }, ...clientContacts.map(c => ({ value: c.id, label: c.name + (c.role ? ` · ${c.role}` : '') }))]}
+              />
             </div>
           )}
 
@@ -316,13 +307,13 @@ export default function TaskModal({ isOpen, onClose, onTaskSaved, editTask = nul
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <DLabel><ListTodo className="h-3.5 w-3.5" /> Sub-tasks</DLabel>
               <div className="flex gap-2 w-full sm:w-auto">
-                <select
-                  onChange={e => { if (e.target.value) { applyTemplate(e.target.value); e.target.value = ''; } }}
-                  style={{ ...ds, flex: '1', padding: '8px 12px', fontSize: '9px' }}
-                >
-                  <option value="">Apply Template</option>
-                  <option value="automations">Automations</option>
-                </select>
+                <CustomSelect
+                  value=""
+                  onChange={v => { if (v) applyTemplate(v); }}
+                  placeholder="Apply Template"
+                  options={[{ value: 'automations', label: 'Automations' }]}
+                  style={{ flex: 1 }}
+                />
                 <button
                   type="button"
                   onClick={addSubtask}

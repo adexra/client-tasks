@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import CustomSelect from '../components/CustomSelect';
 import { supabase } from '../lib/supabase';
 import {
   Plus,
@@ -295,17 +296,10 @@ function QuickTaskForm({ planId, clients, onSaved, onClose, language }) {
         />
         <div className="flex gap-2">
           <div className="flex-1">
-            <Select value={priority} onChange={e => setPriority(e.target.value)}>
-              {PRIORITIES.map(p => (
-                <option key={p.value} value={p.value}>{p.label[language]}</option>
-              ))}
-            </Select>
+            <CustomSelect value={priority} onChange={v => setPriority(v)} options={PRIORITIES.map(p => ({ value: p.value, label: p.label[language] }))} />
           </div>
           <div className="flex-1">
-            <Select value={clientId} onChange={e => setClientId(e.target.value)}>
-              <option value="">{language === 'pt' ? 'Sem cliente' : 'No client'}</option>
-              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </Select>
+            <CustomSelect value={clientId} onChange={v => setClientId(v)} options={[{ value: '', label: language === 'pt' ? 'Sem cliente' : 'No client' }, ...clients.map(c => ({ value: c.id, label: c.name }))]} />
           </div>
         </div>
         <div className="flex justify-end gap-2">

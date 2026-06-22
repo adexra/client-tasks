@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import CustomSelect from '../components/CustomSelect';
 import { supabase } from '../lib/supabase';
 import {
   Plus, Rocket, CalendarDays, Inbox, AlertTriangle,
@@ -389,17 +390,13 @@ export default function PriorityView() {
               {rearrangeMode && (
                 <div className="flex items-center gap-3 p-4 rounded-xl animate-in slide-in-from-top-2 duration-300" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
                   <Calendar className="h-3.5 w-3.5 shrink-0" style={{ color: '#F59E0B' }} />
-                  <select
+                  <CustomSelect
                     value={moveTargetDate}
-                    onChange={e => setMoveTargetDate(e.target.value)}
-                    className="flex-1 rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-widest focus:outline-none"
-                    style={{ background: 'rgba(244,244,246,0.05)', border: '1px solid rgba(244,244,246,0.1)', color: '#6B7080' }}
-                  >
-                    <option value="">Move to…</option>
-                    {weekDaysForPicker.map(d => (
-                      <option key={d} value={d}>{formatDayLabel(d, language)}</option>
-                    ))}
-                  </select>
+                    onChange={v => setMoveTargetDate(v)}
+                    placeholder="Move to…"
+                    style={{ flex: 1 }}
+                    options={weekDaysForPicker.map(d => ({ value: d, label: formatDayLabel(d, language) }))}
+                  />
                   <button
                     onClick={moveSelectedTasks}
                     disabled={!moveTargetDate || selectedTaskIds.size === 0 || moving}

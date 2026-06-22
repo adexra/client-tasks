@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import CustomSelect from '../components/CustomSelect';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { chatStream } from '../lib/azure';
@@ -179,15 +180,11 @@ export default function AgentEditor() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div>
                 <DLabel>Model</DLabel>
-                <select value={form.model} onChange={e => setForm(f => ({ ...f, model: e.target.value }))} style={ds}>
-                  {MODELS.map(m => <option key={m} value={m} style={{ background: '#0D0F1E', color: '#F4F4F6' }}>{m}</option>)}
-                </select>
+                <CustomSelect value={form.model} onChange={v => setForm(f => ({ ...f, model: v }))} options={MODELS.map(m => ({ value: m, label: m }))} />
               </div>
               <div>
                 <DLabel>Icon</DLabel>
-                <select value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} style={ds}>
-                  {ICONS.map(i => <option key={i} value={i} style={{ background: '#0D0F1E', color: '#F4F4F6' }}>{i}</option>)}
-                </select>
+                <CustomSelect value={form.icon} onChange={v => setForm(f => ({ ...f, icon: v }))} options={ICONS.map(i => ({ value: i, label: i }))} />
               </div>
             </div>
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import CustomSelect from '../components/CustomSelect';
 import { supabase } from '../lib/supabase';
 import {
   Plus,
@@ -207,11 +208,11 @@ function OutcomeForm({ initial, onSave, onCancel, language }) {
           />
         </Field>
         <Field label={language === 'pt' ? 'Status' : 'Status'}>
-          <Select value={form.status} onChange={e => set('status', e.target.value)}>
-            {OUTCOME_STATUSES.map(s => (
-              <option key={s.value} value={s.value}>{s.label[language]}</option>
-            ))}
-          </Select>
+          <CustomSelect
+            value={form.status}
+            onChange={v => set('status', v)}
+            options={OUTCOME_STATUSES.map(s => ({ value: s.value, label: s.label[language] }))}
+          />
         </Field>
         <Field label={language === 'pt' ? 'Métrica de sucesso' : 'Success metric'}>
           <Input
