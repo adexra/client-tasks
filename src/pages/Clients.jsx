@@ -37,7 +37,8 @@ export default function Clients() {
   }, []);
 
   const filtered = clients.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchesSearch = c.name.toLowerCase().includes(q) || (c.business_name || '').toLowerCase().includes(q);
     const matchesFilter = filter === 'all' || c.status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -115,6 +116,9 @@ export default function Clients() {
 
                       <div className="space-y-2">
                          <h3 className="text-2xl font-serif transition-colors" style={{ color: '#F4F4F6' }}>{client.name}</h3>
+                         {client.business_name && (
+                           <p className="text-[11px] font-medium" style={{ color: 'rgba(244,244,246,0.45)' }}>{client.business_name}</p>
+                         )}
                          {client.contact_link && (
                            <a
                              href={client.contact_link.startsWith('http') ? client.contact_link : `https://${client.contact_link}`}

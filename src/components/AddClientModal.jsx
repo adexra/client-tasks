@@ -45,7 +45,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
   const { t } = useLanguage();
   const toast = useToast();
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
+    name: '', business_name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
     what_sold: '', contact_link: '', main_delivery: 'none',
     is_recurring: false, recurring_start_date: new Date().toISOString().split('T')[0]
   });
@@ -61,6 +61,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
     if (editClient) {
       setFormData({
         name: editClient.name || '',
+        business_name: editClient.business_name || '',
         email: editClient.email || '',
         phone: editClient.phone || '',
         url: editClient.url || '',
@@ -80,7 +81,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
       setTags(editClient.tags || []);
     } else {
       setFormData({
-        name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
+        name: '', business_name: '', email: '', phone: '', url: '', phase: 'onboarding', revenue: '', currency: 'USD',
         what_sold: '', contact_link: '', main_delivery: 'none',
         is_recurring: false, recurring_start_date: new Date().toISOString().split('T')[0]
       });
@@ -256,6 +257,7 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded, editCli
               <DLabel>{t('project_modal.identity_section')}</DLabel>
               <div className="space-y-4">
                 <MinimalInput label={t('project_modal.name_label')} value={formData.name} onChange={v => setFormData({...formData, name: v})} placeholder={t('project_modal.name_placeholder')} />
+                <MinimalInput label={t('project_modal.business_name_label')} value={formData.business_name} onChange={v => setFormData({...formData, business_name: v})} placeholder={t('project_modal.business_name_placeholder')} />
                 <MinimalInput label={t('project_modal.website_label')} value={formData.url} onChange={v => setFormData({...formData, url: v})} placeholder={t('project_modal.website_placeholder')} />
                 <MinimalInput label={t('project_modal.contact_link_label')} value={formData.contact_link} onChange={v => setFormData({...formData, contact_link: v})} placeholder={t('project_modal.contact_link_placeholder')} />
               </div>
