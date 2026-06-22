@@ -1,6 +1,6 @@
 # Known Issues — Operator OS
 
-Last updated: 2026-06-22 — All sprints complete
+Last updated: 2026-06-22 — QA audit run, 1 new RLS issue found
 
 ---
 
@@ -86,3 +86,25 @@ Last updated: 2026-06-22 — All sprints complete
 ### ISSUE-014 — `Memory.jsx` re-declares `const { data, error }`
 **Severity:** Low
 **Status:** ✅ Fixed — 2026-06-21 (ESLint pass resolved this)
+
+---
+
+## New Issues Found — 2026-06-22 QA Audit
+
+### ISSUE-015 — `expenses` table has RLS still enabled
+**Severity:** High
+**Status:** ⚠️ Open — user must fix
+**Symptom:** Financials page logs `401 Failed to load resource` for every `expenses` query; adding expenses fails silently.
+**Fix required:** Run in Supabase SQL Editor:
+```sql
+ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
+```
+
+### ISSUE-016 — `links` JSONB column missing from `clients` table
+**Severity:** Medium
+**Status:** ⚠️ Open — user must fix
+**Symptom:** Links & Files section in ClientDetail cannot save (column doesn't exist yet).
+**Fix required:** Run in Supabase SQL Editor:
+```sql
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS links JSONB DEFAULT '[]'::jsonb;
+```

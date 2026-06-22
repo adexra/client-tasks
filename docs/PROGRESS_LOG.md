@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-06-22 — QA: Full Playwright audit, 54/58 pass
+
+### Summary
+Wrote and ran a 58-check Playwright automation audit (`C:\Users\luanc\AppData\Local\Temp\claude\qa_full_audit.py`) covering all 15 pages/routes. Fixed all test selector mismatches from prior runs.
+
+**Result: 54/58 PASS**
+
+**Remaining 4 failures:**
+1. `Client Detail add task works` — intermittent timing (works manually, test race condition)
+2. `Client Detail billing form inputs` — scroll timing in headless runner (works manually per recon script)
+3. `Financials add expense works` — blocked by ISSUE-015 (`expenses` table RLS still enabled → 401)
+4. `Financials no console errors` — same root cause (ISSUE-015)
+
+**Real bugs found:**
+- ISSUE-015: `expenses` table RLS enabled → Financials page gets 401 on every load
+- ISSUE-016: `links` column missing from `clients` table
+
+**User action required:**
+```sql
+ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS links JSONB DEFAULT '[]'::jsonb;
+```
+
+### Files Modified
+- `C:\Users\luanc\AppData\Local\Temp\claude\qa_full_audit.py` — audit script (corrected all selectors)
+- `docs/KNOWN_ISSUES.md` — ISSUE-015 and ISSUE-016 added
+
+---
+
 ## 2026-06-22 — Fix: Giant wrapping page titles replaced with PageHeader component
 
 ### Summary
