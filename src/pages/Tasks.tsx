@@ -3453,7 +3453,9 @@ export default function TarefasPage() {
                     <div className="w-8 h-8 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
                       <Rocket size={15} className="text-violet-400" />
                     </div>
-                    <p className="text-sm font-bold text-slate-100">Sprints Ativos</p>
+                    <p className="text-sm font-bold text-slate-100">
+                      {new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" }).replace(/^\w/, c => c.toUpperCase())} — Sprints Ativos
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Progresso</p>
@@ -3464,6 +3466,19 @@ export default function TarefasPage() {
                     </p>
                   </div>
                 </div>
+                {/* Month progress bar */}
+                {(() => {
+                  const totalTasks = customSprints.reduce((sum, s) => sum + s.tasks.length, 0);
+                  const doneTasks = customSprints.reduce((sum, s) => sum + s.done, 0);
+                  const pct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+                  return (
+                    <div className="px-5 pb-3">
+                      <div className="h-1.5 rounded-full overflow-hidden bg-white/[0.06]">
+                        <div className="h-full rounded-full bg-[#09a1e5] transition-all duration-700" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="flex gap-3 px-4 pb-4 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
                   {customSprints.map(s => {
                     const objKey = `frente:${s.label}`;
