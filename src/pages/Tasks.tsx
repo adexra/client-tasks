@@ -3350,11 +3350,42 @@ export default function TarefasPage() {
             {/* RIGHT — Sprint carousel */}
             {!foco && (
               <div className={`${cc.panel} overflow-hidden flex flex-col`}>
-                {mapaMeses.length === 0 ? (
+                {mapaMeses.length === 0 && customSprints.length === 0 ? (
                   <div className="flex flex-col items-center justify-center flex-1 py-10 gap-3">
                     <Rocket size={28} className="text-slate-600" />
                     <p className="text-xs text-slate-500">Nenhum sprint definido ainda</p>
                     <button onClick={() => navigate("/tasks/mapa")} className="text-xs text-[#09a1e5] hover:underline">Ver mapa completo →</button>
+                  </div>
+                ) : mapaMeses.length === 0 && customSprints.length > 0 ? (
+                  /* Custom sprints only — show as activatable list */
+                  <div className="flex flex-col flex-1">
+                    <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-2">
+                      <Rocket size={13} className="text-violet-400 shrink-0" />
+                      <p className="text-sm font-bold text-slate-100 flex-1">Sprints do mês</p>
+                      <button onClick={() => navigate("/tasks/mapa")} className="text-[10px] text-slate-500 hover:text-[#09a1e5] transition-colors">Ver mapa →</button>
+                    </div>
+                    <div className="p-3 space-y-2 overflow-y-auto flex-1">
+                      {customSprints.map(s => {
+                        const objKey = `frente:${s.label}`;
+                        const clientName = objectives[objKey]?.client_name ?? "";
+                        const isDone = s.pct === 100;
+                        return (
+                          <button key={s.label} onClick={() => navigate("/tasks/sprint")}
+                            className={`w-full text-left rounded-xl p-3 border transition-all hover:border-violet-500/40 ${isDone ? "bg-emerald-500/5 border-emerald-500/20" : "bg-slate-900/60 border-slate-800"}`}>
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <p className="text-xs font-bold text-slate-100 truncate">{s.label}</p>
+                              {isDone && <span className="text-[9px] font-bold text-emerald-400 shrink-0">✓ Concluída</span>}
+                            </div>
+                            {clientName && <p className="text-[10px] text-[#09a1e5] mb-1.5 truncate">{clientName}</p>}
+                            <div className="h-1.5 rounded-full overflow-hidden bg-white/[0.06]">
+                              <div className={`h-full rounded-full transition-all duration-700 ${isDone ? "bg-emerald-500" : "bg-violet-500"}`}
+                                style={{ width: `${s.pct}%` }} />
+                            </div>
+                            <p className={`${mono.className} text-[10px] text-slate-500 mt-1`}>{s.done}/{s.tasks.length} · {s.pct}%</p>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : (() => {
                   const idx = Math.min(carouselMonthIdx, mapaMeses.length - 1);
