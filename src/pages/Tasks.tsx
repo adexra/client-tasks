@@ -2727,7 +2727,8 @@ export default function TarefasPage() {
   const bloqueados = live.filter(t => t.execution_status === "blocked");
   const atrasadas = live.filter(t => t.data_foco && t.data_foco < todayStr() && !["done", "archived"].includes(t.execution_status));
   // A task belongs to a sprint if it has planning_bucket=sprint OR has a projeto with a sprint label.
-  const sprintTasks = live.filter(t => t.planning_bucket === "sprint" || /sprint\s*\d+/i.test((t.projeto ?? "").split(" / ")[0] ?? ""));
+  // Sprint tasks: explicitly in sprint bucket, OR have any projeto label set (custom sprint names like "Ativar Bot")
+  const sprintTasks = live.filter(t => t.planning_bucket === "sprint" || !!(t.projeto?.trim()));
   const sprintDone = sprintTasks.filter(t => t.execution_status === "done").length;
   const sprintBlocked = sprintTasks.filter(t => t.execution_status === "blocked").length;
   const sprintPct = sprintTasks.length > 0 ? Math.round((sprintDone / sprintTasks.length) * 100) : 0;
@@ -2912,6 +2913,22 @@ export default function TarefasPage() {
       return { ...month, sprints: activeSprints, total, done, pct };
     }).filter(m => m.sprints.length > 0);
   }, [live, ALL_SPRINT_NUMS, monthKeyForSprint, ALL_MONTHS]);
+
+  // Custom sprints: tasks with a projeto label that has no "Sprint N" number
+  const customSprints = useMemo(() => {
+    const map = new Map<string, ExtendedTask[]>();
+    for (const t of live) {
+      const label = (t.projeto ?? "").split(" / ")[0]?.trim();
+      if (!label) continue;
+      if (/sprint\s*\d+/i.test(label)) continue; // numbered sprint handled by mapaMeses
+      if (!map.has(label)) map.set(label, []);
+      map.get(label)!.push(t);
+    }
+    return Array.from(map.entries()).map(([label, tasks]) => {
+      const done = tasks.filter(t => t.execution_status === "done").length;
+      return { n: -1, label, tasks, done, pct: tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0 };
+    });
+  }, [live]);
 
   // Histórico/Evidências: tarefas concluídas/arquivadas, mais recentes primeiro
   const historico = useMemo(() => {
@@ -3424,8 +3441,24 @@ export default function TarefasPage() {
           </div>
         ) : view === "mapa" ? (
           <div className="space-y-4">
-            {mapaMeses.length === 0 && (
+            {mapaMeses.length === 0 && customSprints.length === 0 && (
               <p className="text-sm text-slate-300 py-8 text-center">Nenhuma tarefa com sprint definida ainda.</p>
+            )}
+            {/* Custom (non-numbered) sprints */}
+            {customSprints.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-slate-300 px-1 mb-2 uppercase tracking-wide">Sprints ativos</p>
+                {customSprints.map(s => {
+                  const objKey = `frente:${s.label}`;
+                  return (
+                    <TaskGroupSection key={s.label} name={s.label} tasks={s.tasks}
+                      onEdit={setEditTask} onMove={applyMove} onSave={handleSave}
+                      defaultOpen TaskRowComponent={TaskRow}
+                      sprintMeta={{ sprintNome: s.label, objective: objectives[objKey]?.objetivo ?? "", clientName: objectives[objKey]?.client_name ?? "", projectName: objectives[objKey]?.project_name ?? "", allTasks: tasks, onSaveObjective: text => saveObjective("frente", s.label, text), onSaveMeta: meta => saveMeta("frente", s.label, meta) }}
+                    />
+                  );
+                })}
+              </div>
             )}
             <p className="text-[11px] text-slate-400 px-1">Arraste um card de sprint para outro mês para reorganizar o roadmap.</p>
             <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={onDragStart} onDragEnd={onMapaDragEnd}>
