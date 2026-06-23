@@ -1,19 +1,25 @@
 # Known Issues — Operator OS
 
-Last updated: 2026-06-22 — Tasks system cloned, 2 new pending actions added
+Last updated: 2026-06-23 — Tasks + rewards system complete
 
 ---
 
 ## Pending User Actions
 
-### ISSUE-017 — Migration 008 not yet run in Supabase
-**Severity:** High — Tasks page will fail to load tasks without sprint columns
-**Status:** ⏳ Pending — run `supabase/migrations/008_tasks_sprint_system.sql` in Supabase SQL editor
-**What it adds:** planning_bucket, execution_status, order_index, task_artifacts table, roadmap_objectives, weekly_rituals, move_task RPC
-
 ### ISSUE-018 — `task-media` storage bucket not yet created
 **Severity:** Low — Tasks load fine; only image uploads in RichTextEditor will fail
 **Status:** ⏳ Pending — create public bucket named `task-media` in Supabase Storage
+
+### ISSUE-019 — Reward Budget not auto-funded from Financials
+**Severity:** Low — Rewards page shows R$0 budget until manually funded
+**Status:** ⏳ Pending — wire `fundRewardBudget()` call when payment marked as paid in Financials page
+
+### ISSUE-020 — Skill trees not built (Phase 2)
+**Severity:** Low — Mentioned in REWARDS_SYSTEM.md but not implemented
+**Status:** ⏳ Future sprint
+
+### ISSUE-017 — Migration 008
+**Status:** ✅ Fixed — 2026-06-22 (user ran migration)
 
 ---
 

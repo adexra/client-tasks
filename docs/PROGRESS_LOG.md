@@ -2,6 +2,52 @@
 
 ---
 
+## 2026-06-23 — Tasks System Full Build + Rewards System
+
+### Summary
+Major build session covering the full tasks command center, sprint system, and rewards game layer.
+
+**Tasks System — completed:**
+- Sprint view: custom-named sprints ("Ativar Bot", "Pre-Onboard") now show in Sprint + Mapa do mês
+- Mapa do mês: horizontal scrollable card strip per month (matches reference design)
+- TaskGroupSection component: unified CategorySection + ObjetivoSection (one component, both views)
+- ObjectiveEditor: extracted to `src/components/ObjectiveEditor.tsx`
+- Sprint activate/deactivate toggle on all sprint cards
+- Client + project per sprint: saved in `roadmap_objectives.client_name / project_name`
+- CustomSelect dropdowns for client/project selection (no free-text)
+- Sprint focus filter: clicking sprint on Hoje right panel filters the focus list
+- FRONTES updated: Operação → WhatsApp Bots
+- WeeklyRitualsBanner: amber accent bar, distinct background (priority feel without warning)
+- Hoje right panel: shows custom sprints when no numbered sprints exist
+- Resultados page (`/results`): artifact/evidence browser
+
+**Rewards System — completed:**
+- `src/lib/rewards.ts`: calcXp(), xpToCoins(), all DB helpers, freebie drops
+- `src/pages/Rewards.tsx`: full shop UI (balance strip, tier grid, freebie claims, history)
+- `supabase/migrations/010_rewards_system.sql`: effort_minutes/value_usd/complexity on tasks + rewards/redemptions/freebies/reward_budget_log tables + 30 seeded rewards
+- New XP formula: Base XP × Value × Priority × Complexity (falls back to legacy for old tasks)
+- Task form: Esforço, Valor (USD), Complexidade fields added
+- `/rewards` route + nav link
+- Hoje teaser: real XP/Coins count, links to shop, freebie badge when unclaimed
+
+**Bugs fixed:**
+- RLS disabled on: weekly_rituals, ritual_completions, roadmap_objectives, rewards, reward_redemptions, freebies, reward_budget_log
+- tasks.title NOT NULL on insert (migration 004 required both titulo and title)
+- JetBrains_Mono leftover crash in TasksNew
+- SprintAssignPanel wasn't setting planning_bucket=sprint
+- NaN in XP calc (null urgencia/prioridade on old tasks)
+- Empty sprint page (sprintTasks now includes tasks with projeto set)
+- Mapa do mês broken by dnd-kit SortableContext outside DndContext
+
+**Migrations run:**
+- 008: sprint system (planning_bucket, execution_status, task_artifacts, move_task RPC)
+- 009: client_name/project_name on roadmap_objectives
+- 010: rewards system tables + new task XP fields
+
+**Build status:** ✅ Clean (2972 modules, 0 errors, commit 8d4be2c)
+
+---
+
 ## 2026-06-22 — Tasks Command Center: Cloned from MoveOn tarefas system
 
 ### Summary
