@@ -2132,11 +2132,12 @@ function SprintMapCard({ s, isActive, isDone, statusLabel, statusColor, subtitle
 
 // ─── Listagem de todos os sprints (aba Sprint → "Todos os sprints") ────────────
 
-function AllSprintsCard({ s, isActive, isDone, onActivate, onEdit, onMove, onSave }: {
+function AllSprintsCard({ s, isActive, isDone, onActivate, onDeactivate, onEdit, onMove, onSave }: {
   s: { n: number; label: string; tasks: ExtendedTask[]; done: number; pct: number; month: string };
   isActive: boolean;
   isDone: boolean;
   onActivate: () => void;
+  onDeactivate: () => void;
   onEdit: (task: ExtendedTask) => void;
   onMove: (id: string, col: ColumnId) => void;
   onSave: (id: string, patch: Partial<Task>) => void;
@@ -2154,14 +2155,14 @@ function AllSprintsCard({ s, isActive, isDone, onActivate, onEdit, onMove, onSav
           <p className="text-sm font-bold text-slate-100 truncate">{s.label}</p>
           <p className={`${mono.className} text-[10px] text-slate-500`}>{s.month} · {s.done}/{s.tasks.length} · {s.pct}% · {pending.length} pendente{pending.length !== 1 ? "s" : ""}</p>
         </div>
-        {isActive
-          ? <span className="text-[9px] font-bold px-2 py-1 rounded-full bg-[#09a1e5]/20 text-[#09a1e5] shrink-0">ATIVA</span>
-          : (
-            <span onClick={e => { e.stopPropagation(); onActivate(); }}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-violet-500/10 border border-violet-500/30 text-violet-300 hover:bg-violet-500/20 transition-colors shrink-0">
-              <Rocket size={11} /> Ativar
-            </span>
-          )}
+        <span onClick={e => { e.stopPropagation(); isActive ? onDeactivate() : onActivate(); }}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all shrink-0 ${
+            isActive
+              ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5] hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400"
+              : "bg-violet-500/10 border-violet-500/30 text-violet-300 hover:bg-violet-500/20"
+          }`}>
+          {isActive ? <><CheckCircle2 size={11} /> Ativa</> : <><Rocket size={11} /> Ativar</>}
+        </span>
         <ChevronRight size={15} className={`shrink-0 text-slate-400 transition-transform ${open ? "rotate-90" : ""}`} />
       </button>
       {open && (
@@ -2597,6 +2598,14 @@ export default function TarefasPage() {
       return u ? { ...t, ...u.patch } : t;
     }));
     await Promise.all(updates.map(u => updateTask(u.id, u.patch as Parameters<typeof updateTask>[1])));
+  }
+
+  async function deactivateSprint(label: string) {
+    const toDeactivate = sprintTasks.filter(t => (t.projeto ?? "").split(" / ")[0]?.trim() === label && !["done","archived"].includes(t.execution_status));
+    if (toDeactivate.length === 0) return;
+    const patch = { planning_bucket: "backlog" as const };
+    setTasks(prev => prev.map(t => toDeactivate.find(d => d.id === t.id) ? { ...t, ...patch } : t));
+    await Promise.all(toDeactivate.map(t => updateTask(t.id, patch)));
   }
 
   /** Renomeia um grupo de backlog (prefixo "Sprint N — ..." ou "Misc — ...") reescrevendo o `projeto` de todas as tarefas do grupo. */
@@ -3823,6 +3832,9 @@ export default function TarefasPage() {
                         allTasks: tasks,
                         onSaveObjective: text => saveObjective("frente", f.name, text),
                         onSaveMeta: meta => saveMeta("frente", f.name, meta),
+                        isActive: f.tasks.some(t => t.planning_bucket === "sprint"),
+                        onActivate: () => activateSprint(f.name, f.tasks),
+                        onDeactivate: () => deactivateSprint(f.name),
                       }}
                     />
                   ))
@@ -3836,6 +3848,7 @@ export default function TarefasPage() {
                       return (
                         <AllSprintsCard key={s.label} s={s} isActive={isActive} isDone={isDone}
                           onActivate={() => activateSprint(s.label, s.tasks)}
+                          onDeactivate={() => deactivateSprint(s.label)}
                           onEdit={setEditTask} onMove={applyMove} onSave={handleSave} />
                       );
                     })}

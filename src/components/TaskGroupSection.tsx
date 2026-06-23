@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
   ChevronDown, ChevronUp, Calendar, CheckCircle2,
-  AlertTriangle, GitBranch, Pencil, X,
+  AlertTriangle, GitBranch, Pencil, X, Rocket,
 } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Task } from "../lib/tasks";
@@ -44,6 +44,9 @@ export interface SprintMeta {
   allTasks: Task[];
   onSaveObjective: (text: string) => void;
   onSaveMeta: (meta: { client_name?: string; project_name?: string }) => void;
+  isActive?: boolean;
+  onActivate?: () => void;
+  onDeactivate?: () => void;
 }
 
 export interface TaskGroupSectionProps {
@@ -64,6 +67,9 @@ export default function TaskGroupSection({
   draggable, defaultOpen = true, icon = "📌",
   sprintMeta, TaskRowComponent: TaskRow,
 }: TaskGroupSectionProps) {
+  const isActive = sprintMeta?.isActive;
+  const onActivate = sprintMeta?.onActivate;
+  const onDeactivate = sprintMeta?.onDeactivate;
   const [open, setOpen] = useState(defaultOpen);
 
   // Sprint-only state
@@ -222,17 +228,31 @@ export default function TaskGroupSection({
                     </button>
                   ))}
                 </div>
-                {active > 0 && (
-                  <button type="button"
-                    onClick={() => {
-                      if (!confirm(`Concluir todas as ${active} tarefas abertas deste sprint?`)) return;
-                      tasks.filter(t => !["done", "archived"].includes(t.execution_status))
-                        .forEach(t => onSave(t.id, { execution_status: "done", concluido_em: new Date().toISOString() } as Partial<Task>));
-                    }}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all ml-auto">
-                    <CheckCircle2 size={11} /> Concluir sprint
-                  </button>
-                )}
+                <div className="flex items-center gap-1.5 ml-auto">
+                  {/* Activate / deactivate toggle */}
+                  {(onActivate || onDeactivate) && (
+                    <button type="button"
+                      onClick={() => isActive ? onDeactivate?.() : onActivate?.()}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all ${
+                        isActive
+                          ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5] hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400"
+                          : "bg-violet-500/10 border-violet-500/30 text-violet-300 hover:bg-violet-500/20"
+                      }`}>
+                      {isActive ? <><CheckCircle2 size={11} /> Ativa</> : <><Rocket size={11} /> Ativar</>}
+                    </button>
+                  )}
+                  {active > 0 && (
+                    <button type="button"
+                      onClick={() => {
+                        if (!confirm(`Concluir todas as ${active} tarefas abertas deste sprint?`)) return;
+                        tasks.filter(t => !["done", "archived"].includes(t.execution_status))
+                          .forEach(t => onSave(t.id, { execution_status: "done", concluido_em: new Date().toISOString() } as Partial<Task>));
+                      }}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all">
+                      <CheckCircle2 size={11} /> Concluir
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Client / project selector — only shown when editing */}
