@@ -27,7 +27,7 @@ interface ParsedTask {
   done_criteria?: string | null;
 }
 
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const mono = { className: "font-mono" };
 
 const PRIO_LABELS: Record<number, string> = { 1: "Baixa", 2: "Média", 3: "Alta" };
 const URG_LABELS:  Record<number, string> = { 1: "Pode esperar 🟢", 2: "Logo 🟡", 3: "Urgente 🔴" };
@@ -309,7 +309,7 @@ export default function NovaTarefaPage() {
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <Link href="/admin/tarefas"
+          <Link to="/tasks/hoje"
             className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-colors shrink-0 shadow-sm">
             <ArrowLeft size={16} />
           </Link>
