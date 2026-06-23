@@ -3059,7 +3059,8 @@ export default function TarefasPage() {
   const focoHoje = live.filter(t => getColumnId(t) === "today");
   const bloqueados = live.filter(t => t.execution_status === "blocked");
   const atrasadas = live.filter(t => t.data_foco && t.data_foco < todayStr() && !["done", "archived"].includes(t.execution_status));
-  const sprintTasks = live.filter(t => t.planning_bucket === "sprint");
+  // A task belongs to a sprint if it has planning_bucket=sprint OR has a projeto with a sprint label.
+  const sprintTasks = live.filter(t => t.planning_bucket === "sprint" || /sprint\s*\d+/i.test((t.projeto ?? "").split(" / ")[0] ?? ""));
   const sprintDone = sprintTasks.filter(t => t.execution_status === "done").length;
   const sprintBlocked = sprintTasks.filter(t => t.execution_status === "blocked").length;
   const sprintPct = sprintTasks.length > 0 ? Math.round((sprintDone / sprintTasks.length) * 100) : 0;
@@ -3929,7 +3930,7 @@ export default function TarefasPage() {
                 <SprintAssignPanel
                   tasks={unassigned}
                   existingLabels={existingLabels}
-                  onAssign={(ids, label) => ids.forEach(id => handleSave(id, { projeto: label }))}
+                  onAssign={(ids, label) => ids.forEach(id => handleSave(id, { projeto: label, planning_bucket: "sprint" }))}
                 />
               );
             })()}
