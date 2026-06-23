@@ -2460,6 +2460,7 @@ export default function TarefasPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deadlineOnly, setDeadlineOnly] = useState(false);
+  const [equityOpen, setEquityOpen] = useState(false);
   const [editTask, setEditTask] = useState<ExtendedTask | null>(null);
   const [editTaskTab, setEditTaskTab] = useState<"missao" | "tarefas" | "resultado">("missao");
 
@@ -3200,23 +3201,33 @@ export default function TarefasPage() {
           </div>
         )}
 
-        {/* Equity Readiness — medidor simbólico de impacto acumulado */}
-        <div className={`${cc.panel} p-4 ${foco || view !== "hoje" ? "hidden" : ""}`}>
-          <div className="flex items-center justify-between mb-3 flex-wrap gap-1">
-            <p className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-              <Sparkles size={15} className="text-amber-400" /> Equity Readiness
-            </p>
-            <span className={`${mono.className} text-xs font-bold text-slate-400`}>
-              {equity.xpEarned}/{equity.xpTotal} Impact XP · {equity.pct}%
-            </span>
+        {/* Equity Readiness — accordion */}
+        {!foco && view === "hoje" && (
+          <div className={cc.panel}>
+            <button onClick={() => setEquityOpen(o => !o)}
+              className="w-full flex items-center justify-between px-4 py-3 text-left">
+              <span className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+                <Sparkles size={15} className="text-amber-400" /> Equity Readiness
+              </span>
+              <div className="flex items-center gap-2">
+                <span className={`${mono.className} text-xs font-bold text-slate-400`}>
+                  {equity.xpEarned.toLocaleString("pt-BR")} XP · {equity.pct}%
+                </span>
+                <ChevronDown size={14} className={`text-slate-500 transition-transform duration-200 ${equityOpen ? "rotate-180" : ""}`} />
+              </div>
+            </button>
+            {equityOpen && (
+              <div className="px-4 pb-4">
+                <div className="h-2.5 rounded-full overflow-hidden bg-white/[0.06]">
+                  <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-[#09a1e5] transition-all duration-700" style={{ width: `${equity.pct}%` }} />
+                </div>
+                <p className="text-xs text-slate-500 mt-2.5">
+                  Medidor simbólico de impacto acumulado (entregas concluídas + evidências), não é cálculo legal de equity.
+                </p>
+              </div>
+            )}
           </div>
-          <div className="h-2.5 rounded-full overflow-hidden bg-white/[0.06]">
-            <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-[#09a1e5] transition-all duration-700" style={{ width: `${equity.pct}%` }} />
-          </div>
-          <p className="text-xs text-slate-500 mt-2.5">
-            Medidor simbólico de impacto acumulado (entregas concluídas + evidências), não é cálculo legal de equity.
-          </p>
-        </div>
+        )}
 
         {/* Filters */}
         <div className={`flex flex-wrap gap-2 ${foco ? "hidden" : ""}`}>
