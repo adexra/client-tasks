@@ -2281,6 +2281,7 @@ export default function TarefasPage() {
   const { tab } = useParams<{ tab: string }>();
   const view = (tab as "hoje" | "mapa" | "sprint" | "backlog" | "historico" | "avancado") ?? "hoje";
   const [selectedFronte, setSelectedFronte] = useState<FronteKey | null>(null);
+  const [selectedSprint, setSelectedSprint] = useState<string | null>(null);
   const [carouselMonthIdx, setCarouselMonthIdx] = useState(0);
   const [avancadoView, setAvancadoView] = useState<"kanban" | "tabela">("kanban");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -2856,11 +2857,17 @@ export default function TarefasPage() {
   const equity = useMemo(() => getEquityReadiness(live), [live]);
 
   const focoOrdenado = [...focoHoje].filter(t => t.execution_status !== "done").sort((a, b) => score(b) - score(a));
-  const missaoPrincipal = top3[0] ?? null;
-  const missoesSecundarias = top3.slice(1, FOCUS_LIMIT_TODAY);
+
+  // When a sprint is selected from the right panel, show its tasks as the focus list
+  const sprintFocusTasks = selectedSprint
+    ? live.filter(t => (t.projeto ?? "").split(" / ")[0]?.trim() === selectedSprint && !["done","archived"].includes(t.execution_status)).sort((a, b) => score(b) - score(a))
+    : null;
+
+  const missaoPrincipal = (sprintFocusTasks ?? top3)[0] ?? null;
+  const missoesSecundarias = (sprintFocusTasks ?? top3).slice(1, FOCUS_LIMIT_TODAY);
   // Tarefas adicionadas manualmente para hoje (fora do sprint/top3) — exibidas abaixo em destaque roxo.
   const focoBaseIds = new Set([missaoPrincipal, ...missoesSecundarias].filter((t): t is ExtendedTask => !!t).map(t => t.id));
-  const extrasHoje = focoOrdenado.filter(t => !focoBaseIds.has(t.id));
+  const extrasHoje = sprintFocusTasks ? [] : focoOrdenado.filter(t => !focoBaseIds.has(t.id));
   const missoesHoje = [missaoPrincipal, ...missoesSecundarias, ...extrasHoje].filter((t): t is ExtendedTask => !!t);
   const missoesConcluidas = missoesHoje.filter(t => t.execution_status === "done").length;
   const xpPossivelHoje = missoesHoje.reduce((sum, t) => sum + getXp(t), 0);
@@ -3242,7 +3249,15 @@ export default function TarefasPage() {
                 <div className="w-8 h-8 rounded-xl bg-[#09a1e5]/10 border border-[#09a1e5]/20 flex items-center justify-center shrink-0">
                   <Target size={15} className="text-[#09a1e5]" />
                 </div>
-                <p className="text-sm font-bold text-slate-100">Foco de Hoje</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-bold text-slate-100">Foco de Hoje</p>
+                  {selectedSprint && (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-violet-300 bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 rounded-full">
+                      🚀 {selectedSprint}
+                      <button onClick={() => setSelectedSprint(null)} className="text-violet-400 hover:text-white ml-0.5">×</button>
+                    </span>
+                  )}
+                </div>
                 {missoesHoje.length > 0 && (
                   <span className={`${mono.className} ml-auto text-[11px] font-bold text-slate-400`}>
                     {missoesConcluidas}/{missoesHoje.length} · {xpPossivelHoje} XP possível
@@ -3370,8 +3385,8 @@ export default function TarefasPage() {
                         const clientName = objectives[objKey]?.client_name ?? "";
                         const isDone = s.pct === 100;
                         return (
-                          <button key={s.label} onClick={() => navigate("/tasks/sprint")}
-                            className={`w-full text-left rounded-xl p-3 border transition-all hover:border-violet-500/40 ${isDone ? "bg-emerald-500/5 border-emerald-500/20" : "bg-slate-900/60 border-slate-800"}`}>
+                          <button key={s.label} onClick={() => setSelectedSprint(prev => prev === s.label ? null : s.label)}
+                            className={`w-full text-left rounded-xl p-3 border transition-all ${selectedSprint === s.label ? "border-violet-500/60 bg-violet-500/10" : isDone ? "bg-emerald-500/5 border-emerald-500/20 hover:border-violet-500/40" : "bg-slate-900/60 border-slate-800 hover:border-violet-500/40"}`}>
                             <div className="flex items-center justify-between gap-2 mb-1.5">
                               <p className="text-xs font-bold text-slate-100 truncate">{s.label}</p>
                               {isDone && <span className="text-[9px] font-bold text-emerald-400 shrink-0">✓ Concluída</span>}
