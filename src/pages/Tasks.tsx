@@ -2107,9 +2107,19 @@ function ObjetivoSection({ objetivo, sprintNome, desiredOutcome, tasks, objectiv
       <button className="w-full flex items-center gap-3 px-5 py-4 hover:bg-slate-800/60 transition-colors" onClick={() => setOpen(o => !o)}>
         <span className="text-lg">🎯</span>
         <div className="flex-1 text-left min-w-0">
-          <p className="text-sm font-bold text-slate-100">{objetivo}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-bold text-slate-100">{objetivo}</p>
+            {(() => {
+              const clientNames = Array.from(new Set(tasks.map(t => t.client?.name).filter(Boolean)));
+              return clientNames.length > 0 ? (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
+                  {clientNames.join(", ")}
+                </span>
+              ) : null;
+            })()}
+          </div>
           {desiredOutcome && <p className="text-[11px] text-slate-400 mt-0.5">{desiredOutcome}</p>}
-          <p className="text-[10px] text-violet-300 font-semibold mt-1">🚀 Sprint ativa: {sprintNome}</p>
+          <p className="text-[10px] text-violet-300 font-semibold mt-1">🚀 {sprintNome}</p>
           <div className="flex items-center gap-3 mt-1.5">
             <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden max-w-[160px]">
               <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
@@ -2126,6 +2136,46 @@ function ObjetivoSection({ objetivo, sprintNome, desiredOutcome, tasks, objectiv
 
       {open && (
         <div className="px-4 pb-4 space-y-3 border-t border-slate-800 pt-3">
+          {/* Sprint-level controls */}
+          <div className="flex flex-wrap items-center gap-2 px-1">
+            {/* Due date */}
+            <div className="flex items-center gap-1.5">
+              <Calendar size={11} className="text-slate-500" />
+              <input type="date"
+                defaultValue={tasks.find(t => t.semana_alvo)?.semana_alvo ?? ""}
+                onChange={e => tasks.forEach(t => onSave(t.id, { semana_alvo: e.target.value || null }))}
+                className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-slate-300 outline-none focus:border-[#09a1e5] cursor-pointer"
+                title="Data de entrega do sprint" />
+            </div>
+            {/* Priority */}
+            <div className="flex items-center gap-1">
+              {([1,2,3] as const).map(v => (
+                <button key={v} type="button"
+                  onClick={() => tasks.filter(t => !["done","archived"].includes(t.execution_status)).forEach(t => onSave(t.id, { prioridade: v }))}
+                  className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all ${
+                    tasks.some(t => t.prioridade === v)
+                      ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5]"
+                      : "bg-slate-900/60 border-slate-800 text-slate-500 hover:text-slate-300"
+                  }`}
+                  title={`Prioridade ${v} para todas as tarefas abertas`}>
+                  P{v}
+                </button>
+              ))}
+            </div>
+            {/* Mark all done */}
+            {active > 0 && (
+              <button type="button"
+                onClick={() => {
+                  if (!confirm(`Concluir todas as ${active} tarefas abertas deste sprint?`)) return;
+                  tasks.filter(t => !["done","archived"].includes(t.execution_status))
+                    .forEach(t => onSave(t.id, { execution_status: "done", concluido_em: new Date().toISOString() } as Partial<Task>));
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all ml-auto">
+                <CheckCircle2 size={11} /> Concluir sprint
+              </button>
+            )}
+          </div>
+
           {oversized && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-semibold">
               <AlertTriangle size={13} className="shrink-0" />
