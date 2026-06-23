@@ -50,7 +50,7 @@ const FRENTE_ICONS: Record<FronteKey, LucideIcon> = {
   instagram:       Camera,
   desenvolvimento: Code2,
   anuncios:        Megaphone,
-  admin_dash:      BarChart3,
+  operacao:        BarChart3,
   automation:      Zap,
   site:            Globe,
   marketing:       Rocket,

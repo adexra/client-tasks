@@ -33,7 +33,7 @@ const PRIO_LABELS: Record<number, string> = { 1: "Baixa", 2: "Média", 3: "Alta"
 const URG_LABELS:  Record<number, string> = { 1: "Pode esperar 🟢", 2: "Logo 🟡", 3: "Urgente 🔴" };
 
 const FRENTE_ICONS: Record<FronteKey, string> = {
-  instagram: "📸", desenvolvimento: "💻", anuncios: "🎯", admin_dash: "🗄️",
+  instagram: "📸", desenvolvimento: "💻", anuncios: "🎯", operacao: "⚙️",
   automation: "🤖", site: "🌐", marketing: "📣", loja: "🛍️",
 };
 const IMPACTO_LABELS: Record<number, string> = { 1: "Baixo", 2: "Médio", 3: "Alto" };
@@ -379,6 +379,23 @@ export default function NovaTarefaPage() {
             </div>
           )}
 
+          {form.destino === "sprint" && (
+            <div>
+              <label className={label}><Flag size={10} className="inline mr-1" />Sprint / Projeto <span className="text-slate-600 normal-case font-normal">(ex: Sprint 3 — Desenvolvimento)</span></label>
+              <input value={form.projeto} onChange={e => setForm(f => ({ ...f, projeto: e.target.value }))}
+                placeholder="Sprint 3 — Desenvolvimento" className={input} />
+              <p className="text-[10px] text-slate-600 mt-1">Use o formato "Sprint N — Frente" para aparecer no Mapa do mês.</p>
+            </div>
+          )}
+
+          {/* Descrição — always visible */}
+          <div>
+            <label className={label}>Descrição</label>
+            <textarea value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
+              rows={2} placeholder="Contexto, o que precisa ser feito…"
+              className={`${input} resize-none`} />
+          </div>
+
           {/* Mais detalhes */}
           <button type="button" onClick={() => setShowAdvanced(s => !s)}
             className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-bold text-slate-500 hover:text-slate-300 transition-colors">
@@ -387,14 +404,7 @@ export default function NovaTarefaPage() {
 
           {showAdvanced && (
             <div className="space-y-5 pt-1 border-t border-slate-800">
-              <div className="pt-4">
-                <label className={label}>Descrição</label>
-                <textarea value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
-                  rows={3} placeholder="Contexto, detalhes, o que precisa ser feito…"
-                  className={`${input} resize-none`} />
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 pt-4">
                 {([
                   ["prioridade", "Prioridade", PRIO_LABELS] as const,
                   ["urgencia",   "Urgência",   { 1: "U1", 2: "U2", 3: "U3" }] as const,
@@ -412,12 +422,6 @@ export default function NovaTarefaPage() {
                     </div>
                   </div>
                 ))}
-              </div>
-
-              <div>
-                <label className={label}>Projeto / Sprint</label>
-                <input value={form.projeto} onChange={e => setForm(f => ({ ...f, projeto: e.target.value }))}
-                  placeholder="Ex: Sprint 1 — Diagnóstico" className={input} />
               </div>
 
               <div>

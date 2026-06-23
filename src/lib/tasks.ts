@@ -341,7 +341,7 @@ export const FRONTES = {
   instagram:      { name: "Instagram",      color: "#e1306c", keywords: ["instagram", "conteúdo em escala", "bio, fixados", "instagram/conteúdo"] },
   desenvolvimento: { name: "Desenvolvimento", color: "#6366f1", keywords: ["command center", "admin e banco", "admin/banco", "simplificação da página", "diagnóstico e controle", "fonte da verdade", "arrumar command"] },
   anuncios:       { name: "Anúncios",       color: "#f59e0b", keywords: ["ads focado", "test drive", "conversão e test", "inventário de campanhas", "ads/tracking"] },
-  admin_dash:     { name: "Admin Dash",     color: "#09a1e5", keywords: ["dashboard", "financeiro e margem", "dinheiro, estoque", "mapa da operação", "mapa geral", "governança", "auditoria operacional", "operação e infraestrutura", "criar dashboard", "dashboard/dados", "operação", "estratégia/ceo", "segurança"] },
+  operacao:       { name: "Operação",       color: "#09a1e5", keywords: ["dashboard", "financeiro e margem", "dinheiro, estoque", "mapa da operação", "mapa geral", "governança", "auditoria operacional", "operação e infraestrutura", "criar dashboard", "dashboard/dados", "operação", "estratégia/ceo", "segurança", "admin_dash", "admin dash"] },
   automation:     { name: "Automation",     color: "#10b981", keywords: ["bot", "chatwoot", "melissa", "automação", "recuperar bot", "automações", "bot/chatwoot"] },
   site:           { name: "Site",           color: "#8b5cf6", keywords: ["site/seo", "seo e autoridade", "seo", "auditoria técnica inicial", "landing page"] },
   marketing:      { name: "Marketing",      color: "#f97316", keywords: ["growth e experimentos", "escala e autoridade", "expansão e dependências", "marketing"] },
@@ -351,7 +351,7 @@ export const FRONTES = {
 export type FronteKey = keyof typeof FRONTES;
 
 // automation checked first — "bot" is unambiguous; desenvolvimento last (broad match)
-const FRONTE_ORDER: FronteKey[] = ["automation", "instagram", "anuncios", "admin_dash", "site", "marketing", "loja", "desenvolvimento"];
+const FRONTE_ORDER: FronteKey[] = ["automation", "instagram", "anuncios", "operacao", "site", "marketing", "loja", "desenvolvimento"];
 
 export function getFronte(t: Pick<Task, "projeto" | "objetivo_nome" | "sprint_nome" | "categoria">): FronteKey | null {
   const hay = [t.projeto ?? "", t.objetivo_nome ?? "", t.sprint_nome ?? "", t.categoria ?? ""].join(" ").toLowerCase();
