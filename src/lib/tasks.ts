@@ -138,7 +138,7 @@ export async function updateTask(id: string, patch: Partial<TaskInsert>): Promis
 
 /** Symbolic Impact XP for a task, based on prioridade × urgencia × impacto. */
 export function getXp(t: { urgencia: number; prioridade: number; impacto?: number | null }): number {
-  return t.urgencia * t.prioridade * (t.impacto ?? 1) * 10;
+  return (t.urgencia ?? 1) * (t.prioridade ?? 1) * (t.impacto ?? 1) * 10;
 }
 
 /** Whether a task has an "evidence" trail (verification link or notes). */
