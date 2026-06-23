@@ -51,13 +51,17 @@ ALTER TABLE tasks ADD COLUMN IF NOT EXISTS history JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE tasks ADD COLUMN IF NOT EXISTS parent_task_id UUID REFERENCES tasks(id);
 ALTER TABLE tasks ADD COLUMN IF NOT EXISTS generated_from_audit BOOLEAN DEFAULT false;
 
--- titulo: primary display name (mapped from existing "title" field)
--- We keep both: title (existing) and titulo (new, used by sprint system).
--- On create, set titulo = title if titulo is null.
+-- titulo/descricao: sprint system names (mapped from title/description)
 ALTER TABLE tasks ADD COLUMN IF NOT EXISTS titulo TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS descricao TEXT;
 
--- Backfill titulo from title for existing rows
+-- prioridade: 1-3 priority score (separate from old bucket-based status)
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS prioridade INT DEFAULT 2
+  CHECK (prioridade BETWEEN 1 AND 3);
+
+-- Backfill from existing columns
 UPDATE tasks SET titulo = title WHERE titulo IS NULL AND title IS NOT NULL;
+UPDATE tasks SET descricao = description WHERE descricao IS NULL AND description IS NOT NULL;
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS tasks_planning_bucket_idx ON tasks(planning_bucket);
