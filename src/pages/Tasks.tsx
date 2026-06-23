@@ -2780,17 +2780,18 @@ export default function TarefasPage() {
     const order: string[] = [];
     const map = new Map<string, ExtendedTask[]>();
     for (const t of sprintTasks) {
-      const key = getObjetivoNome(t);
+      // Group by projeto (sprint label) first — preserves user-defined sprint names like "Ativar Bot".
+      // Fall back to getObjetivoNome only when projeto is empty.
+      const key = t.projeto?.trim() || getObjetivoNome(t);
       if (!map.has(key)) { map.set(key, []); order.push(key); }
       map.get(key)!.push(t);
     }
     const groups = order.map(name => {
       const groupTasks = map.get(name)!;
       const pending = groupTasks.filter(t => !["done", "archived"].includes(t.execution_status)).length;
-      const sprintNome = getSprintNome(groupTasks[0]);
+      const sprintNome = groupTasks[0]?.sprint_nome || (t => (t.projeto ?? "").split(" / ")[0]?.trim() || name)(groupTasks[0]);
       return { name, sprintNome, tasks: groupTasks, pending };
     });
-    // Most pending/urgent objetivo first — that's the one shown expanded by default.
     groups.sort((a, b) => b.pending - a.pending);
     return groups;
   }, [sprintTasks]);
@@ -3752,7 +3753,9 @@ export default function TarefasPage() {
                           if (objTasks.length === 0) return null;
                           const sprintNome = getSprintNome(objTasks[0]);
                           const label = sprintNome && sprintNome !== obj ? `${obj} · ${sprintNome}` : obj;
-                          return <TaskGroupSection key={obj} name={label} icon={CATEGORIA_ICONS[obj] ?? "📌"} tasks={objTasks} onEdit={setEditTask} onMove={applyMove} onSave={handleSave} draggable TaskRowComponent={TaskRow} />;
+                          const objKey = `frente:${group.name}`;
+                          return <TaskGroupSection key={obj} name={label} icon={CATEGORIA_ICONS[obj] ?? "📌"} tasks={objTasks} onEdit={setEditTask} onMove={applyMove} onSave={handleSave} draggable TaskRowComponent={TaskRow}
+                            sprintMeta={{ sprintNome: group.name, objective: objectives[objKey]?.objetivo ?? "", clientName: objectives[objKey]?.client_name ?? "", projectName: objectives[objKey]?.project_name ?? "", allTasks: tasks, onSaveObjective: text => saveObjective("frente", group.name, text), onSaveMeta: meta => saveMeta("frente", group.name, meta) }} />;
                         })}
                       </GroupDropZone>
                     );
@@ -3773,7 +3776,9 @@ export default function TarefasPage() {
                     {cats.map((cat: string) => {
                       const catTasks = group.tasks.filter((t: ExtendedTask) => (t.categoria ?? "Outros") === cat);
                       if (catTasks.length === 0) return null;
-                      return <TaskGroupSection key={cat} name={cat} icon={CATEGORIA_ICONS[cat] ?? "📌"} tasks={catTasks} onEdit={setEditTask} onMove={applyMove} onSave={handleSave} draggable TaskRowComponent={TaskRow} />;
+                      const objKey = `frente:${group.name}`;
+                      return <TaskGroupSection key={cat} name={cat} icon={CATEGORIA_ICONS[cat] ?? "📌"} tasks={catTasks} onEdit={setEditTask} onMove={applyMove} onSave={handleSave} draggable TaskRowComponent={TaskRow}
+                        sprintMeta={{ sprintNome: group.name, objective: objectives[objKey]?.objetivo ?? "", clientName: objectives[objKey]?.client_name ?? "", projectName: objectives[objKey]?.project_name ?? "", allTasks: tasks, onSaveObjective: text => saveObjective("frente", group.name, text), onSaveMeta: meta => saveMeta("frente", group.name, meta) }} />;
                     })}
                   </GroupDropZone>
                 );
