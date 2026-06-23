@@ -1,13 +1,15 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ChevronDown, ChevronUp, Calendar, CheckCircle2,
-  AlertTriangle, GitBranch, Save, X, Pencil,
+  AlertTriangle, GitBranch, Pencil, X,
 } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Task } from "../lib/tasks";
 import { updateTask, SPRINT_SIZE_WARNING_THRESHOLD } from "../lib/tasks";
 import type { ColumnId } from "../pages/Tasks";
 import ObjectiveEditor from "./ObjectiveEditor";
+import CustomSelect from "./CustomSelect";
+import { supabase } from "../lib/supabase";
 
 type ExtendedTask = Task;
 
@@ -72,9 +74,22 @@ export default function TaskGroupSection({
   const [editingMeta, setEditingMeta] = useState(false);
   const [draftClient, setDraftClient] = useState(sprintMeta?.clientName ?? "");
   const [draftProject, setDraftProject] = useState(sprintMeta?.projectName ?? "");
+  const [clientOptions, setClientOptions] = useState<{ value: string; label: string }[]>([]);
+  const [projectOptions, setProjectOptions] = useState<{ value: string; label: string }[]>([]);
 
   React.useEffect(() => { setDraftClient(sprintMeta?.clientName ?? ""); }, [sprintMeta?.clientName]);
   React.useEffect(() => { setDraftProject(sprintMeta?.projectName ?? ""); }, [sprintMeta?.projectName]);
+
+  useEffect(() => {
+    if (!sprintMeta) return;
+    supabase.from("clients").select("id, name").order("name").then(({ data }) => {
+      setClientOptions((data ?? []).map(c => ({ value: c.name ?? c.id, label: c.name ?? c.id })));
+    });
+    supabase.from("roadmap_objectives").select("project_name").not("project_name", "is", null).then(({ data }) => {
+      const unique = Array.from(new Set((data ?? []).map(r => r.project_name).filter(Boolean))) as string[];
+      setProjectOptions(unique.map(p => ({ value: p, label: p })));
+    });
+  }, [!!sprintMeta]);
 
   const sprintLabels = useMemo(() => {
     if (!sprintMeta) return [];
@@ -148,17 +163,21 @@ export default function TaskGroupSection({
       <button className="w-full flex items-center gap-3 px-5 py-4 hover:bg-slate-800/60 transition-colors" onClick={() => setOpen(o => !o)}>
         <span className="text-lg">{sprintMeta ? "🎯" : icon}</span>
         <div className="flex-1 text-left min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className={`text-sm ${sprintMeta ? "font-bold" : "font-semibold"} text-slate-100`}>{name}</p>
-            {clientName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#09a1e5]/15 border border-[#09a1e5]/30 text-[#09a1e5]">{clientName}</span>}
-            {projectName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300">{projectName}</span>}
-            {sprintMeta && !clientName && !projectName && (
+          {/* Sprint name — dominant */}
+          <p className={`${sprintMeta ? "text-base font-extrabold" : "text-sm font-semibold"} text-slate-100 leading-tight`}>{name}</p>
+          {/* Client + project — secondary, below the name */}
+          {sprintMeta && (clientName || projectName) ? (
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              {clientName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#09a1e5]/15 border border-[#09a1e5]/30 text-[#09a1e5]">{clientName}</span>}
+              {projectName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300">{projectName}</span>}
               <button type="button" onClick={e => { e.stopPropagation(); setEditingMeta(true); setOpen(true); }}
-                className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">+ cliente / projeto</button>
-            )}
-          </div>
+                className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors"><Pencil size={9} className="inline" /></button>
+            </div>
+          ) : sprintMeta ? (
+            <button type="button" onClick={e => { e.stopPropagation(); setEditingMeta(true); setOpen(true); }}
+              className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors mt-0.5">+ cliente / projeto</button>
+          ) : null}
           {sprintMeta?.desiredOutcome && <p className="text-[11px] text-slate-400 mt-0.5">{sprintMeta.desiredOutcome}</p>}
-          {sprintMeta && <p className="text-[10px] text-violet-300 font-semibold mt-1">🚀 {sprintMeta.sprintNome}</p>}
           <div className="flex items-center gap-3 mt-1.5">
             <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden max-w-[160px]">
               <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
@@ -216,30 +235,34 @@ export default function TaskGroupSection({
                 )}
               </div>
 
-              {/* Client / project inline editor */}
-              {(editingMeta || clientName || projectName) && (
+              {/* Client / project selector — only shown when editing */}
+              {editingMeta && (
                 <div className="flex flex-wrap items-center gap-2 px-1">
-                  {editingMeta ? (
-                    <>
-                      <input value={draftClient} onChange={e => setDraftClient(e.target.value)}
-                        placeholder="Nome do cliente" autoFocus
-                        className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-white placeholder-slate-500 outline-none focus:border-[#09a1e5] w-36" />
-                      <input value={draftProject} onChange={e => setDraftProject(e.target.value)}
-                        placeholder="Nome do projeto"
-                        className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-white placeholder-slate-500 outline-none focus:border-[#09a1e5] w-36" />
-                      <button onClick={() => { sprintMeta.onSaveMeta({ client_name: draftClient, project_name: draftProject }); setEditingMeta(false); }}
-                        className="px-2 py-1 rounded-lg text-[11px] font-bold bg-[#09a1e5]/15 border border-[#09a1e5]/30 text-[#09a1e5] hover:bg-[#09a1e5]/25 transition-all">
-                        <Save size={11} />
-                      </button>
-                      <button onClick={() => setEditingMeta(false)} className="text-[11px] text-slate-500 hover:text-slate-300"><X size={11} /></button>
-                    </>
-                  ) : (
-                    <>
-                      {clientName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#09a1e5]/15 border border-[#09a1e5]/30 text-[#09a1e5]">{clientName}</span>}
-                      {projectName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300">{projectName}</span>}
-                      <button onClick={() => setEditingMeta(true)} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors flex items-center gap-1"><Pencil size={9} /> editar</button>
-                    </>
-                  )}
+                  <CustomSelect
+                    value={draftClient}
+                    onChange={(v: string) => setDraftClient(v)}
+                    options={[{ value: "", label: "Nenhum cliente" }, ...clientOptions]}
+                    placeholder="Cliente…"
+                    style={{ minWidth: 160 }}
+                  />
+                  <CustomSelect
+                    value={draftProject}
+                    onChange={(v: string) => setDraftProject(v)}
+                    options={[
+                      { value: "", label: "Nenhum projeto" },
+                      ...projectOptions,
+                      ...(draftProject && !projectOptions.find(p => p.value === draftProject)
+                        ? [{ value: draftProject, label: draftProject }] : []),
+                    ]}
+                    placeholder="Projeto…"
+                    style={{ minWidth: 160 }}
+                  />
+                  <button onClick={() => { sprintMeta.onSaveMeta({ client_name: draftClient, project_name: draftProject }); setEditingMeta(false); }}
+                    className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[#09a1e5] text-white hover:bg-[#0891d5] transition-all">
+                    Salvar
+                  </button>
+                  <button onClick={() => { setDraftClient(clientName); setDraftProject(projectName); setEditingMeta(false); }}
+                    className="text-[11px] text-slate-500 hover:text-slate-300 flex items-center gap-1"><X size={11} /> Cancelar</button>
                 </div>
               )}
 
