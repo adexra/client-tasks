@@ -3445,20 +3445,57 @@ export default function TarefasPage() {
             {mapaMeses.length === 0 && customSprints.length === 0 && (
               <p className="text-sm text-slate-300 py-8 text-center">Nenhuma tarefa com sprint definida ainda.</p>
             )}
-            {/* Custom (non-numbered) sprints — outside drag context, no dragging between months */}
+            {/* Custom (non-numbered) sprints — horizontal strip */}
             {customSprints.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-[11px] font-bold text-slate-300 px-1 mb-2 uppercase tracking-wide">Sprints ativos</p>
-                {customSprints.map(s => {
-                  const objKey = `frente:${s.label}`;
-                  return (
-                    <TaskGroupSection key={s.label} name={s.label} tasks={s.tasks}
-                      onEdit={setEditTask} onMove={applyMove} onSave={handleSave}
-                      defaultOpen TaskRowComponent={TaskRow}
-                      sprintMeta={{ sprintNome: s.label, objective: objectives[objKey]?.objetivo ?? "", clientName: objectives[objKey]?.client_name ?? "", projectName: objectives[objKey]?.project_name ?? "", allTasks: tasks, onSaveObjective: text => saveObjective("frente", s.label, text), onSaveMeta: meta => saveMeta("frente", s.label, meta) }}
-                    />
-                  );
-                })}
+              <div className={cc.panel}>
+                <div className="px-5 py-4 flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
+                      <Rocket size={15} className="text-violet-400" />
+                    </div>
+                    <p className="text-sm font-bold text-slate-100">Sprints Ativos</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Progresso</p>
+                    <p className="text-2xl font-black text-white">
+                      {customSprints.length > 0
+                        ? Math.round(customSprints.reduce((sum, s) => sum + s.pct, 0) / customSprints.length)
+                        : 0}%
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 px-4 pb-4 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                  {customSprints.map(s => {
+                    const objKey = `frente:${s.label}`;
+                    const clientName = objectives[objKey]?.client_name ?? "";
+                    const projectName = objectives[objKey]?.project_name ?? "";
+                    const isDone = s.pct === 100;
+                    const statusLabel = isDone ? "Concluída" : s.pct > 0 ? "Em andamento" : "Não iniciada";
+                    const statusColor = isDone ? "text-emerald-400" : s.pct > 0 ? "text-[#09a1e5]" : "text-slate-500";
+                    return (
+                      <div key={s.label} className={`shrink-0 w-[150px] ${isDone ? cc.card : cc.card}`}>
+                        <div className="p-3 pt-4">
+                          <p className="text-xs font-bold text-slate-100 truncate text-center">{s.label}</p>
+                          {clientName && <p className="text-[10px] text-[#09a1e5] text-center mt-0.5 truncate">{clientName}</p>}
+                          {projectName && <p className="text-[10px] text-violet-300 text-center truncate">{projectName}</p>}
+                          <div className="flex justify-center my-3">
+                            <RingProgress pct={s.pct} size={56} stroke={5} color={isDone ? "#34d399" : "#a78bfa"}>
+                              <span className={`${mono.className} text-xs font-bold text-white`}>{s.pct}%</span>
+                            </RingProgress>
+                          </div>
+                          <p className={`text-[10px] font-semibold text-center ${statusColor}`}>{statusLabel}</p>
+                          <p className={`${mono.className} text-[10px] text-slate-500 text-center mt-0.5`}>{s.done}/{s.tasks.length}</p>
+                          <div className="flex items-center justify-center mt-2.5">
+                            <button onClick={() => navigate("/tasks/sprint")}
+                              className="text-[10px] text-slate-400 hover:text-[#09a1e5] transition-colors font-semibold">
+                              Abrir →
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
             {mapaMeses.length > 0 && <p className="text-[11px] text-slate-400 px-1">Arraste um card de sprint para outro mês para reorganizar o roadmap.</p>}
