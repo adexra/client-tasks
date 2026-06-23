@@ -14,6 +14,8 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import RichTextEditor from "../components/RichTextEditor";
+import TaskGroupSection from "../components/TaskGroupSection";
+import ObjectiveEditorComponent from "../components/ObjectiveEditor";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
   closestCorners, useDroppable, useDraggable,
@@ -32,8 +34,6 @@ import {
 import type { UtilidadeKey, FronteKey, Task, TaskInsert, PlanningBucket, ExecutionStatus, TaskArtifact, ArtifactType, TaskArtifactInsert, RoadmapObjective } from "../lib/tasks";
 import WeeklyRitualsBanner from "../components/WeeklyRitualsBanner";
 
-/** Bike models for the "Modelo" picker (arsenal tagging). */
-const BIKE_MODELS: string[] = [];
 
 const mono = { className: "font-mono" };
 
@@ -139,7 +139,7 @@ function RingProgress({ pct, size = 56, stroke = 5, color = "#09a1e5", track = "
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ExtendedTask = Task;
-type ColumnId = "backlog" | "sprint" | "today" | "doing" | "review" | "blocked" | "done" | "trash";
+export type ColumnId = "backlog" | "sprint" | "today" | "doing" | "review" | "blocked" | "done" | "trash";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -927,51 +927,7 @@ function ArtifactsPanel({ taskId, type, types }: { taskId: string; type: Artifac
 }
 
 /** Inline-editable objective text (click pencil to edit, save on blur/Enter). */
-function ObjectiveEditor({ value, placeholder, onSave, className }: {
-  value: string;
-  placeholder: string;
-  onSave: (text: string) => void;
-  className?: string;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-
-  useEffect(() => { setDraft(value); }, [value]);
-
-  const commit = () => {
-    setEditing(false);
-    const trimmed = draft.trim();
-    if (trimmed !== value.trim()) onSave(trimmed);
-  };
-
-  if (editing) {
-    return (
-      <textarea
-        autoFocus
-        value={draft}
-        onChange={e => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={e => {
-          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commit(); }
-          if (e.key === "Escape") { setDraft(value); setEditing(false); }
-        }}
-        placeholder={placeholder}
-        rows={2}
-        className={`w-full bg-slate-900/80 border border-[#09a1e5]/40 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-[#09a1e5] resize-none ${className ?? ""}`}
-      />
-    );
-  }
-
-  return (
-    <button onClick={() => setEditing(true)}
-      className={`group flex items-start gap-1.5 text-left w-full rounded-lg px-1 py-0.5 -mx-1 hover:bg-white/[0.04] transition-colors ${className ?? ""}`}>
-      <span className={`text-xs flex-1 ${value ? "text-slate-300" : "text-slate-500 italic"}`}>
-        {value || placeholder}
-      </span>
-      <Pencil size={11} className="text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" />
-    </button>
-  );
-}
+const ObjectiveEditor = ObjectiveEditorComponent;
 
 // ─── Audit Findings → Correction Tasks ─────────────────────────────────────
 
@@ -1186,7 +1142,7 @@ function ChildTasksSprintSplitter({ task, allTasks, onTaskUpdated }: {
 
   useEffect(() => {
     let active = true;
-    const supabase = createAdminClient();
+    // supabase singleton from ../lib/supabase
     supabase.from("tasks").select("*").eq("parent_task_id", task.id).order("created_at", { ascending: true })
       .then(({ data }) => { if (active) setChildren((data ?? []) as Task[]); });
     return () => { active = false; };
@@ -1970,300 +1926,7 @@ function KanbanColumn({ column, tasks: colTasks, onEdit, onMove, onQuickAdd }: {
 
 // ─── Category Section (Por Área view) ──────────────────────────────────────────
 
-function CategorySection({ categoria, tasks, onEdit, onMove, onSave, draggable }: {
-  categoria: string;
-  tasks: ExtendedTask[];
-  onEdit: (task: ExtendedTask) => void;
-  onMove: (id: string, col: ColumnId) => void;
-  onSave?: (id: string, patch: Partial<Task>) => void;
-  draggable?: boolean;
-}) {
-  const [open, setOpen] = useState(true);
-  const total = tasks.length;
-  const done = tasks.filter(t => t.execution_status === "done").length;
-  const inProgress = tasks.filter(t => ["doing", "review"].includes(t.execution_status)).length;
-  const blocked = tasks.filter(t => t.execution_status === "blocked").length;
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-
-  const barColor = pct >= 80 ? "bg-emerald-500/100" : pct >= 50 ? "bg-amber-500/100" : "bg-blue-500/100";
-  const icon = CATEGORIA_ICONS[categoria] ?? "📌";
-
-  return (
-    <div className={`${cc.panel} overflow-hidden`}>
-      <button className="w-full flex items-center gap-3 px-5 py-4 hover:bg-slate-800/60 transition-colors" onClick={() => setOpen(o => !o)}>
-        <span className="text-lg">{icon}</span>
-        <div className="flex-1 text-left min-w-0">
-          <p className="text-sm font-semibold text-slate-100">{categoria}</p>
-          <div className="flex items-center gap-3 mt-1.5">
-            <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden max-w-[120px]">
-              <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
-            </div>
-            <span className={`${mono.className} text-[10px] text-slate-400`}>{done}/{total} · {pct}%</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {blocked > 0 && <span className="text-[10px] font-bold text-red-600 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full">{blocked} bloqueada{blocked > 1 ? "s" : ""}</span>}
-          {inProgress > 0 && <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 border border-blue-500/30 px-2 py-0.5 rounded-full">{inProgress} ativo{inProgress > 1 ? "s" : ""}</span>}
-          {open ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
-        </div>
-      </button>
-
-      {open && (
-        <div className="px-4 pb-4 space-y-2 border-t border-slate-800 pt-3">
-          {draggable ? (
-            <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-              {tasks.map(t => <TaskRow key={t.id} task={t} onEdit={onEdit} onMove={onMove} onSave={onSave} draggable />)}
-            </SortableContext>
-          ) : (
-            tasks.map(t => <TaskRow key={t.id} task={t} onEdit={onEdit} onMove={onMove} onSave={onSave} />)
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Objetivo Section (Sprint view — one objective + its active sprint) ────────
-
-function ObjetivoSection({ objetivo, sprintNome, desiredOutcome, tasks, objective, clientName, projectName, onSaveObjective, onSaveMeta, onEdit, onMove, onSave, defaultOpen, allTasks }: {
-  objetivo: string;
-  sprintNome: string;
-  desiredOutcome?: string;
-  tasks: ExtendedTask[];
-  objective: string;
-  clientName: string;
-  projectName: string;
-  onSaveObjective: (text: string) => void;
-  onSaveMeta: (meta: { client_name?: string; project_name?: string }) => void;
-  onEdit: (task: ExtendedTask) => void;
-  onMove: (id: string, col: ColumnId) => void;
-  onSave: (id: string, patch: Partial<Task>) => void;
-  defaultOpen: boolean;
-  allTasks: Task[];
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  const [moving, setMoving] = useState(false);
-  const [targetSprint, setTargetSprint] = useState("");
-  const [newLabel, setNewLabel] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [editingMeta, setEditingMeta] = useState(false);
-  const [draftClient, setDraftClient] = useState(clientName);
-  const [draftProject, setDraftProject] = useState(projectName);
-
-  // sync if parent updates
-  React.useEffect(() => { setDraftClient(clientName); }, [clientName]);
-  React.useEffect(() => { setDraftProject(projectName); }, [projectName]);
-
-  const sprintLabels = useMemo(() => {
-    const byNum = new Map<string, string>();
-    for (const t of allTasks) {
-      const prefix = (t.projeto ?? "").split(" / ")[0]?.trim() ?? "";
-      const m = /^sprint\s*(\d+)/i.exec(prefix);
-      if (m && !byNum.has(m[1])) byNum.set(m[1], prefix);
-    }
-    return Array.from(byNum.entries()).sort((a, b) => Number(a[0]) - Number(b[0])).map(([, label]) => label);
-  }, [allTasks]);
-
-  const nextSprintSuggestion = useMemo(() => {
-    let max = 0;
-    for (const label of sprintLabels) {
-      const m = /^sprint\s*(\d+)/i.exec(label);
-      if (m) max = Math.max(max, Number(m[1]));
-    }
-    return `Sprint ${max + 1} — `;
-  }, [sprintLabels]);
-
-  const currentSprintLabel = (tasks[0]?.projeto ?? "").split(" / ")[0]?.trim() ?? "";
-
-  async function moveFrente() {
-    const label = targetSprint === "__new__" ? newLabel.trim() : targetSprint;
-    if (!label || label === currentSprintLabel) return;
-    setSaving(true);
-    try {
-      for (const t of tasks) {
-        const projeto = `${label} / ${objetivo}`;
-        const patch = { projeto, sprint_nome: label };
-        await updateTask(t.id, patch);
-        onSave(t.id, patch);
-      }
-      setMoving(false);
-      setTargetSprint("");
-      setNewLabel("");
-    } finally {
-      setSaving(false);
-    }
-  }
-  const total = tasks.length;
-  const done = tasks.filter(t => t.execution_status === "done").length;
-  const inProgress = tasks.filter(t => ["doing", "review"].includes(t.execution_status)).length;
-  const blocked = tasks.filter(t => t.execution_status === "blocked").length;
-  const active = tasks.filter(t => !["done", "archived"].includes(t.execution_status)).length;
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-  const barColor = pct >= 80 ? "bg-emerald-500/100" : pct >= 50 ? "bg-amber-500/100" : "bg-violet-500/100";
-  const oversized = active > SPRINT_SIZE_WARNING_THRESHOLD;
-
-  const sorted = [...tasks].sort((a, b) => {
-    const aDone = a.execution_status === "done";
-    const bDone = b.execution_status === "done";
-    if (aDone !== bDone) return aDone ? 1 : -1;
-    if (aDone && bDone) {
-      return new Date(b.concluido_em ?? b.updated_at).getTime() - new Date(a.concluido_em ?? a.updated_at).getTime();
-    }
-    return a.order_index - b.order_index;
-  });
-
-  return (
-    <div className={`${cc.panel} overflow-hidden`}>
-      <button className="w-full flex items-center gap-3 px-5 py-4 hover:bg-slate-800/60 transition-colors" onClick={() => setOpen(o => !o)}>
-        <span className="text-lg">🎯</span>
-        <div className="flex-1 text-left min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-bold text-slate-100">{objetivo}</p>
-            {clientName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#09a1e5]/15 border border-[#09a1e5]/30 text-[#09a1e5]">{clientName}</span>}
-            {projectName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300">{projectName}</span>}
-            {!clientName && !projectName && (
-              <button type="button" onClick={e => { e.stopPropagation(); setEditingMeta(true); setOpen(true); }}
-                className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">+ cliente / projeto</button>
-            )}
-          </div>
-          {desiredOutcome && <p className="text-[11px] text-slate-400 mt-0.5">{desiredOutcome}</p>}
-          <p className="text-[10px] text-violet-300 font-semibold mt-1">🚀 {sprintNome}</p>
-          <div className="flex items-center gap-3 mt-1.5">
-            <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden max-w-[160px]">
-              <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
-            </div>
-            <span className={`${mono.className} text-[10px] text-slate-400`}>{done}/{total} · {pct}%</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {blocked > 0 && <span className="text-[10px] font-bold text-red-600 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full">{blocked} bloqueada{blocked > 1 ? "s" : ""}</span>}
-          {inProgress > 0 && <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 border border-blue-500/30 px-2 py-0.5 rounded-full">{inProgress} ativo{inProgress > 1 ? "s" : ""}</span>}
-          {open ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
-        </div>
-      </button>
-
-      {open && (
-        <div className="px-4 pb-4 space-y-3 border-t border-slate-800 pt-3">
-          {/* Sprint-level controls */}
-          <div className="flex flex-wrap items-center gap-2 px-1">
-            {/* Due date */}
-            <div className="flex items-center gap-1.5">
-              <Calendar size={11} className="text-slate-500" />
-              <input type="date"
-                defaultValue={tasks.find(t => t.semana_alvo)?.semana_alvo ?? ""}
-                onChange={e => tasks.forEach(t => onSave(t.id, { semana_alvo: e.target.value || null }))}
-                className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-slate-300 outline-none focus:border-[#09a1e5] cursor-pointer"
-                title="Data de entrega do sprint" />
-            </div>
-            {/* Priority */}
-            <div className="flex items-center gap-1">
-              {([1,2,3] as const).map(v => (
-                <button key={v} type="button"
-                  onClick={() => tasks.filter(t => !["done","archived"].includes(t.execution_status)).forEach(t => onSave(t.id, { prioridade: v }))}
-                  className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all ${
-                    tasks.some(t => t.prioridade === v)
-                      ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5]"
-                      : "bg-slate-900/60 border-slate-800 text-slate-500 hover:text-slate-300"
-                  }`}
-                  title={`Prioridade ${v} para todas as tarefas abertas`}>
-                  P{v}
-                </button>
-              ))}
-            </div>
-            {/* Mark all done */}
-            {active > 0 && (
-              <button type="button"
-                onClick={() => {
-                  if (!confirm(`Concluir todas as ${active} tarefas abertas deste sprint?`)) return;
-                  tasks.filter(t => !["done","archived"].includes(t.execution_status))
-                    .forEach(t => onSave(t.id, { execution_status: "done", concluido_em: new Date().toISOString() } as Partial<Task>));
-                }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all ml-auto">
-                <CheckCircle2 size={11} /> Concluir sprint
-              </button>
-            )}
-          </div>
-
-          {/* Cliente / Projeto inline editor */}
-          {(editingMeta || clientName || projectName) && (
-            <div className="flex flex-wrap items-center gap-2 px-1">
-              {editingMeta ? (
-                <>
-                  <input value={draftClient} onChange={e => setDraftClient(e.target.value)}
-                    placeholder="Nome do cliente" autoFocus
-                    className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-white placeholder-slate-500 outline-none focus:border-[#09a1e5] w-36" />
-                  <input value={draftProject} onChange={e => setDraftProject(e.target.value)}
-                    placeholder="Nome do projeto"
-                    className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-white placeholder-slate-500 outline-none focus:border-[#09a1e5] w-36" />
-                  <button onClick={() => { onSaveMeta({ client_name: draftClient, project_name: draftProject }); setEditingMeta(false); }}
-                    className="px-2 py-1 rounded-lg text-[11px] font-bold bg-[#09a1e5]/15 border border-[#09a1e5]/30 text-[#09a1e5] hover:bg-[#09a1e5]/25 transition-all">
-                    <Save size={11} />
-                  </button>
-                  <button onClick={() => setEditingMeta(false)} className="text-[11px] text-slate-500 hover:text-slate-300"><X size={11} /></button>
-                </>
-              ) : (
-                <>
-                  {clientName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#09a1e5]/15 border border-[#09a1e5]/30 text-[#09a1e5]">{clientName}</span>}
-                  {projectName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300">{projectName}</span>}
-                  <button onClick={() => setEditingMeta(true)} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors flex items-center gap-1"><Pencil size={9} /> editar</button>
-                </>
-              )}
-            </div>
-          )}
-
-          {oversized && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-semibold">
-              <AlertTriangle size={13} className="shrink-0" />
-              Esse sprint está grande demais. Quebre em objetivos menores.
-            </div>
-          )}
-          <div className="px-1">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Objetivo</p>
-            <ObjectiveEditor
-              value={objective}
-              placeholder="Qual é o objetivo único deste sprint? Ex: deixar o bot funcionando corretamente de novo."
-              onSave={onSaveObjective}
-            />
-          </div>
-
-          <div className="px-1">
-            {!moving ? (
-              <button onClick={() => { setMoving(true); setTargetSprint("__new__"); setNewLabel(nextSprintSuggestion); }}
-                className="text-[11px] text-violet-400 hover:text-violet-300 transition-colors flex items-center gap-1">
-                <GitBranch size={11} /> Mover esta frente ({tasks.length}) para outra sprint
-              </button>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <select value={targetSprint} onChange={e => {
-                    setTargetSprint(e.target.value);
-                    if (e.target.value === "__new__" && !newLabel) setNewLabel(nextSprintSuggestion);
-                  }}
-                  className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-white outline-none focus:border-[#09a1e5]">
-                  <option value="">Mover para…</option>
-                  {sprintLabels.filter(l => l !== currentSprintLabel).map(label => <option key={label} value={label}>{label}</option>)}
-                  <option value="__new__">+ Nova sprint…</option>
-                </select>
-                {targetSprint === "__new__" && (
-                  <input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Sprint N — Nome"
-                    className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-white outline-none focus:border-[#09a1e5] w-52" />
-                )}
-                <button onClick={moveFrente} disabled={saving || !targetSprint || (targetSprint === "__new__" && !newLabel.trim())}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 transition-all disabled:opacity-40">
-                  {saving ? "Movendo…" : `Mover ${tasks.length} tarefas`}
-                </button>
-                <button onClick={() => { setMoving(false); setTargetSprint(""); setNewLabel(""); }}
-                  className="text-[11px] text-slate-500 hover:text-slate-300">Cancelar</button>
-              </div>
-            )}
-          </div>
-          <div className="space-y-2">
-            {sorted.map(t => <TaskRow key={t.id} task={t} onEdit={onEdit} onMove={onMove} onSave={onSave} />)}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+// CategorySection and ObjetivoSection replaced by TaskGroupSection (src/components/TaskGroupSection.tsx)
 
 // ─── Table view ─────────────────────────────────────────────────────────────────
 
@@ -4008,22 +3671,25 @@ export default function TarefasPage() {
                   </div>
                 ) : (
                   sprintFrentes.map((f, i) => (
-                    <ObjetivoSection
+                    <TaskGroupSection
                       key={f.name}
-                      objetivo={f.name}
-                      sprintNome={f.sprintNome}
-                      desiredOutcome={OBJECTIVE_META[f.name]?.desired_outcome}
+                      name={f.name}
                       tasks={f.tasks}
-                      objective={objectives[`frente:${f.name}`]?.objetivo ?? ""}
-                      clientName={objectives[`frente:${f.name}`]?.client_name ?? ""}
-                      projectName={objectives[`frente:${f.name}`]?.project_name ?? ""}
-                      onSaveObjective={text => saveObjective("frente", f.name, text)}
-                      onSaveMeta={meta => saveMeta("frente", f.name, meta)}
                       onEdit={setEditTask}
                       onMove={applyMove}
                       onSave={handleSave}
                       defaultOpen={i === 0}
-                      allTasks={tasks}
+                      TaskRowComponent={TaskRow}
+                      sprintMeta={{
+                        sprintNome: f.sprintNome,
+                        objective: objectives[`frente:${f.name}`]?.objetivo ?? "",
+                        clientName: objectives[`frente:${f.name}`]?.client_name ?? "",
+                        projectName: objectives[`frente:${f.name}`]?.project_name ?? "",
+                        desiredOutcome: OBJECTIVE_META[f.name]?.desired_outcome,
+                        allTasks: tasks,
+                        onSaveObjective: text => saveObjective("frente", f.name, text),
+                        onSaveMeta: meta => saveMeta("frente", f.name, meta),
+                      }}
                     />
                   ))
                 )
@@ -4086,7 +3752,7 @@ export default function TarefasPage() {
                           if (objTasks.length === 0) return null;
                           const sprintNome = getSprintNome(objTasks[0]);
                           const label = sprintNome && sprintNome !== obj ? `${obj} · ${sprintNome}` : obj;
-                          return <CategorySection key={obj} categoria={label} tasks={objTasks} onEdit={setEditTask} onMove={applyMove} onSave={handleSave} draggable />;
+                          return <TaskGroupSection key={obj} name={label} icon={CATEGORIA_ICONS[obj] ?? "📌"} tasks={objTasks} onEdit={setEditTask} onMove={applyMove} onSave={handleSave} draggable TaskRowComponent={TaskRow} />;
                         })}
                       </GroupDropZone>
                     );
@@ -4107,7 +3773,7 @@ export default function TarefasPage() {
                     {cats.map((cat: string) => {
                       const catTasks = group.tasks.filter((t: ExtendedTask) => (t.categoria ?? "Outros") === cat);
                       if (catTasks.length === 0) return null;
-                      return <CategorySection key={cat} categoria={cat} tasks={catTasks} onEdit={setEditTask} onMove={applyMove} onSave={handleSave} draggable />;
+                      return <TaskGroupSection key={cat} name={cat} icon={CATEGORIA_ICONS[cat] ?? "📌"} tasks={catTasks} onEdit={setEditTask} onMove={applyMove} onSave={handleSave} draggable TaskRowComponent={TaskRow} />;
                     })}
                   </GroupDropZone>
                 );
