@@ -3479,7 +3479,7 @@ export default function TarefasPage() {
                     </div>
                   );
                 })()}
-                <div className="flex gap-3 px-4 pb-4 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                <div className="flex gap-3 px-4 pb-4 pt-1 overflow-x-auto overflow-y-visible" style={{ scrollbarWidth: "none" }}>
                   {customSprints.map(s => {
                     const objKey = `frente:${s.label}`;
                     const clientName = objectives[objKey]?.client_name ?? "";
@@ -3488,8 +3488,8 @@ export default function TarefasPage() {
                     const statusLabel = isDone ? "Concluída" : s.pct > 0 ? "Em andamento" : "Não iniciada";
                     const statusColor = isDone ? "text-emerald-400" : s.pct > 0 ? "text-[#09a1e5]" : "text-slate-500";
                     return (
-                      <button key={s.label} onClick={() => navigate("/tasks/sprint")}
-                        className={`shrink-0 w-[150px] text-left transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(9,161,229,0.15)] ${cc.card}`}>
+                      <Link key={s.label} to="/tasks/sprint"
+                        className={`shrink-0 w-[150px] block transition-opacity hover:opacity-75 ${cc.card}`}>
                         <div className="p-3 pt-4">
                           <p className="text-xs font-bold text-slate-100 truncate text-center">{s.label}</p>
                           {clientName && <p className="text-[10px] text-[#09a1e5] text-center mt-0.5 truncate">{clientName}</p>}
@@ -3502,7 +3502,7 @@ export default function TarefasPage() {
                           <p className={`text-[10px] font-semibold text-center ${statusColor}`}>{statusLabel}</p>
                           <p className={`${mono.className} text-[10px] text-slate-500 text-center mt-0.5`}>{s.done}/{s.tasks.length}</p>
                         </div>
-                      </button>
+                      </Link>
                     );
                   })}
                 </div>
