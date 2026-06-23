@@ -2450,6 +2450,68 @@ function Block({ title, icon, accent, right, children }: { title: string; icon: 
   );
 }
 
+// ─── Sprint Assign Panel ──────────────────────────────────────────────────────
+
+function SprintAssignPanel({ tasks, existingLabels, onAssign }: {
+  tasks: ExtendedTask[];
+  existingLabels: string[];
+  onAssign: (ids: string[], label: string) => void;
+}) {
+  const [selected, setSelected] = useState<string>(""); // sprint label to assign
+  const [custom, setCustom] = useState("");
+  const [showCustom, setShowCustom] = useState(false);
+  const effectiveLabel = showCustom ? custom.trim() : selected;
+
+  return (
+    <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="text-amber-400 font-bold text-sm">⚠️ {tasks.length} tarefa{tasks.length !== 1 ? "s" : ""} sem sprint</span>
+        <span className="text-slate-500 text-xs">— selecione um sprint para atribuir</span>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {existingLabels.map(l => (
+          <button key={l} type="button" onClick={() => { setSelected(l); setShowCustom(false); }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${selected === l && !showCustom ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5]" : "bg-slate-900/60 border-slate-800 text-slate-300 hover:text-white"}`}>
+            {l}
+          </button>
+        ))}
+        <button type="button" onClick={() => { setShowCustom(v => !v); setSelected(""); }}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold border border-dashed transition-all ${showCustom ? "border-[#09a1e5]/40 text-[#09a1e5]" : "border-slate-700 text-slate-500 hover:text-slate-300"}`}>
+          + Novo sprint
+        </button>
+      </div>
+
+      {showCustom && (
+        <input value={custom} onChange={e => setCustom(e.target.value)} autoFocus
+          placeholder="Sprint 3 — Desenvolvimento"
+          className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-[#09a1e5]" />
+      )}
+
+      <div className="space-y-1 max-h-40 overflow-y-auto">
+        {tasks.map(t => (
+          <div key={t.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-slate-900/40">
+            <span className="flex-1 text-xs text-slate-300 truncate">{t.titulo}</span>
+            {effectiveLabel && (
+              <button onClick={() => onAssign([t.id], effectiveLabel)}
+                className="shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold bg-[#09a1e5]/15 border border-[#09a1e5]/30 text-[#09a1e5] hover:bg-[#09a1e5]/25 transition-all">
+                Atribuir →
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {effectiveLabel && (
+        <button onClick={() => onAssign(tasks.map(t => t.id), effectiveLabel)}
+          className="w-full py-2 rounded-xl text-xs font-bold bg-[#09a1e5] hover:bg-[#0891d5] text-white transition-all">
+          Atribuir todas para "{effectiveLabel}"
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function TarefasPage() {
@@ -3756,6 +3818,25 @@ export default function TarefasPage() {
           </div>
         ) : view === "sprint" ? (
           <div className="space-y-4">
+            {/* ── Sem sprint: tarefas no bucket sprint sem projeto definido ── */}
+            {(() => {
+              const unassigned = sprintTasks.filter(t => !t.projeto?.trim());
+              if (unassigned.length === 0) return null;
+              const existingLabels = Array.from(new Set(
+                sprintTasks.filter(t => t.projeto?.trim()).map(t => (t.projeto ?? "").split(" / ")[0]?.trim()).filter(Boolean)
+              )).sort((a, b) => {
+                const na = Number(/sprint\s*(\d+)/i.exec(a)?.[1] ?? 999);
+                const nb = Number(/sprint\s*(\d+)/i.exec(b)?.[1] ?? 999);
+                return na - nb;
+              });
+              return (
+                <SprintAssignPanel
+                  tasks={unassigned}
+                  existingLabels={existingLabels}
+                  onAssign={(ids, label) => ids.forEach(id => handleSave(id, { projeto: label }))}
+                />
+              );
+            })()}
             {/* Timeline do sprint ativo */}
             <div className={`${cc.panel} p-4`}>
               <div className="flex items-center justify-between mb-2.5 flex-wrap gap-1">
