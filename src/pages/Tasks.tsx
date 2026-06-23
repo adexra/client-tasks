@@ -3067,31 +3067,17 @@ export default function TarefasPage() {
           </div>
         )}
 
-        {/* Equity Readiness — accordion */}
+        {/* Rewards teaser — replaces Equity Readiness */}
         {!foco && view === "hoje" && (
-          <div className={cc.panel}>
-            <button onClick={() => setEquityOpen(o => !o)}
-              className="w-full flex items-center justify-between px-4 py-3 text-left">
-              <span className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-                <Sparkles size={15} className="text-amber-400" /> Equity Readiness
-              </span>
-              <div className="flex items-center gap-2">
-                <span className={`${mono.className} text-xs font-bold text-slate-400`}>
-                  {equity.xpEarned.toLocaleString("pt-BR")} XP · {equity.pct}%
-                </span>
-                <ChevronDown size={14} className={`text-slate-500 transition-transform duration-200 ${equityOpen ? "rotate-180" : ""}`} />
+          <div className="rounded-2xl border border-violet-500/20 bg-[#0D0F1E] px-4 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">🎮</span>
+              <div>
+                <p className="text-sm font-bold text-slate-100">{equity.xpEarned.toLocaleString("pt-BR")} XP acumulado</p>
+                <p className="text-[11px] text-slate-500">Sistema de recompensas em construção — XP, Coins e loja de treats</p>
               </div>
-            </button>
-            {equityOpen && (
-              <div className="px-4 pb-4">
-                <div className="h-2.5 rounded-full overflow-hidden bg-white/[0.06]">
-                  <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-[#09a1e5] transition-all duration-700" style={{ width: `${equity.pct}%` }} />
-                </div>
-                <p className="text-xs text-slate-500 mt-2.5">
-                  Medidor simbólico de impacto acumulado (entregas concluídas + evidências), não é cálculo legal de equity.
-                </p>
-              </div>
-            )}
+            </div>
+            <span className="text-[10px] font-bold text-violet-400 border border-violet-500/30 bg-violet-500/10 px-2 py-1 rounded-full shrink-0">Em breve</span>
           </div>
         )}
 
