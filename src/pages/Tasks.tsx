@@ -3444,7 +3444,7 @@ export default function TarefasPage() {
             {mapaMeses.length === 0 && customSprints.length === 0 && (
               <p className="text-sm text-slate-300 py-8 text-center">Nenhuma tarefa com sprint definida ainda.</p>
             )}
-            {/* Custom (non-numbered) sprints */}
+            {/* Custom (non-numbered) sprints — outside drag context, no dragging between months */}
             {customSprints.length > 0 && (
               <div className="space-y-2">
                 <p className="text-[11px] font-bold text-slate-300 px-1 mb-2 uppercase tracking-wide">Sprints ativos</p>
@@ -3460,10 +3460,10 @@ export default function TarefasPage() {
                 })}
               </div>
             )}
-            <p className="text-[11px] text-slate-400 px-1">Arraste um card de sprint para outro mês para reorganizar o roadmap.</p>
+            {mapaMeses.length > 0 && <p className="text-[11px] text-slate-400 px-1">Arraste um card de sprint para outro mês para reorganizar o roadmap.</p>}
             <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={onDragStart} onDragEnd={onMapaDragEnd}>
               <div>
-                <p className="text-[11px] font-bold text-slate-300 px-1 mb-2 uppercase tracking-wide">Foco atual</p>
+                {mapaMeses.length > 0 && <p className="text-[11px] font-bold text-slate-300 px-1 mb-2 uppercase tracking-wide">Foco atual</p>}
                 {mapaMeses.slice(0, 3).map(month => (
                   <div key={month.key} className={`${cc.panel} overflow-hidden mb-4`}>
                     {/* Header: month icon+title left, "Progresso do mês" + big % right */}
