@@ -3122,7 +3122,7 @@ export default function TarefasPage() {
 
   return (
     <ArtifactCountsContext.Provider value={artifactCounts}>
-    <div className="relative min-h-screen bg-[#050B16] text-slate-100 font-sans">
+    <div className="relative min-h-screen text-slate-100 font-sans">
       {showConfetti && <Confetti />}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-[#09a1e5]/10 blur-[120px]" />
