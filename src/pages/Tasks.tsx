@@ -2325,7 +2325,7 @@ export default function TarefasPage() {
       const existing = prev[`${scope}:${key}`];
       return { ...prev, [`${scope}:${key}`]: { ...existing, scope, key, objetivo: existing?.objetivo ?? null, updated_at: new Date().toISOString(), client_name: meta.client_name ?? existing?.client_name ?? null, project_name: meta.project_name ?? existing?.project_name ?? null } };
     });
-    try { await upsertObjectiveMeta(scope, key, meta); } catch { /* best-effort */ }
+    try { await upsertObjectiveMeta(scope, key, meta); } catch (e) { console.error("saveMeta failed:", e); }
   }, []);
 
   useEffect(() => { load(); }, [load]);

@@ -425,10 +425,27 @@ export async function upsertObjective(scope: ObjectiveScope, key: string, objeti
 
 /** Update client_name and/or project_name for a sprint/frente objective. */
 export async function upsertObjectiveMeta(scope: ObjectiveScope, key: string, meta: { client_name?: string; project_name?: string }): Promise<void> {
-  const { error } = await supabase
+  // Try update first — preserves existing objetivo text
+  const { data: existing } = await supabase
     .from("roadmap_objectives")
-    .upsert({ scope, key, ...meta, updated_at: new Date().toISOString() }, { onConflict: "scope,key" });
-  if (error) throw error;
+    .select("id")
+    .eq("scope", scope)
+    .eq("key", key)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("roadmap_objectives")
+      .update({ ...meta, updated_at: new Date().toISOString() })
+      .eq("scope", scope)
+      .eq("key", key);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from("roadmap_objectives")
+      .insert({ scope, key, ...meta, updated_at: new Date().toISOString() });
+    if (error) throw error;
+  }
 }
 
 export async function deleteTask(id: string): Promise<void> {
