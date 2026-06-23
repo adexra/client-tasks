@@ -118,7 +118,7 @@ export async function createTask(task: Omit<TaskInsert, "concluido_em">): Promis
   // supabase singleton from ./supabase
   const { data, error } = await supabase
     .from("tasks")
-    .insert(task)
+    .insert({ ...task, title: task.titulo })
     .select("*, client:clients(name, phone)")
     .single();
   if (error) throw error;
