@@ -30,6 +30,7 @@ import {
   ExternalLink,
   Plus,
   Star,
+  Gift,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
@@ -139,6 +140,7 @@ export default function Layout() {
                 { to: '/tasks/historico',icon: Trophy,      label: 'Histórico' },
                 { to: '/tasks/avancado', icon: Columns3,    label: 'Avançado' },
                 { to: '/results',        icon: Star,        label: 'Resultados' },
+                { to: '/rewards',        icon: Gift,        label: 'Rewards 🎮' },
               ].map(({ to, icon: Icon, label }) => (
                 <NavLink key={to} to={to} onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) => cn(

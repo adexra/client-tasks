@@ -27,6 +27,7 @@ const MoveOn       = lazy(() => import('./pages/MoveOn'));
 const Tasks        = lazy(() => import('./pages/Tasks'));
 const TasksNew     = lazy(() => import('./pages/TasksNew'));
 const Results      = lazy(() => import('./pages/Results'));
+const Rewards      = lazy(() => import('./pages/Rewards'));
 
 function PageFallback() {
   return (
@@ -69,6 +70,7 @@ export default function App() {
                     <Route path="tasks/:tab" element={<Tasks />} />
                     <Route path="tasks/new" element={<TasksNew />} />
                     <Route path="results" element={<Results />} />
+                    <Route path="rewards" element={<Rewards />} />
                   </Route>
                 </Routes>
               </Suspense>

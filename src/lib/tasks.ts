@@ -136,8 +136,23 @@ export async function updateTask(id: string, patch: Partial<TaskInsert>): Promis
 
 // ─── Growth Game helpers (derived, no new columns) ─────────────────────────
 
-/** Symbolic Impact XP for a task, based on prioridade × urgencia × impacto. */
-export function getXp(t: { urgencia: number; prioridade: number; impacto?: number | null }): number {
+/** XP for a task. Uses new formula (effort × value × priority × complexity) when
+ *  effort_minutes is set; falls back to legacy formula for old tasks. */
+export function getXp(t: {
+  urgencia?: number | null; prioridade?: number | null; impacto?: number | null;
+  effort_minutes?: number | null; value_usd?: number | null; complexity?: string | null;
+}): number {
+  if (t.effort_minutes) {
+    // New formula — imported inline to avoid circular dep
+    const EFFORT_XP: Record<number, number> = { 5:5, 15:10, 30:20, 60:40, 120:70, 240:120, 480:220 };
+    const base = EFFORT_XP[t.effort_minutes] ?? 20;
+    const v = t.value_usd ?? 0;
+    const valMul = v <= 0 ? 1 : v < 100 ? 1.2 : v < 300 ? 1.5 : v < 700 ? 2 : v < 1500 ? 3 : v < 3000 ? 4 : 5;
+    const priMul = (t.prioridade ?? 2) >= 3 ? 1.7 : (t.prioridade ?? 2) === 2 ? 1.3 : 0.8;
+    const cxMul  = t.complexity === "expert" ? 2 : t.complexity === "hard" ? 1.5 : t.complexity === "medium" ? 1.2 : 1;
+    return Math.round(base * valMul * priMul * cxMul);
+  }
+  // Legacy formula for tasks without new fields
   return (t.urgencia ?? 1) * (t.prioridade ?? 1) * (t.impacto ?? 1) * 10;
 }
 
@@ -147,7 +162,7 @@ export function hasEvidence(t: { url_verificacao?: string | null; notas?: string
 }
 
 /** XP earned for a completed task — 1.5x multiplier if evidence is attached. */
-export function getEarnedXp(t: { urgencia: number; prioridade: number; impacto?: number | null; url_verificacao?: string | null; notas?: string | null }): number {
+export function getEarnedXp(t: Parameters<typeof getXp>[0] & { url_verificacao?: string | null; notas?: string | null }): number {
   const base = getXp(t);
   return hasEvidence(t) ? Math.round(base * 1.5) : base;
 }

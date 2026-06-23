@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { createTask, FRONTES, getSprintLabel } from "../lib/tasks";
+import { EFFORT_OPTIONS, COMPLEXITY_OPTIONS } from "../lib/rewards";
 import type { PlanningBucket, TaskInsert, FronteKey } from "../lib/tasks";
 import { supabase } from "../lib/supabase";
 
@@ -253,6 +254,9 @@ export default function NovaTarefaPage() {
     projeto:         "",
     impacto:         2 as 1 | 2 | 3,
     done_criteria:   "",
+    effort_minutes:  30 as number,
+    value_usd:       0 as number,
+    complexity:      "medium" as string,
   });
 
   useEffect(() => {
@@ -313,6 +317,9 @@ export default function NovaTarefaPage() {
         projeto:         form.projeto.trim() || null,
         impacto:         form.impacto,
         done_criteria:   form.done_criteria.trim() || null,
+        effort_minutes:  form.effort_minutes,
+        value_usd:       form.value_usd || 0,
+        complexity:      form.complexity,
         data_foco:       form.destino === "today" ? (form.data_foco || null) : null,
         planning_bucket: form.destino,
         execution_status: "todo",
@@ -460,7 +467,31 @@ export default function NovaTarefaPage() {
 
           {showAdvanced && (
             <div className="space-y-5 pt-1 border-t border-slate-800">
-              <div className="grid grid-cols-3 gap-2 pt-4">
+
+              {/* XP fields */}
+              <div className="pt-4 grid grid-cols-3 gap-2">
+                <div>
+                  <label className={label}>Esforço</label>
+                  <select value={form.effort_minutes} onChange={e => setForm(f => ({ ...f, effort_minutes: Number(e.target.value) }))}
+                    className={input}>
+                    {EFFORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={label}>Valor do projeto (USD)</label>
+                  <input type="number" min={0} value={form.value_usd} onChange={e => setForm(f => ({ ...f, value_usd: Number(e.target.value) }))}
+                    placeholder="0" className={input} />
+                </div>
+                <div>
+                  <label className={label}>Complexidade</label>
+                  <select value={form.complexity} onChange={e => setForm(f => ({ ...f, complexity: e.target.value }))}
+                    className={input}>
+                    {COMPLEXITY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
                 {([
                   ["prioridade", "Prioridade", PRIO_LABELS] as const,
                   ["urgencia",   "Urgência",   { 1: "U1", 2: "U2", 3: "U3" }] as const,
