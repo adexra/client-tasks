@@ -3346,7 +3346,7 @@ export default function TarefasPage() {
                       </div>
                     </div>
                   )}
-                  <button onClick={() => navigate("/tasks/backlog")}
+                  <button onClick={() => navigate("/tasks/sprint")}
                     className="w-full text-center text-xs text-slate-400 hover:text-[#09a1e5] transition-colors pt-2">
                     Mudar foco no Backlog →
                   </button>
@@ -3488,7 +3488,8 @@ export default function TarefasPage() {
                     const statusLabel = isDone ? "Concluída" : s.pct > 0 ? "Em andamento" : "Não iniciada";
                     const statusColor = isDone ? "text-emerald-400" : s.pct > 0 ? "text-[#09a1e5]" : "text-slate-500";
                     return (
-                      <div key={s.label} className={`shrink-0 w-[150px] ${isDone ? cc.card : cc.card}`}>
+                      <button key={s.label} onClick={() => navigate("/tasks/sprint")}
+                        className={`shrink-0 w-[150px] text-left transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(9,161,229,0.15)] ${cc.card}`}>
                         <div className="p-3 pt-4">
                           <p className="text-xs font-bold text-slate-100 truncate text-center">{s.label}</p>
                           {clientName && <p className="text-[10px] text-[#09a1e5] text-center mt-0.5 truncate">{clientName}</p>}
@@ -3500,14 +3501,8 @@ export default function TarefasPage() {
                           </div>
                           <p className={`text-[10px] font-semibold text-center ${statusColor}`}>{statusLabel}</p>
                           <p className={`${mono.className} text-[10px] text-slate-500 text-center mt-0.5`}>{s.done}/{s.tasks.length}</p>
-                          <div className="flex items-center justify-center mt-2.5">
-                            <button onClick={() => navigate("/tasks/sprint")}
-                              className="text-[10px] text-slate-400 hover:text-[#09a1e5] transition-colors font-semibold">
-                              Abrir →
-                            </button>
-                          </div>
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -3567,7 +3562,7 @@ export default function TarefasPage() {
                               subtitle={subtitle}
                               objectiveValue={objectives[`sprint:${s.n}`]?.objetivo ?? ""}
                               onSaveObjective={text => saveObjective("sprint", String(s.n), text)}
-                              onOpen={() => navigate("/tasks/backlog")}
+                              onOpen={() => navigate("/tasks/sprint")}
                             />
                           </DraggableSprintCard>
                         );
@@ -3608,7 +3603,7 @@ export default function TarefasPage() {
                                 const isDone = s.pct === 100;
                                 return (
                                   <DraggableSprintCard key={s.n} id={`sprintcard:${s.n}`}>
-                                    <button onClick={() => navigate("/tasks/backlog")}
+                                    <button onClick={() => navigate("/tasks/sprint")}
                                       className={`w-full text-left rounded-xl p-3 transition-colors border ${isActive ? "bg-[#09a1e5]/10 border-[#09a1e5]/40 ring-1 ring-[#09a1e5]/30" : "bg-slate-900/60 border-slate-800 hover:border-[#09a1e5]/30"}`}>
                                       <div className="flex items-center justify-between gap-1">
                                         <p className="text-xs font-bold text-violet-300 truncate">🚀 {s.label}</p>
