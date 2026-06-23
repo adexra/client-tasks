@@ -31,6 +31,7 @@ import {
   UTILIDADE_OPTIONS, MODELO_GERAL,
   FRONTES, getFronte, rollingSprintMonthKey,
 } from "../lib/tasks";
+import { calcXp, xpToCoins, getFreebies, getRedemptions } from "../lib/rewards";
 import type { UtilidadeKey, FronteKey, Task, TaskInsert, PlanningBucket, ExecutionStatus, TaskArtifact, ArtifactType, TaskArtifactInsert, RoadmapObjective } from "../lib/tasks";
 import WeeklyRitualsBanner from "../components/WeeklyRitualsBanner";
 
@@ -2270,6 +2271,8 @@ export default function TarefasPage() {
   const [search, setSearch] = useState("");
   const [deadlineOnly, setDeadlineOnly] = useState(false);
   const [equityOpen, setEquityOpen] = useState(false);
+  const [rewardCoins, setRewardCoins] = useState(0);
+  const [unclaimedFreebies, setUnclaimedFreebies] = useState(0);
   const [editTask, setEditTask] = useState<ExtendedTask | null>(null);
   const [editTaskTab, setEditTaskTab] = useState<"missao" | "tarefas" | "resultado">("missao");
 
@@ -2312,6 +2315,13 @@ export default function TarefasPage() {
     setLoading(false);
     getArtifactCounts().then(setArtifactCounts).catch(() => {});
     getObjectives().then(setObjectives).catch(() => {});
+    // Rewards data — freebies count
+    getFreebies().then(fb => setUnclaimedFreebies(fb.filter(f => !f.redeemed_at).length)).catch(() => {});
+    getRedemptions().then(rd => {
+      // coins computed after tasks load — placeholder here, recalculated below
+      const spent = rd.reduce((s, r) => s + r.coins_spent, 0);
+      setRewardCoins(Math.max(0, -spent)); // will be corrected after tasks
+    }).catch(() => {});
   }, []);
 
   const saveObjective = useCallback(async (scope: "month" | "sprint" | "frente", key: string, text: string) => {
@@ -2855,6 +2865,8 @@ export default function TarefasPage() {
 
   // ── Growth Game derived data ──
   const equity = useMemo(() => getEquityReadiness(live), [live]);
+  // Coins from new XP formula on done tasks
+  const newXpTotal = useMemo(() => live.filter(t => t.execution_status === "done").reduce((s, t) => s + calcXp(t), 0), [live]);
 
   const focoOrdenado = [...focoHoje].filter(t => t.execution_status !== "done").sort((a, b) => score(b) - score(a));
 
@@ -3076,16 +3088,20 @@ export default function TarefasPage() {
 
         {/* Rewards teaser — replaces Equity Readiness */}
         {!foco && view === "hoje" && (
-          <div className="rounded-2xl border border-violet-500/20 bg-[#0D0F1E] px-4 py-3 flex items-center justify-between gap-3">
+          <Link to="/rewards" className="rounded-2xl border border-violet-500/20 bg-[#0D0F1E] px-4 py-3 flex items-center justify-between gap-3 hover:border-violet-500/40 transition-colors">
             <div className="flex items-center gap-3">
               <span className="text-xl">🎮</span>
               <div>
-                <p className="text-sm font-bold text-slate-100">{equity.xpEarned.toLocaleString("pt-BR")} XP acumulado</p>
-                <p className="text-[11px] text-slate-500">Sistema de recompensas em construção — XP, Coins e loja de treats</p>
+                <p className="text-sm font-bold text-slate-100">{newXpTotal.toLocaleString("pt-BR")} XP · {xpToCoins(newXpTotal).toLocaleString()} Coins</p>
+                <p className="text-[11px] text-slate-500">Ver loja de rewards →</p>
               </div>
             </div>
-            <span className="text-[10px] font-bold text-violet-400 border border-violet-500/30 bg-violet-500/10 px-2 py-1 rounded-full shrink-0">Em breve</span>
-          </div>
+            {unclaimedFreebies > 0 && (
+              <span className="text-[10px] font-bold text-amber-400 border border-amber-500/30 bg-amber-500/10 px-2 py-1 rounded-full shrink-0 animate-pulse">
+                🎁 {unclaimedFreebies} freebie{unclaimedFreebies !== 1 ? "s" : ""}
+              </span>
+            )}
+          </Link>
         )}
 
         {/* Filters */}
