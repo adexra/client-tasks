@@ -2053,11 +2053,11 @@ function GroupDropZone({ id, children, isOver: forceOver }: { id: string; childr
 
 // ─── Mapa do mês: sprint arrastável entre meses ────────────────────────────────
 
-function DraggableSprintCard({ id, children }: { id: string; children: React.ReactNode }) {
+function DraggableSprintCard({ id, children, className }: { id: string; children: React.ReactNode; className?: string }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.4 : 1, zIndex: isDragging ? 10 : undefined } : undefined;
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none cursor-grab active:cursor-grabbing">
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={`touch-none cursor-grab active:cursor-grabbing shrink-0 w-[150px] ${className ?? ""}`}>
       {children}
     </div>
   );
@@ -2177,7 +2177,8 @@ function AllSprintsCard({ s, isActive, isDone, onActivate, onEdit, onMove, onSav
 function MonthDropZone({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id });
   return (
-    <div ref={setNodeRef} className={`p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3 transition-colors rounded-b-2xl ${isOver ? "bg-[#09a1e5]/5 ring-2 ring-inset ring-[#09a1e5]/30" : ""}`}>
+    <div ref={setNodeRef} className={`px-4 pb-4 flex gap-3 overflow-x-auto transition-colors rounded-b-2xl ${isOver ? "bg-[#09a1e5]/5 ring-2 ring-inset ring-[#09a1e5]/30" : ""}`}
+      style={{ scrollbarWidth: "none" }}>
       {children}
     </div>
   );
