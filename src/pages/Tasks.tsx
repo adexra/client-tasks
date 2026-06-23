@@ -3077,12 +3077,13 @@ export default function TarefasPage() {
         const label = (sprintTasks[0]?.projeto ?? "").split(" / ")[0]?.trim() || `Sprint ${n}`;
         return { n, label, tasks: sprintTasks, done, pct: sprintTasks.length > 0 ? Math.round((done / sprintTasks.length) * 100) : 0 };
       });
-      const monthTasks = sprints.flatMap(s => s.tasks);
+      const activeSprints = sprints.filter(s => s.tasks.length > 0);
+      const monthTasks = activeSprints.flatMap(s => s.tasks);
       const total = monthTasks.length;
       const done = monthTasks.filter(t => t.execution_status === "done").length;
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-      return { ...month, sprints, total, done, pct };
-    });
+      return { ...month, sprints: activeSprints, total, done, pct };
+    }).filter(m => m.sprints.length > 0);
   }, [live, ALL_SPRINT_NUMS, monthKeyForSprint, ALL_MONTHS]);
 
   // Histórico/Evidências: tarefas concluídas/arquivadas, mais recentes primeiro

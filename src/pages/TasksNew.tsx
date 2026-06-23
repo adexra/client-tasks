@@ -5,7 +5,7 @@ import {
   MessageCircle, Sparkles, CheckCircle2, Loader2, ExternalLink,
 } from "lucide-react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { createTask, FRONTES, getSprintLabel, getRollingMonths } from "../lib/tasks";
+import { createTask, FRONTES, getSprintLabel } from "../lib/tasks";
 import type { PlanningBucket, TaskInsert, FronteKey } from "../lib/tasks";
 import { supabase } from "../lib/supabase";
 
@@ -281,14 +281,6 @@ export default function NovaTarefaPage() {
           const isActive = t.planning_bucket === "sprint" && t.execution_status !== "done" && t.execution_status !== "archived";
           if (!seen.has(label)) seen.set(label, false);
           if (isActive) seen.set(label, true);
-        }
-        // Also add upcoming sprints from the calendar even if no tasks yet
-        const months = getRollingMonths(new Date(), 3);
-        for (const m of months) {
-          for (const n of m.sprints) {
-            const label = `Sprint ${n}`;
-            if (!seen.has(label)) seen.set(label, false);
-          }
         }
         const sorted = Array.from(seen.entries())
           .map(([label, active]) => ({ label, active }))
