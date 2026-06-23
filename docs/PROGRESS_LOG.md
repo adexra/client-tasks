@@ -2,6 +2,52 @@
 
 ---
 
+## 2026-06-22 — Tasks Command Center: Cloned from MoveOn tarefas system
+
+### Summary
+Transplanted the production-proven MoveOn task system (Kanban board + sprint planning + artifacts + rituals) directly into Operator OS. No logic rewrite — code copied and import paths patched to work with this project's Vite/React/Supabase stack.
+
+**What was added:**
+- `/tasks` — Full Kanban board (8 columns: backlog, sprint, today, doing, review, blocked, done, trash)
+- `/tasks/new` — Task creation form (manual + AI dump mode stub)
+- `src/lib/tasks.ts` — Complete task data layer (getTasks, moveTask, getXp, FRONTES, sprint math, artifacts)
+- `src/lib/rituals.ts` — Weekly rituals data layer
+- `src/components/RichTextEditor.tsx` — TipTap rich text editor with image upload
+- `src/components/WeeklyRitualsBanner.tsx` — Weekly ritual tracker with XP flash
+- `supabase/migrations/008_tasks_sprint_system.sql` — Schema delta (sprint columns, task_artifacts, roadmap_objectives, weekly_rituals, move_task RPC)
+
+**Adaptations made:**
+- Replaced Next.js `Link`/`useRouter` with `react-router-dom` equivalents
+- Replaced `createAdminClient()` with project's `supabase` singleton
+- Replaced `leads` join with `clients` join (`lead_id` → `client_id`)
+- Replaced `bike-media` storage bucket with `task-media`
+- Removed MoveOn-specific bike models array (BIKE_MODELS = [])
+- Stubbed AI parse-tasks and parse-audit-findings (no server API — wire to Azure later)
+- Removed `"use client"` directives (not needed in Vite)
+- Fixed pre-existing syntax bug in Availability.jsx (stray `</Select>` tags)
+
+**User action required:**
+1. Run `supabase/migrations/008_tasks_sprint_system.sql` in Supabase dashboard
+2. Create `task-media` storage bucket in Supabase (for RichTextEditor image uploads)
+
+**Build status:** ✅ Clean build (2967 modules, 0 errors)
+
+### Files Modified/Created
+- `src/lib/tasks.ts` — copied + patched
+- `src/lib/rituals.ts` — copied + patched
+- `src/pages/Tasks.tsx` — copied + patched (Next.js → React Router + singleton Supabase)
+- `src/pages/TasksNew.tsx` — copied + patched
+- `src/components/RichTextEditor.tsx` — copied + patched
+- `src/components/WeeklyRitualsBanner.tsx` — copied + patched
+- `src/App.jsx` — added `/tasks` and `/tasks/new` routes
+- `src/components/Layout.jsx` — added Tasks nav link (Kanban icon)
+- `supabase/migrations/008_tasks_sprint_system.sql` — new migration
+- `src/pages/Availability.jsx` — fixed pre-existing JSX syntax bug
+- `docs/PROGRESS_LOG.md` — this entry
+- `docs/KNOWN_ISSUES.md` — ISSUE-017 and ISSUE-018 added
+
+---
+
 ## 2026-06-22 — QA: Full Playwright audit, 54/58 pass
 
 ### Summary

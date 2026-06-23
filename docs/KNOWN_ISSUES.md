@@ -1,6 +1,19 @@
 # Known Issues — Operator OS
 
-Last updated: 2026-06-22 — QA audit run, 1 new RLS issue found
+Last updated: 2026-06-22 — Tasks system cloned, 2 new pending actions added
+
+---
+
+## Pending User Actions
+
+### ISSUE-017 — Migration 008 not yet run in Supabase
+**Severity:** High — Tasks page will fail to load tasks without sprint columns
+**Status:** ⏳ Pending — run `supabase/migrations/008_tasks_sprint_system.sql` in Supabase SQL editor
+**What it adds:** planning_bucket, execution_status, order_index, task_artifacts table, roadmap_objectives, weekly_rituals, move_task RPC
+
+### ISSUE-018 — `task-media` storage bucket not yet created
+**Severity:** Low — Tasks load fine; only image uploads in RichTextEditor will fail
+**Status:** ⏳ Pending — create public bucket named `task-media` in Supabase Storage
 
 ---
 

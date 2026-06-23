@@ -211,8 +211,7 @@ function AvailabilityForm({ initial, onSave, onCancel, language }) {
           <CustomSelect value={form.availability_type} onChange={v => set('availability_type', v)} options={AVAILABILITY_TYPES.map(a => ({ value: a.value, label: a.label[language] }))} />
         </Field>
         <Field label={language === 'pt' ? 'Escopo' : 'Scope'}>
-          <CustomSelect value={form.company_scope} onChange={v => set('company_scope', v)} options={SCOPES.map(s => ({ value: s.value, label: s.label[language] }))}
-          </Select>
+          <CustomSelect value={form.company_scope} onChange={v => set('company_scope', v)} options={SCOPES.map(s => ({ value: s.value, label: s.label[language] }))} />
         </Field>
         <Field label={language === 'pt' ? 'Início' : 'Start time'}>
           <Input type="time" value={form.start_time} onChange={e => set('start_time', e.target.value)} />
@@ -305,8 +304,7 @@ function RitualForm({ initial, onSave, onCancel, language }) {
           <CustomSelect value={String(form.day_of_week)} onChange={v => set('day_of_week', v)} options={[{ value: '', label: language === 'pt' ? '— Todo dia —' : '— Every day —' }, ...DAYS.map(d => ({ value: String(d.value), label: d[language] }))]} />
         </Field>
         <Field label={language === 'pt' ? 'Escopo' : 'Scope'}>
-          <CustomSelect value={form.company_scope} onChange={v => set('company_scope', v)} options={SCOPES.map(s => ({ value: s.value, label: s.label[language] }))}
-          </Select>
+          <CustomSelect value={form.company_scope} onChange={v => set('company_scope', v)} options={SCOPES.map(s => ({ value: s.value, label: s.label[language] }))} />
         </Field>
         <Field label={language === 'pt' ? 'Descrição' : 'Description'}>
           <Textarea

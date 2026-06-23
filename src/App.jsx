@@ -24,6 +24,8 @@ const Availability = lazy(() => import('./pages/Availability'));
 const Weekly       = lazy(() => import('./pages/Weekly'));
 const Today        = lazy(() => import('./pages/Today'));
 const MoveOn       = lazy(() => import('./pages/MoveOn'));
+const Tasks        = lazy(() => import('./pages/Tasks'));
+const TasksNew     = lazy(() => import('./pages/TasksNew'));
 
 function PageFallback() {
   return (
@@ -62,6 +64,8 @@ export default function App() {
                     <Route path="weekly" element={<Weekly />} />
                     <Route path="today" element={<Today />} />
                     <Route path="moveon" element={<MoveOn />} />
+                    <Route path="tasks" element={<Tasks />} />
+                    <Route path="tasks/new" element={<TasksNew />} />
                   </Route>
                 </Routes>
               </Suspense>

@@ -20,7 +20,8 @@ import {
   Database,
   CalendarDays,
   ListChecks,
-  Flag
+  Flag,
+  Kanban
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
@@ -193,6 +194,29 @@ export default function Layout() {
                       <span className="text-xs font-medium tracking-tight">
                         {language === 'pt' ? 'Semana' : 'Weekly'}
                       </span>
+                    </div>
+                    {isActive && <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#3362FF' }} />}
+                  </>
+                )}
+              </NavLink>
+              {/* Tasks / Command Center */}
+              <NavLink
+                to="/tasks"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={({ isActive }) => cn(
+                  "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200",
+                  isActive ? "border" : "hover:bg-[rgba(244,244,246,0.04)]"
+                )}
+                style={({ isActive }) => isActive
+                  ? { backgroundColor: 'rgba(51,98,255,0.15)', color: '#F4F4F6', borderColor: 'rgba(51,98,255,0.3)' }
+                  : { color: '#6B7080' }
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <Kanban className="h-4 w-4" style={isActive ? { color: '#3362FF' } : {}} />
+                      <span className="text-xs font-medium tracking-tight">Tasks</span>
                     </div>
                     {isActive && <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#3362FF' }} />}
                   </>
