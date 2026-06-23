@@ -3156,7 +3156,7 @@ export default function TarefasPage() {
               className="flex items-center gap-1.5 px-3 py-2 bg-[#111A2E] border border-slate-800/70 rounded-xl text-xs text-slate-300 hover:text-white shadow-sm transition-all disabled:opacity-50">
               <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Atualizar
             </button>
-            <Link href="/admin/tarefas/nova"
+            <Link to="/tasks/new"
               className="flex items-center gap-1.5 px-3 py-2 bg-[#09a1e5] hover:bg-[#0891d5] rounded-xl text-xs text-white font-semibold shadow-sm shadow-[#09a1e5]/20 transition-all">
               <Plus size={13} /> Nova tarefa
             </Link>
@@ -3164,10 +3164,10 @@ export default function TarefasPage() {
         </div>
 
         {/* Rituais da Semana — hábitos recorrentes */}
-        {!foco && <WeeklyRitualsBanner />}
+        {!foco && view === "hoje" && <WeeklyRitualsBanner />}
 
         {/* KPI Cards — Hoje / Sprint Ativa / Entregas Próximas / Impact XP */}
-        <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 ${foco ? "hidden" : ""}`}>
+        <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 ${foco || view !== "hoje" ? "hidden" : ""}`}>
           <KpiResourceCard label="Hoje" value={missoesHoje.length} sub="missões do dia" icon={Target} accent="#22d3ee" />
           <KpiResourceCard label="Sprint Ativa" value={`${activeFrentePct}%`} sub={activeFrente ? `${activeFrente.sprintNome} · ${activeFrenteDone}/${activeFrente.tasks.length}` : "—"} icon={Flag} accent="#a78bfa" pct={activeFrentePct} />
           <KpiResourceCard label="Entregas Próximas" value={proximos7dias.length} sub="nos próximos 7 dias" icon={Calendar} accent="#fbbf24" />
@@ -3175,7 +3175,7 @@ export default function TarefasPage() {
         </div>
 
         {/* Objetivos do Mês — tira compacta */}
-        {!foco && (
+        {!foco && view === "hoje" && (
           <div className={`${cc.panel} p-4`}>
             <p className="text-[11px] font-bold text-slate-400 mb-3">Objetivos do Mês</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -3201,7 +3201,7 @@ export default function TarefasPage() {
         )}
 
         {/* Equity Readiness — medidor simbólico de impacto acumulado */}
-        <div className={`${cc.panel} p-4 ${foco ? "hidden" : ""}`}>
+        <div className={`${cc.panel} p-4 ${foco || view !== "hoje" ? "hidden" : ""}`}>
           <div className="flex items-center justify-between mb-3 flex-wrap gap-1">
             <p className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
               <Sparkles size={15} className="text-amber-400" /> Equity Readiness
