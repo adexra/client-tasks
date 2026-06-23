@@ -156,22 +156,19 @@ function daysSince(iso: string) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
 }
 
-const CATEGORIAS = [
-  "Admin/Banco", "Bot/Chatwoot", "Ads/Tracking", "Site/SEO", "Instagram/Conteúdo",
-  "Automações", "Dashboard/Dados", "Operação", "Estratégia/CEO", "Segurança", "Outros",
-] as const;
-
 const IMPACTO_LABELS: Record<number, string> = { 1: "Baixo", 2: "Médio", 3: "Alto" };
 
+// Maps any categoria value (new frente key or legacy string) to an emoji icon.
 const CATEGORIA_ICONS: Record<string, string> = {
+  // frente keys (new canonical values)
+  instagram: "📸", desenvolvimento: "💻", anuncios: "🎯", operacao: "⚙️",
+  automation: "🤖", site: "🌐", marketing: "📣", loja: "🛍️",
+  // legacy free-text values kept for display of old tasks
   "Admin/Banco": "🗄️", "Bot/Chatwoot": "🤖", "Ads/Tracking": "🎯", "Site/SEO": "🌐",
   "Instagram/Conteúdo": "📸", "Automações": "⚙️", "Dashboard/Dados": "📊",
   "Operação": "🏍️", "Estratégia/CEO": "🧭", "Segurança": "🔒", "Outros": "📌",
-  // legado
   "Ads": "🎯", "Site": "🌐", "Admin": "🛠️", "Instagram": "📸", "Automação": "🤖",
-  "Marketing": "📣", "Loja": "🏍️", "Infraestrutura & Website": "🌐", "Tracking & Analytics": "📊",
-  "Marketing & Tráfego Pago": "🎯", "CRM & Automação": "🤖", "SEO & Autoridade": "🔍",
-  "BI & Analytics": "📈", "Dependências Externas": "⏳", "Operacional": "⚙️",
+  "Marketing": "📣", "Loja": "🏍️",
 };
 
 // ─── Objetivos do Mês (MVP — dados manuais/mockados) ───────────────────────────
@@ -1586,25 +1583,26 @@ function EditModal({ task, onClose, onSave, onMove, onChildTasksCreated, onTaskU
           </div>
         </div>
 
-        {/* Categoria */}
+        {/* Área de trabalho */}
         <div>
-          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1.5">Categoria</label>
+          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1.5">Área de trabalho</label>
           <div className="flex flex-wrap gap-1.5">
-            {CATEGORIAS.map(c => (
-              <button key={c} onClick={() => setDraft(d => ({ ...d, categoria: c }))}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${draft.categoria === c ? "bg-[#09a1e5]/10 border-[#09a1e5]/40 text-[#09a1e5]" : "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-slate-200"}`}>
-                {CATEGORIA_ICONS[c]} {c}
+            {(Object.keys(FRONTES) as FronteKey[]).map(k => (
+              <button key={k} onClick={() => setDraft(d => ({ ...d, categoria: d.categoria === k ? "" : k }))}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${draft.categoria === k ? "bg-[#09a1e5]/10 border-[#09a1e5]/40 text-[#09a1e5]" : "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-slate-200"}`}>
+                {CATEGORIA_ICONS[k]} {FRONTES[k].name}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Projeto */}
+        {/* Projeto / Sprint */}
         <div>
-          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1.5">Projeto</label>
+          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1.5">Sprint / Projeto</label>
           <input value={draft.projeto} onChange={e => setDraft(d => ({ ...d, projeto: e.target.value }))}
-            placeholder="Ex: Auditoria V1 vs V2"
+            placeholder="Sprint 3 — Desenvolvimento"
             className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-400 outline-none focus:border-[#09a1e5]" />
+          <p className="text-[10px] text-slate-600 mt-1">Formato "Sprint N — Frente" para aparecer no Mapa do mês.</p>
         </div>
 
         {/* Prioridade + Urgência + Impacto */}
