@@ -3218,7 +3218,7 @@ export default function TarefasPage() {
           </p>
         </div>
 
-        {/* Filters + view toggle */}
+        {/* Filters */}
         <div className={`flex flex-wrap gap-2 ${foco ? "hidden" : ""}`}>
           <div className="relative flex-1 min-w-[180px]">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -3230,14 +3230,6 @@ export default function TarefasPage() {
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all border whitespace-nowrap ${deadlineOnly ? "bg-amber-500/15 border-amber-500/40 text-amber-300" : "bg-[#111A2E] border-slate-800/70 text-slate-300 hover:text-white"}`}>
             <Clock size={13} /> Prazos próximos
           </button>
-          <div className="flex bg-slate-900/60 border border-slate-800 rounded-xl p-1 gap-1 overflow-x-auto">
-            {([["hoje", <Calendar key="i1" size={13} />, "Hoje"], ["mapa", <MapIcon key="i6" size={13} />, "Mapa do mês"], ["sprint", <Flag key="i2" size={13} />, "Sprint"], ["backlog", <LayoutGrid key="i3" size={13} />, "Backlog"], ["historico", <Trophy key="i7" size={13} />, "Histórico"], ["avancado", <Columns3 key="i4" size={13} />, "Avançado"]] as const).map(([v, icon, label]) => (
-              <button key={v} onClick={() => navigate(`/tasks/${v}`)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${view === v ? "bg-slate-800 text-white shadow-sm border border-slate-700" : "text-slate-400 hover:text-slate-100"}`}>
-                {icon}{label}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Content */}

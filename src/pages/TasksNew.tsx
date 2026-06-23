@@ -299,237 +299,185 @@ export default function NovaTarefaPage() {
     }
   }
 
+  const input = "w-full bg-[#111A2E] border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-[#09a1e5]";
+  const label = "text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5";
+
   return (
-    <div className="min-h-screen bg-[#F4F6FB] text-slate-900 font-sans">
-      <div className="fixed inset-0 pointer-events-none opacity-[0.4]"
-        style={{ backgroundImage: "radial-gradient(#CBD5E1 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-      <div className="fixed top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#09a1e5] via-cyan-300 to-[#09a1e5] z-50" />
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-6">
 
-      <div className="relative max-w-2xl mx-auto px-4 sm:px-6 py-10">
-
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <Link to="/tasks/hoje"
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-colors shrink-0 shadow-sm">
-            <ArrowLeft size={16} />
-          </Link>
-          <div>
-            <p className={`${mono.className} text-[10px] font-bold text-[#09a1e5] uppercase tracking-[0.25em]`}>Command Center</p>
-            <h1 className="text-2xl font-black tracking-tight">Nova tarefa</h1>
-            <p className="text-slate-500 text-xs mt-0.5">Adiciona ao backlog de planejamento</p>
-          </div>
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Link to="/tasks/hoje"
+          className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-800 text-slate-400 hover:text-white hover:border-slate-600 transition-colors shrink-0">
+          <ArrowLeft size={16} />
+        </Link>
+        <div>
+          <h1 className="text-xl font-extrabold text-white">Nova tarefa</h1>
+          <p className="text-slate-500 text-xs mt-0.5">Adiciona ao backlog de planejamento</p>
         </div>
-
-        {/* Mode toggle */}
-        <div className="flex p-1 rounded-2xl bg-slate-200/60 border border-slate-200 mb-6">
-          <button onClick={() => setMode("formulario")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${
-              mode === "formulario" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
-            }`}>
-            <Plus size={14} /> Formulário
-          </button>
-          <button onClick={() => setMode("dump")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${
-              mode === "dump" ? "bg-white text-cyan-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
-            }`}>
-            <Sparkles size={14} /> Text Dump + IA
-          </button>
-        </div>
-
-        {/* Dump mode */}
-        {mode === "dump" && (
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">
-            <DumpMode leads={leads} onDone={() => navigate("/tasks")} />
-          </div>
-        )}
-
-        {/* Formulário mode */}
-        {mode === "formulario" && (
-          <form onSubmit={submit} className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
-
-            <div>
-              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">
-                Título <span className="text-red-600">*</span>
-              </label>
-              <input value={form.titulo} onChange={e => setForm(f => ({ ...f, titulo: e.target.value }))}
-                placeholder="Ex: Ajustar preços no catálogo" required
-                className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#09a1e5]" />
-            </div>
-
-            {/* Categoria */}
-            <div>
-              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">Categoria</label>
-              <div className="flex flex-wrap gap-1.5">
-                {CATEGORIAS.map(c => (
-                  <button type="button" key={c} onClick={() => setForm(f => ({ ...f, categoria: c }))}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${form.categoria === c ? "bg-cyan-50 border-cyan-500/30 text-cyan-700" : "bg-slate-100 border-slate-200 text-slate-500 hover:text-slate-700"}`}>
-                    {CATEGORIA_ICONS[c]} {c}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Destino: Hoje / Sprint / Backlog */}
-            <div>
-              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">Onde colocar</label>
-              <div className="grid grid-cols-3 gap-1.5">
-                {([
-                  ["today", "📅 Hoje"],
-                  ["sprint", "🚀 Sprint"],
-                  ["backlog", "📥 Backlog"],
-                ] as const).map(([v, label]) => (
-                  <button type="button" key={v} onClick={() => setForm(f => ({ ...f, destino: v }))}
-                    className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${form.destino === v ? "bg-cyan-50 border-cyan-500/30 text-cyan-700" : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"}`}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Dia (só se Hoje) */}
-            {form.destino === "today" && (
-              <div>
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1 mb-1.5">
-                  <Calendar size={10} /> Dia
-                </label>
-                <input type="date" value={form.data_foco} onChange={e => setForm(f => ({ ...f, data_foco: e.target.value }))}
-                  className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-[#09a1e5]" />
-              </div>
-            )}
-
-            {/* Mais detalhes (opcional) */}
-            <button type="button" onClick={() => setShowAdvanced(s => !s)}
-              className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors">
-              {showAdvanced ? <ChevronUp size={13} /> : <ChevronDown size={13} />} Mais detalhes (opcional)
-            </button>
-
-            {showAdvanced && (
-              <div className="space-y-5 pt-1 border-t border-slate-100">
-                <div className="pt-4">
-                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">Descrição</label>
-                  <textarea value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
-                    rows={3} placeholder="Contexto, detalhes, o que precisa ser feito…"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#09a1e5] resize-none" />
-                </div>
-
-                {/* Prioridade + Urgência + Impacto */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1 mb-1.5">
-                      <Flag size={10} /> Prioridade
-                    </label>
-                    <div className="flex gap-1">
-                      {([1,2,3] as const).map(v => (
-                        <button type="button" key={v} onClick={() => setForm(f => ({ ...f, prioridade: v }))}
-                          className={`flex-1 py-2 rounded-lg text-[10px] font-black border transition-all ${form.prioridade === v ? "bg-cyan-50 border-cyan-500/30 text-cyan-700" : "bg-white border-slate-200 text-slate-400"}`}>
-                          {PRIO_LABELS[v][0]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1 mb-1.5">
-                      <Zap size={10} /> Urgência
-                    </label>
-                    <div className="flex gap-1">
-                      {([1,2,3] as const).map(v => (
-                        <button type="button" key={v} onClick={() => setForm(f => ({ ...f, urgencia: v }))}
-                          className={`flex-1 py-2 rounded-lg text-[10px] font-black border transition-all ${form.urgencia === v ? "bg-cyan-50 border-cyan-500/30 text-cyan-700" : "bg-white border-slate-200 text-slate-400"}`}>
-                          U{v}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">Impacto</label>
-                    <div className="flex gap-1">
-                      {([1,2,3] as const).map(v => (
-                        <button type="button" key={v} onClick={() => setForm(f => ({ ...f, impacto: v }))}
-                          className={`flex-1 py-2 rounded-lg text-[10px] font-black border transition-all ${form.impacto === v ? "bg-cyan-50 border-cyan-500/30 text-cyan-700" : "bg-white border-slate-200 text-slate-400"}`}>
-                          {IMPACTO_LABELS[v][0]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Projeto */}
-                <div>
-                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">Projeto / Sprint</label>
-                  <input value={form.projeto} onChange={e => setForm(f => ({ ...f, projeto: e.target.value }))}
-                    placeholder="Ex: Sprint 1 — Diagnóstico / Auditoria V1 vs V2"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#09a1e5]" />
-                </div>
-
-                {/* Critério de pronto */}
-                <div>
-                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">Critério de pronto</label>
-                  <textarea value={form.done_criteria} onChange={e => setForm(f => ({ ...f, done_criteria: e.target.value }))}
-                    rows={2} placeholder="Como saber que essa tarefa está realmente concluída?"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#09a1e5] resize-none" />
-                </div>
-
-                {/* Responsável + Semana */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1 mb-1.5">
-                      <User size={10} /> Responsável
-                    </label>
-                    <input value={form.responsavel} onChange={e => setForm(f => ({ ...f, responsavel: e.target.value }))}
-                      placeholder="Nome"
-                      className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#09a1e5]" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1 mb-1.5">
-                      <Calendar size={10} /> Semana alvo
-                    </label>
-                    <input type="date" value={form.semana_alvo} onChange={e => setForm(f => ({ ...f, semana_alvo: e.target.value }))}
-                      className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-[#09a1e5]" />
-                  </div>
-                </div>
-
-                {/* URL verificação */}
-                <div>
-                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1 mb-1.5">
-                    <ExternalLink size={10} /> URL de verificação
-                  </label>
-                  <input value={form.url_verificacao} onChange={e => setForm(f => ({ ...f, url_verificacao: e.target.value }))}
-                    placeholder="https://… link para ver o resultado"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#09a1e5]" />
-                </div>
-
-                {/* Lead */}
-                {leads.length > 0 && (
-                  <div>
-                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1 mb-1.5">
-                      <MessageCircle size={10} /> Lead relacionado
-                    </label>
-                    <select value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))}
-                      className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-[#09a1e5]">
-                      <option value="">Nenhum</option>
-                      {leads.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
-                    </select>
-                  </div>
-                )}
-
-                {/* Notas */}
-                <div>
-                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">Notas internas</label>
-                  <textarea value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))}
-                    rows={2} placeholder="Observações, links, contexto adicional…"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-[#09a1e5] resize-none" />
-                </div>
-              </div>
-            )}
-
-            <button type="submit" disabled={saving || !form.titulo.trim()}
-              className="w-full flex items-center justify-center gap-2 py-3.5 bg-cyan-50 hover:bg-cyan-100 border border-cyan-500/30 rounded-2xl text-cyan-700 font-black text-sm transition-all disabled:opacity-40">
-              <Plus size={15} /> {saving ? "Criando…" : "Criar tarefa"}
-            </button>
-
-          </form>
-        )}
       </div>
+
+      {/* Mode toggle */}
+      <div className="flex p-1 rounded-xl bg-slate-900/60 border border-slate-800 gap-1">
+        <button onClick={() => setMode("formulario")}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${
+            mode === "formulario" ? "bg-slate-800 text-white shadow-sm border border-slate-700" : "text-slate-500 hover:text-slate-300"
+          }`}>
+          <Plus size={14} /> Formulário
+        </button>
+        <button onClick={() => setMode("dump")}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${
+            mode === "dump" ? "bg-slate-800 text-[#09a1e5] shadow-sm border border-slate-700" : "text-slate-500 hover:text-slate-300"
+          }`}>
+          <Sparkles size={14} /> Text Dump + IA
+        </button>
+      </div>
+
+      {/* Dump mode */}
+      {mode === "dump" && (
+        <div className="rounded-2xl border border-slate-800 bg-[#0B1324]/80 p-5 sm:p-6">
+          <DumpMode leads={leads} onDone={() => navigate("/tasks")} />
+        </div>
+      )}
+
+      {/* Formulário mode */}
+      {mode === "formulario" && (
+        <form onSubmit={submit} className="rounded-2xl border border-slate-800 bg-[#0B1324]/80 p-5 sm:p-6 space-y-5">
+
+          <div>
+            <label className={label}>Título <span className="text-red-400">*</span></label>
+            <input value={form.titulo} onChange={e => setForm(f => ({ ...f, titulo: e.target.value }))}
+              placeholder="Ex: Ajustar preços no catálogo" required className={input} />
+          </div>
+
+          {/* Categoria */}
+          <div>
+            <label className={label}>Categoria</label>
+            <div className="flex flex-wrap gap-1.5">
+              {CATEGORIAS.map(c => (
+                <button type="button" key={c} onClick={() => setForm(f => ({ ...f, categoria: f.categoria === c ? "" : c }))}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${form.categoria === c ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5]" : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200"}`}>
+                  {CATEGORIA_ICONS[c]} {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Destino */}
+          <div>
+            <label className={label}>Onde colocar</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {([["today", "📅 Hoje"], ["sprint", "🚀 Sprint"], ["backlog", "📥 Backlog"]] as const).map(([v, lbl]) => (
+                <button type="button" key={v} onClick={() => setForm(f => ({ ...f, destino: v }))}
+                  className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${form.destino === v ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5]" : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200"}`}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {form.destino === "today" && (
+            <div>
+              <label className={label}><Calendar size={10} className="inline mr-1" />Dia</label>
+              <input type="date" value={form.data_foco} onChange={e => setForm(f => ({ ...f, data_foco: e.target.value }))}
+                className={input} />
+            </div>
+          )}
+
+          {/* Mais detalhes */}
+          <button type="button" onClick={() => setShowAdvanced(s => !s)}
+            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-bold text-slate-500 hover:text-slate-300 transition-colors">
+            {showAdvanced ? <ChevronUp size={13} /> : <ChevronDown size={13} />} Mais detalhes (opcional)
+          </button>
+
+          {showAdvanced && (
+            <div className="space-y-5 pt-1 border-t border-slate-800">
+              <div className="pt-4">
+                <label className={label}>Descrição</label>
+                <textarea value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
+                  rows={3} placeholder="Contexto, detalhes, o que precisa ser feito…"
+                  className={`${input} resize-none`} />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ["prioridade", "Prioridade", PRIO_LABELS] as const,
+                  ["urgencia",   "Urgência",   { 1: "U1", 2: "U2", 3: "U3" }] as const,
+                  ["impacto",    "Impacto",    IMPACTO_LABELS] as const,
+                ]).map(([field, title, labels]) => (
+                  <div key={field}>
+                    <label className={label}>{title}</label>
+                    <div className="flex gap-1">
+                      {([1,2,3] as const).map(v => (
+                        <button type="button" key={v} onClick={() => setForm(f => ({ ...f, [field]: v }))}
+                          className={`flex-1 py-2 rounded-lg text-[10px] font-black border transition-all ${(form as Record<string, number>)[field] === v ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5]" : "bg-slate-900/60 border-slate-800 text-slate-500"}`}>
+                          {(labels as Record<number,string>)[v][0]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <label className={label}>Projeto / Sprint</label>
+                <input value={form.projeto} onChange={e => setForm(f => ({ ...f, projeto: e.target.value }))}
+                  placeholder="Ex: Sprint 1 — Diagnóstico" className={input} />
+              </div>
+
+              <div>
+                <label className={label}>Critério de pronto</label>
+                <textarea value={form.done_criteria} onChange={e => setForm(f => ({ ...f, done_criteria: e.target.value }))}
+                  rows={2} placeholder="Como saber que está realmente concluída?"
+                  className={`${input} resize-none`} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={label}><User size={10} className="inline mr-1" />Responsável</label>
+                  <input value={form.responsavel} onChange={e => setForm(f => ({ ...f, responsavel: e.target.value }))}
+                    placeholder="Nome" className={input} />
+                </div>
+                <div>
+                  <label className={label}><Calendar size={10} className="inline mr-1" />Semana alvo</label>
+                  <input type="date" value={form.semana_alvo} onChange={e => setForm(f => ({ ...f, semana_alvo: e.target.value }))}
+                    className={input} />
+                </div>
+              </div>
+
+              <div>
+                <label className={label}><ExternalLink size={10} className="inline mr-1" />URL de verificação</label>
+                <input value={form.url_verificacao} onChange={e => setForm(f => ({ ...f, url_verificacao: e.target.value }))}
+                  placeholder="https://…" className={input} />
+              </div>
+
+              {leads.length > 0 && (
+                <div>
+                  <label className={label}><MessageCircle size={10} className="inline mr-1" />Cliente relacionado</label>
+                  <select value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))}
+                    className={input}>
+                    <option value="">Nenhum</option>
+                    {leads.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className={label}>Notas internas</label>
+                <textarea value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))}
+                  rows={2} placeholder="Observações, links, contexto adicional…"
+                  className={`${input} resize-none`} />
+              </div>
+            </div>
+          )}
+
+          <button type="submit" disabled={saving || !form.titulo.trim()}
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#09a1e5] hover:bg-[#0891d5] rounded-2xl text-white font-black text-sm transition-all disabled:opacity-40 shadow-lg shadow-[#09a1e5]/20">
+            <Plus size={15} /> {saving ? "Criando…" : "Criar tarefa"}
+          </button>
+
+        </form>
+      )}
     </div>
   );
 }
