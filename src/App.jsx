@@ -26,6 +26,7 @@ const Today        = lazy(() => import('./pages/Today'));
 const MoveOn       = lazy(() => import('./pages/MoveOn'));
 const Tasks        = lazy(() => import('./pages/Tasks'));
 const TasksNew     = lazy(() => import('./pages/TasksNew'));
+const Results      = lazy(() => import('./pages/Results'));
 
 function PageFallback() {
   return (
@@ -67,6 +68,7 @@ export default function App() {
                     <Route path="tasks" element={<Navigate to="/tasks/hoje" replace />} />
                     <Route path="tasks/:tab" element={<Tasks />} />
                     <Route path="tasks/new" element={<TasksNew />} />
+                    <Route path="results" element={<Results />} />
                   </Route>
                 </Routes>
               </Suspense>

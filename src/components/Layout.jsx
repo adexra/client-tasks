@@ -29,6 +29,7 @@ import {
   LayoutGrid,
   ExternalLink,
   Plus,
+  Star,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
@@ -137,6 +138,7 @@ export default function Layout() {
                 { to: '/tasks/mapa',     icon: MapPin,      label: 'Mapa do mês' },
                 { to: '/tasks/historico',icon: Trophy,      label: 'Histórico' },
                 { to: '/tasks/avancado', icon: Columns3,    label: 'Avançado' },
+                { to: '/results',        icon: Star,        label: 'Resultados' },
               ].map(({ to, icon: Icon, label }) => (
                 <NavLink key={to} to={to} onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) => cn(
