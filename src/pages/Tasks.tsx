@@ -27,7 +27,7 @@ import {
   getTaskArtifacts, createArtifact, updateArtifact, deleteArtifact, looksLikeSecret, getArtifactCounts,
   getObjectives, upsertObjective, getObjetivoNome, getSprintNome, OBJECTIVE_META, SPRINT_SIZE_WARNING_THRESHOLD,
   UTILIDADE_OPTIONS, MODELO_GERAL,
-  FRONTES, getFronte,
+  FRONTES, getFronte, rollingSprintMonthKey,
 } from "../lib/tasks";
 import type { UtilidadeKey, FronteKey, Task, TaskInsert, PlanningBucket, ExecutionStatus, TaskArtifact, ArtifactType, TaskArtifactInsert } from "../lib/tasks";
 import WeeklyRitualsBanner from "../components/WeeklyRitualsBanner";
@@ -3040,13 +3040,35 @@ export default function TarefasPage() {
 
   // Mapa do mês: agrupa tarefas por mês (via projeto "Sprint N") e depois por sprint.
   // Suporta um override local (arrastar sprint para outro mês) sem migração de schema.
-  const ALL_SPRINT_NUMS = useMemo(() => Array.from(new Set(ALL_MONTHS.flatMap(m => m.sprints))).sort((a, b) => a - b), [ALL_MONTHS]);
+  // Also include sprint numbers found in actual tasks (tasks may reference sprints not yet in the static month list)
+  const ALL_SPRINT_NUMS = useMemo(() => {
+    const fromMonths = ALL_MONTHS.flatMap(m => m.sprints);
+    const fromTasks = live
+      .map(t => { const m = /sprint\s*(\d+)/i.exec((t.projeto ?? "").split(" / ")[0] ?? ""); return m ? Number(m[1]) : null; })
+      .filter((n): n is number => n !== null);
+    return Array.from(new Set([...fromMonths, ...fromTasks])).sort((a, b) => a - b);
+  }, [ALL_MONTHS, live]);
   const monthKeyForSprint = useCallback((n: number): string | null => {
-    return sprintMonthOverride[n] ?? ALL_MONTHS.find(m => m.sprints.includes(n))?.key ?? null;
+    return sprintMonthOverride[n] ?? ALL_MONTHS.find(m => m.sprints.includes(n))?.key ?? rollingSprintMonthKey(n);
   }, [sprintMonthOverride, ALL_MONTHS]);
 
   const mapaMeses = useMemo(() => {
-    return ALL_MONTHS.map(month => {
+    // Build a complete month list: static ALL_MONTHS + any extra months implied by tasks
+    const extraMonthKeys = new Set<string>();
+    for (const n of ALL_SPRINT_NUMS) {
+      const key = monthKeyForSprint(n);
+      if (key && !ALL_MONTHS.find(m => m.key === key)) extraMonthKeys.add(key);
+    }
+    const extraMonths = Array.from(extraMonthKeys).map(key => {
+      const sprintN = ALL_SPRINT_NUMS.find(n => monthKeyForSprint(n) === key) ?? 0;
+      const d = new Date("2026-06-01T00:00:00");
+      d.setDate(d.getDate() + sprintN * 7);
+      const name = d.toLocaleDateString("pt-BR", { month: "long" });
+      return { key, titulo: `${name.charAt(0).toUpperCase()}${name.slice(1)} ${d.getFullYear()}`, sprints: [] as number[] };
+    });
+    const allMonths = [...ALL_MONTHS, ...extraMonths];
+
+    return allMonths.map(month => {
       const sprintNums = ALL_SPRINT_NUMS.filter(n => monthKeyForSprint(n) === month.key);
       const sprints = sprintNums.map(n => {
         const sprintTasks = live.filter(t => {

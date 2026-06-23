@@ -259,7 +259,7 @@ function genericMonthTitle(d: Date): string {
  * the calendar month/year containing its start date (anchor + n*7 days).
  * Sprints 0-4 are NOT covered here — use LEGACY_SPRINT_MONTH for those.
  */
-function rollingSprintMonthKey(n: number): string {
+export function rollingSprintMonthKey(n: number): string {
   const start = getSprintStartDate(n);
   return `${monthKeyForDate(start)}-${start.getFullYear()}`;
 }

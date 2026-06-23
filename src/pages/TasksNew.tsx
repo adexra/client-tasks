@@ -5,8 +5,8 @@ import {
   MessageCircle, Sparkles, CheckCircle2, Loader2, ExternalLink,
 } from "lucide-react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { createTask } from "../lib/tasks";
-import type { PlanningBucket, TaskInsert } from "../lib/tasks";
+import { createTask, FRONTES } from "../lib/tasks";
+import type { PlanningBucket, TaskInsert, FronteKey } from "../lib/tasks";
 import { supabase } from "../lib/supabase";
 
 interface LeadOption { id: string; label: string; }
@@ -32,14 +32,9 @@ const mono = { className: "font-mono" };
 const PRIO_LABELS: Record<number, string> = { 1: "Baixa", 2: "Média", 3: "Alta" };
 const URG_LABELS:  Record<number, string> = { 1: "Pode esperar 🟢", 2: "Logo 🟡", 3: "Urgente 🔴" };
 
-const CATEGORIAS = [
-  "Admin/Banco", "Bot/Chatwoot", "Ads/Tracking", "Site/SEO", "Instagram/Conteúdo",
-  "Automações", "Dashboard/Dados", "Operação", "Estratégia/CEO", "Segurança", "Outros",
-] as const;
-const CATEGORIA_ICONS: Record<string, string> = {
-  "Admin/Banco": "🗄️", "Bot/Chatwoot": "🤖", "Ads/Tracking": "🎯", "Site/SEO": "🌐",
-  "Instagram/Conteúdo": "📸", "Automações": "⚙️", "Dashboard/Dados": "📊",
-  "Operação": "🏍️", "Estratégia/CEO": "🧭", "Segurança": "🔒", "Outros": "📌",
+const FRENTE_ICONS: Record<FronteKey, string> = {
+  instagram: "📸", desenvolvimento: "💻", anuncios: "🎯", admin_dash: "🗄️",
+  automation: "🤖", site: "🌐", marketing: "📣", loja: "🛍️",
 };
 const IMPACTO_LABELS: Record<number, string> = { 1: "Baixo", 2: "Médio", 3: "Alto" };
 
@@ -123,12 +118,12 @@ function DumpMode({ leads, onDone }: { leads: LeadOption[]; onDone: () => void }
       />
 
       <div>
-        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">Categoria (opcional — aplica a todas)</label>
+        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1.5">Área de trabalho (opcional — aplica a todas)</label>
         <div className="flex flex-wrap gap-1.5">
-          {CATEGORIAS.map(c => (
-            <button type="button" key={c} onClick={() => setCategoria(prev => prev === c ? "" : c)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${categoria === c ? "bg-cyan-50 border-cyan-500/30 text-cyan-700" : "bg-slate-100 border-slate-200 text-slate-500 hover:text-slate-700"}`}>
-              {CATEGORIA_ICONS[c]} {c}
+          {(Object.keys(FRONTES) as FronteKey[]).map(k => (
+            <button type="button" key={k} onClick={() => setCategoria(prev => prev === k ? "" : k)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${categoria === k ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5]" : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200"}`}>
+              {FRENTE_ICONS[k]} {FRONTES[k].name}
             </button>
           ))}
         </div>
@@ -191,8 +186,8 @@ function DumpMode({ leads, onDone }: { leads: LeadOption[]; onDone: () => void }
                   )}
                   <div className="flex flex-wrap gap-2 mt-1.5">
                     {t.categoria && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md border bg-slate-100 border-slate-200 text-slate-500">
-                        {CATEGORIA_ICONS[t.categoria] ?? "📌"} {t.categoria}
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md border bg-slate-900/60 border-slate-800 text-slate-400">
+                        {FRENTE_ICONS[t.categoria as FronteKey] ?? "📌"} {FRONTES[t.categoria as FronteKey]?.name ?? t.categoria}
                       </span>
                     )}
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${
@@ -250,7 +245,7 @@ export default function NovaTarefaPage() {
     semana_alvo:     "",
     url_verificacao: "",
     notas:           "",
-    categoria:       "" as string,
+    categoria:       "" as FronteKey | "",
     projeto:         "",
     impacto:         2 as 1 | 2 | 3,
     done_criteria:   "",
@@ -350,14 +345,14 @@ export default function NovaTarefaPage() {
               placeholder="Ex: Ajustar preços no catálogo" required className={input} />
           </div>
 
-          {/* Categoria */}
+          {/* Área / Frente */}
           <div>
-            <label className={label}>Categoria</label>
+            <label className={label}>Área de trabalho</label>
             <div className="flex flex-wrap gap-1.5">
-              {CATEGORIAS.map(c => (
-                <button type="button" key={c} onClick={() => setForm(f => ({ ...f, categoria: f.categoria === c ? "" : c }))}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${form.categoria === c ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5]" : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200"}`}>
-                  {CATEGORIA_ICONS[c]} {c}
+              {(Object.keys(FRONTES) as FronteKey[]).map(k => (
+                <button type="button" key={k} onClick={() => setForm(f => ({ ...f, categoria: f.categoria === k ? "" : k }))}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${form.categoria === k ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5]" : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200"}`}>
+                  {FRENTE_ICONS[k]} {FRONTES[k].name}
                 </button>
               ))}
             </div>
