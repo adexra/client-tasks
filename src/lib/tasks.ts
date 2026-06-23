@@ -397,29 +397,37 @@ export interface RoadmapObjective {
   scope: ObjectiveScope;
   key: string;
   objetivo: string | null;
+  client_name: string | null;
+  project_name: string | null;
   updated_at: string;
 }
 
 /** All roadmap objectives, keyed as `${scope}:${key}` for easy lookup. */
-export async function getObjectives(): Promise<Record<string, string>> {
-  // supabase singleton from ./supabase
+export async function getObjectives(): Promise<Record<string, RoadmapObjective>> {
   const { data, error } = await supabase
     .from("roadmap_objectives")
-    .select("scope, key, objetivo");
+    .select("scope, key, objetivo, client_name, project_name, updated_at");
   if (error) throw error;
-  const map: Record<string, string> = {};
-  for (const row of data as { scope: ObjectiveScope; key: string; objetivo: string | null }[]) {
-    if (row.objetivo) map[`${row.scope}:${row.key}`] = row.objetivo;
+  const map: Record<string, RoadmapObjective> = {};
+  for (const row of data as RoadmapObjective[]) {
+    map[`${row.scope}:${row.key}`] = row;
   }
   return map;
 }
 
 /** Create or update the objective text for a given month/sprint. */
 export async function upsertObjective(scope: ObjectiveScope, key: string, objetivo: string): Promise<void> {
-  // supabase singleton from ./supabase
   const { error } = await supabase
     .from("roadmap_objectives")
     .upsert({ scope, key, objetivo, updated_at: new Date().toISOString() }, { onConflict: "scope,key" });
+  if (error) throw error;
+}
+
+/** Update client_name and/or project_name for a sprint/frente objective. */
+export async function upsertObjectiveMeta(scope: ObjectiveScope, key: string, meta: { client_name?: string; project_name?: string }): Promise<void> {
+  const { error } = await supabase
+    .from("roadmap_objectives")
+    .upsert({ scope, key, ...meta, updated_at: new Date().toISOString() }, { onConflict: "scope,key" });
   if (error) throw error;
 }
 

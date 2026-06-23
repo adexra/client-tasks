@@ -25,11 +25,11 @@ import {
   getTasks, updateTask, moveTask, restoreTask, createTask,
   getXp, getEarnedXp, hasEvidence, getMonthKey, getRollingMonths, buildHistoryLine, getEquityReadiness, getEstimatedDueDate,
   getTaskArtifacts, createArtifact, updateArtifact, deleteArtifact, looksLikeSecret, getArtifactCounts,
-  getObjectives, upsertObjective, getObjetivoNome, getSprintNome, OBJECTIVE_META, SPRINT_SIZE_WARNING_THRESHOLD,
+  getObjectives, upsertObjective, upsertObjectiveMeta, getObjetivoNome, getSprintNome, OBJECTIVE_META, SPRINT_SIZE_WARNING_THRESHOLD,
   UTILIDADE_OPTIONS, MODELO_GERAL,
   FRONTES, getFronte, rollingSprintMonthKey,
 } from "../lib/tasks";
-import type { UtilidadeKey, FronteKey, Task, TaskInsert, PlanningBucket, ExecutionStatus, TaskArtifact, ArtifactType, TaskArtifactInsert } from "../lib/tasks";
+import type { UtilidadeKey, FronteKey, Task, TaskInsert, PlanningBucket, ExecutionStatus, TaskArtifact, ArtifactType, TaskArtifactInsert, RoadmapObjective } from "../lib/tasks";
 import WeeklyRitualsBanner from "../components/WeeklyRitualsBanner";
 
 /** Bike models for the "Modelo" picker (arsenal tagging). */
@@ -2025,13 +2025,16 @@ function CategorySection({ categoria, tasks, onEdit, onMove, onSave, draggable }
 
 // ─── Objetivo Section (Sprint view — one objective + its active sprint) ────────
 
-function ObjetivoSection({ objetivo, sprintNome, desiredOutcome, tasks, objective, onSaveObjective, onEdit, onMove, onSave, defaultOpen, allTasks }: {
+function ObjetivoSection({ objetivo, sprintNome, desiredOutcome, tasks, objective, clientName, projectName, onSaveObjective, onSaveMeta, onEdit, onMove, onSave, defaultOpen, allTasks }: {
   objetivo: string;
   sprintNome: string;
   desiredOutcome?: string;
   tasks: ExtendedTask[];
   objective: string;
+  clientName: string;
+  projectName: string;
   onSaveObjective: (text: string) => void;
+  onSaveMeta: (meta: { client_name?: string; project_name?: string }) => void;
   onEdit: (task: ExtendedTask) => void;
   onMove: (id: string, col: ColumnId) => void;
   onSave: (id: string, patch: Partial<Task>) => void;
@@ -2043,6 +2046,13 @@ function ObjetivoSection({ objetivo, sprintNome, desiredOutcome, tasks, objectiv
   const [targetSprint, setTargetSprint] = useState("");
   const [newLabel, setNewLabel] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editingMeta, setEditingMeta] = useState(false);
+  const [draftClient, setDraftClient] = useState(clientName);
+  const [draftProject, setDraftProject] = useState(projectName);
+
+  // sync if parent updates
+  React.useEffect(() => { setDraftClient(clientName); }, [clientName]);
+  React.useEffect(() => { setDraftProject(projectName); }, [projectName]);
 
   const sprintLabels = useMemo(() => {
     const byNum = new Map<string, string>();
@@ -2109,14 +2119,12 @@ function ObjetivoSection({ objetivo, sprintNome, desiredOutcome, tasks, objectiv
         <div className="flex-1 text-left min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm font-bold text-slate-100">{objetivo}</p>
-            {(() => {
-              const clientNames = Array.from(new Set(tasks.map(t => t.client?.name).filter(Boolean)));
-              return clientNames.length > 0 ? (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-                  {clientNames.join(", ")}
-                </span>
-              ) : null;
-            })()}
+            {clientName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#09a1e5]/15 border border-[#09a1e5]/30 text-[#09a1e5]">{clientName}</span>}
+            {projectName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300">{projectName}</span>}
+            {!clientName && !projectName && (
+              <button type="button" onClick={e => { e.stopPropagation(); setEditingMeta(true); setOpen(true); }}
+                className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">+ cliente / projeto</button>
+            )}
           </div>
           {desiredOutcome && <p className="text-[11px] text-slate-400 mt-0.5">{desiredOutcome}</p>}
           <p className="text-[10px] text-violet-300 font-semibold mt-1">🚀 {sprintNome}</p>
@@ -2175,6 +2183,33 @@ function ObjetivoSection({ objetivo, sprintNome, desiredOutcome, tasks, objectiv
               </button>
             )}
           </div>
+
+          {/* Cliente / Projeto inline editor */}
+          {(editingMeta || clientName || projectName) && (
+            <div className="flex flex-wrap items-center gap-2 px-1">
+              {editingMeta ? (
+                <>
+                  <input value={draftClient} onChange={e => setDraftClient(e.target.value)}
+                    placeholder="Nome do cliente" autoFocus
+                    className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-white placeholder-slate-500 outline-none focus:border-[#09a1e5] w-36" />
+                  <input value={draftProject} onChange={e => setDraftProject(e.target.value)}
+                    placeholder="Nome do projeto"
+                    className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-white placeholder-slate-500 outline-none focus:border-[#09a1e5] w-36" />
+                  <button onClick={() => { onSaveMeta({ client_name: draftClient, project_name: draftProject }); setEditingMeta(false); }}
+                    className="px-2 py-1 rounded-lg text-[11px] font-bold bg-[#09a1e5]/15 border border-[#09a1e5]/30 text-[#09a1e5] hover:bg-[#09a1e5]/25 transition-all">
+                    <Save size={11} />
+                  </button>
+                  <button onClick={() => setEditingMeta(false)} className="text-[11px] text-slate-500 hover:text-slate-300"><X size={11} /></button>
+                </>
+              ) : (
+                <>
+                  {clientName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#09a1e5]/15 border border-[#09a1e5]/30 text-[#09a1e5]">{clientName}</span>}
+                  {projectName && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300">{projectName}</span>}
+                  <button onClick={() => setEditingMeta(true)} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors flex items-center gap-1"><Pencil size={9} /> editar</button>
+                </>
+              )}
+            </div>
+          )}
 
           {oversized && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-semibold">
@@ -2603,7 +2638,7 @@ export default function TarefasPage() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const [artifactCounts, setArtifactCounts] = useState<ArtifactCounts>({});
-  const [objectives, setObjectives] = useState<Record<string, string>>({});
+  const [objectives, setObjectives] = useState<Record<string, RoadmapObjective>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -2615,8 +2650,19 @@ export default function TarefasPage() {
   }, []);
 
   const saveObjective = useCallback(async (scope: "month" | "sprint" | "frente", key: string, text: string) => {
-    setObjectives(prev => ({ ...prev, [`${scope}:${key}`]: text }));
+    setObjectives(prev => {
+      const existing = prev[`${scope}:${key}`];
+      return { ...prev, [`${scope}:${key}`]: { ...existing, scope, key, objetivo: text, updated_at: new Date().toISOString(), client_name: existing?.client_name ?? null, project_name: existing?.project_name ?? null } };
+    });
     try { await upsertObjective(scope, key, text); } catch { /* best-effort */ }
+  }, []);
+
+  const saveMeta = useCallback(async (scope: "month" | "sprint" | "frente", key: string, meta: { client_name?: string; project_name?: string }) => {
+    setObjectives(prev => {
+      const existing = prev[`${scope}:${key}`];
+      return { ...prev, [`${scope}:${key}`]: { ...existing, scope, key, objetivo: existing?.objetivo ?? null, updated_at: new Date().toISOString(), client_name: meta.client_name ?? existing?.client_name ?? null, project_name: meta.project_name ?? existing?.project_name ?? null } };
+    });
+    try { await upsertObjectiveMeta(scope, key, meta); } catch { /* best-effort */ }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -3741,7 +3787,7 @@ export default function TarefasPage() {
 
                     <div className="px-5 pb-2.5">
                       <ObjectiveEditor
-                        value={objectives[`month:${month.key}`] ?? ""}
+                        value={objectives[`month:${month.key}`]?.objetivo ?? ""}
                         placeholder="Definir objetivo do mês…"
                         onSave={text => saveObjective("month", month.key, text)}
                       />
@@ -3754,7 +3800,7 @@ export default function TarefasPage() {
                         const isDone = s.pct === 100;
                         const statusLabel = isDone ? "Concluída" : s.pct > 0 ? "Em andamento" : "Não iniciada";
                         const statusColor = isDone ? "text-emerald-400" : s.pct > 0 ? "text-[#09a1e5]" : "text-slate-500";
-                        const subtitle = OBJECTIVE_META[s.label]?.desired_outcome ?? objectives[`sprint:${s.n}`] ?? "";
+                        const subtitle = OBJECTIVE_META[s.label]?.desired_outcome ?? objectives[`sprint:${s.n}`]?.objetivo ?? "";
                         return (
                           <DraggableSprintCard key={s.n} id={`sprintcard:${s.n}`}>
                             <SprintMapCard
@@ -3764,7 +3810,7 @@ export default function TarefasPage() {
                               statusLabel={statusLabel}
                               statusColor={statusColor}
                               subtitle={subtitle}
-                              objectiveValue={objectives[`sprint:${s.n}`] ?? ""}
+                              objectiveValue={objectives[`sprint:${s.n}`]?.objetivo ?? ""}
                               onSaveObjective={text => saveObjective("sprint", String(s.n), text)}
                               onOpen={() => navigate("/tasks/backlog")}
                             />
@@ -3795,7 +3841,7 @@ export default function TarefasPage() {
                           </div>
                           <div className="px-4 py-2.5">
                             <ObjectiveEditor
-                              value={objectives[`month:${month.key}`] ?? ""}
+                              value={objectives[`month:${month.key}`]?.objetivo ?? ""}
                               placeholder="Definir objetivo do mês…"
                               onSave={text => saveObjective("month", month.key, text)}
                             />
@@ -3821,7 +3867,7 @@ export default function TarefasPage() {
                                     </button>
                                     <div onClick={e => e.stopPropagation()} className="px-1 pb-1">
                                       <ObjectiveEditor
-                                        value={objectives[`sprint:${s.n}`] ?? ""}
+                                        value={objectives[`sprint:${s.n}`]?.objetivo ?? ""}
                                         placeholder="Definir objetivo da sprint…"
                                         onSave={text => saveObjective("sprint", String(s.n), text)}
                                       />
@@ -3967,8 +4013,11 @@ export default function TarefasPage() {
                       sprintNome={f.sprintNome}
                       desiredOutcome={OBJECTIVE_META[f.name]?.desired_outcome}
                       tasks={f.tasks}
-                      objective={objectives[`frente:${f.name}`] ?? ""}
+                      objective={objectives[`frente:${f.name}`]?.objetivo ?? ""}
+                      clientName={objectives[`frente:${f.name}`]?.client_name ?? ""}
+                      projectName={objectives[`frente:${f.name}`]?.project_name ?? ""}
                       onSaveObjective={text => saveObjective("frente", f.name, text)}
+                      onSaveMeta={meta => saveMeta("frente", f.name, meta)}
                       onEdit={setEditTask}
                       onMove={applyMove}
                       onSave={handleSave}
