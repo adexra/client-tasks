@@ -3726,60 +3726,37 @@ export default function TarefasPage() {
                 <div key={month.key} className="space-y-3">
                   <h2 className="text-sm font-black text-slate-100 px-1">{month.titulo}</h2>
                   {month.groups.map((group: { name: string; tasks: ExtendedTask[] }) => {
-                    const objetivos = Array.from(new Set(group.tasks.map((t: ExtendedTask) => getObjetivoNome(t)))).sort();
-                    const isSprintGroup = /sprint/i.test(group.name);
                     const isMisc = /^misc/i.test(group.name);
+                    const objKey = `frente:${group.name}`;
                     return (
                       <GroupDropZone key={group.name} id={`group:${group.name}`}>
-                        <div className="flex items-center gap-2 px-1">
-                          {editingGroup === group.name ? (
-                            <input autoFocus value={editingGroupName} onChange={e => setEditingGroupName(e.target.value)}
-                              onBlur={() => { renameGroup(group.name, editingGroupName); setEditingGroup(null); }}
-                              onKeyDown={e => { if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") setEditingGroup(null); }}
-                              className="text-xs font-bold bg-transparent border-b border-slate-600 outline-none text-slate-200" />
-                          ) : (
-                            <span className={`text-xs font-bold ${isSprintGroup ? "text-violet-300" : "text-slate-400"}`}>
-                              {isSprintGroup ? "🚀 " : "📥 "}{group.name}
-                            </span>
-                          )}
-                          {isMisc && editingGroup !== group.name && (
-                            <button onClick={() => { setEditingGroup(group.name); setEditingGroupName(group.name); }}
-                              className="text-slate-500 hover:text-slate-300"><Pencil size={10} /></button>
-                          )}
-                          <span className={`${mono.className} text-[10px] text-slate-400`}>{group.tasks.length}</span>
-                        </div>
-                        {objetivos.map((obj: string) => {
-                          const objTasks = group.tasks.filter((t: ExtendedTask) => getObjetivoNome(t) === obj);
-                          if (objTasks.length === 0) return null;
-                          const sprintNome = getSprintNome(objTasks[0]);
-                          const label = sprintNome && sprintNome !== obj ? `${obj} · ${sprintNome}` : obj;
-                          const objKey = `frente:${group.name}`;
-                          return <TaskGroupSection key={obj} name={label} icon={CATEGORIA_ICONS[obj] ?? "📌"} tasks={objTasks} onEdit={setEditTask} onMove={applyMove} onSave={handleSave} draggable TaskRowComponent={TaskRow}
-                            sprintMeta={{ sprintNome: group.name, objective: objectives[objKey]?.objetivo ?? "", clientName: objectives[objKey]?.client_name ?? "", projectName: objectives[objKey]?.project_name ?? "", allTasks: tasks, onSaveObjective: text => saveObjective("frente", group.name, text), onSaveMeta: meta => saveMeta("frente", group.name, meta) }} />;
-                        })}
+                        <TaskGroupSection
+                          name={group.name}
+                          tasks={group.tasks}
+                          onEdit={setEditTask} onMove={applyMove} onSave={handleSave}
+                          draggable TaskRowComponent={TaskRow}
+                          sprintMeta={{ sprintNome: group.name, objective: objectives[objKey]?.objetivo ?? "", clientName: objectives[objKey]?.client_name ?? "", projectName: objectives[objKey]?.project_name ?? "", allTasks: tasks, onSaveObjective: text => saveObjective("frente", group.name, text), onSaveMeta: meta => saveMeta("frente", group.name, meta) }}
+                        />
+                        {isMisc && (
+                          <button onClick={() => { setEditingGroup(group.name); setEditingGroupName(group.name); }}
+                            className="text-[10px] text-slate-600 hover:text-slate-400 px-1"><Pencil size={9} className="inline" /> renomear</button>
+                        )}
                       </GroupDropZone>
                     );
                   })}
                 </div>
               ))}
               {backlogByMonth.semMes.map((group: { name: string; tasks: ExtendedTask[] }) => {
-                const cats = Array.from(new Set(group.tasks.map((t: ExtendedTask) => t.categoria ?? "Outros"))).sort();
-                const isSprintGroup = /sprint/i.test(group.name);
+                const objKey = `frente:${group.name}`;
                 return (
                   <GroupDropZone key={group.name} id={`group:${group.name}`}>
-                    <div className="flex items-center gap-2 px-1">
-                      <span className={`text-xs font-bold ${isSprintGroup ? "text-violet-300" : "text-slate-400"}`}>
-                        {isSprintGroup ? "🚀 " : "📥 "}{group.name}
-                      </span>
-                      <span className={`${mono.className} text-[10px] text-slate-400`}>{group.tasks.length}</span>
-                    </div>
-                    {cats.map((cat: string) => {
-                      const catTasks = group.tasks.filter((t: ExtendedTask) => (t.categoria ?? "Outros") === cat);
-                      if (catTasks.length === 0) return null;
-                      const objKey = `frente:${group.name}`;
-                      return <TaskGroupSection key={cat} name={cat} icon={CATEGORIA_ICONS[cat] ?? "📌"} tasks={catTasks} onEdit={setEditTask} onMove={applyMove} onSave={handleSave} draggable TaskRowComponent={TaskRow}
-                        sprintMeta={{ sprintNome: group.name, objective: objectives[objKey]?.objetivo ?? "", clientName: objectives[objKey]?.client_name ?? "", projectName: objectives[objKey]?.project_name ?? "", allTasks: tasks, onSaveObjective: text => saveObjective("frente", group.name, text), onSaveMeta: meta => saveMeta("frente", group.name, meta) }} />;
-                    })}
+                    <TaskGroupSection
+                      name={group.name}
+                      tasks={group.tasks}
+                      onEdit={setEditTask} onMove={applyMove} onSave={handleSave}
+                      draggable TaskRowComponent={TaskRow}
+                      sprintMeta={{ sprintNome: group.name, objective: objectives[objKey]?.objetivo ?? "", clientName: objectives[objKey]?.client_name ?? "", projectName: objectives[objKey]?.project_name ?? "", allTasks: tasks, onSaveObjective: text => saveObjective("frente", group.name, text), onSaveMeta: meta => saveMeta("frente", group.name, meta) }}
+                    />
                   </GroupDropZone>
                 );
               })}
