@@ -122,24 +122,26 @@ export default function WeeklyRitualsBanner() {
     : "—";
 
   return (
-    <div className={`${cc.panel} p-4`}>
+    <div className="rounded-2xl border border-amber-500/20 bg-[#0D1220] shadow-[0_4px_40px_rgba(251,191,36,0.06)] overflow-hidden">
+      {/* Gold accent bar */}
+      <div className="h-[2px] w-full bg-gradient-to-r from-amber-400/60 via-amber-300/30 to-transparent" />
+      <div className="p-4">
       <button
         onClick={() => setExpanded(prev => !prev)}
         className="w-full flex items-center justify-between gap-2 text-left"
       >
-        <div className="flex items-baseline gap-3 flex-wrap min-w-0">
-          <p className="text-sm font-bold text-slate-100 shrink-0">Rituais da Semana</p>
+        <div className="flex items-center gap-3 flex-wrap min-w-0">
+          <span className="text-base">🔁</span>
+          <p className="text-sm font-bold text-amber-100 shrink-0">Rituais da Semana</p>
           <p className="text-[11px] text-slate-400 truncate">
-            Ritual de Hoje: {todayRitualLabel} / {DAY_LABELS[todayRitualDay]}
+            Hoje: {todayRitualLabel || "—"} · {DAY_LABELS[todayRitualDay]}
           </p>
-          <p className="text-[11px] text-slate-500 hidden sm:block">— Hábitos recorrentes que mantêm a operação viva</p>
         </div>
         <ChevronRight
           size={16}
-          className={`shrink-0 text-slate-400 transition-transform ${expanded ? "rotate-90" : ""}`}
+          className={`shrink-0 text-amber-400/60 transition-transform ${expanded ? "rotate-90" : ""}`}
         />
       </button>
-      <p className="text-[11px] text-slate-500 mt-1 sm:hidden">Hábitos recorrentes que mantêm a operação viva</p>
 
       {expanded && (
       <div className="grid grid-cols-1 sm:grid-cols-7 gap-2 mt-3">
@@ -225,6 +227,7 @@ export default function WeeklyRitualsBanner() {
       </div>
       )}
       {loading && expanded && <p className="text-[11px] text-slate-500 mt-2">Carregando…</p>}
+      </div>
     </div>
   );
 }
