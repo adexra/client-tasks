@@ -338,11 +338,11 @@ export function getEstimatedDueDate(t: { projeto?: string | null; execution_stat
 // ─── Frontes (8 work areas that own all tasks) ────────────────────────────────
 
 export const FRONTES = {
-  instagram:      { name: "Instagram",      color: "#e1306c", keywords: ["instagram", "conteúdo em escala", "bio, fixados"] },
+  instagram:      { name: "Instagram",      color: "#e1306c", keywords: ["instagram", "conteúdo em escala", "bio, fixados", "instagram/conteúdo"] },
   desenvolvimento: { name: "Desenvolvimento", color: "#6366f1", keywords: ["command center", "admin e banco", "admin/banco", "simplificação da página", "diagnóstico e controle", "fonte da verdade", "arrumar command"] },
   anuncios:       { name: "Anúncios",       color: "#f59e0b", keywords: ["ads focado", "test drive", "conversão e test", "inventário de campanhas", "ads/tracking"] },
-  admin_dash:     { name: "Admin Dash",     color: "#09a1e5", keywords: ["dashboard", "financeiro e margem", "dinheiro, estoque", "mapa da operação", "mapa geral", "governança", "auditoria operacional", "operação e infraestrutura", "criar dashboard"] },
-  automation:     { name: "Automation",     color: "#10b981", keywords: ["bot", "chatwoot", "melissa", "automação", "recuperar bot"] },
+  admin_dash:     { name: "Admin Dash",     color: "#09a1e5", keywords: ["dashboard", "financeiro e margem", "dinheiro, estoque", "mapa da operação", "mapa geral", "governança", "auditoria operacional", "operação e infraestrutura", "criar dashboard", "dashboard/dados", "operação", "estratégia/ceo", "segurança"] },
+  automation:     { name: "Automation",     color: "#10b981", keywords: ["bot", "chatwoot", "melissa", "automação", "recuperar bot", "automações", "bot/chatwoot"] },
   site:           { name: "Site",           color: "#8b5cf6", keywords: ["site/seo", "seo e autoridade", "seo", "auditoria técnica inicial", "landing page"] },
   marketing:      { name: "Marketing",      color: "#f97316", keywords: ["growth e experimentos", "escala e autoridade", "expansão e dependências", "marketing"] },
   loja:           { name: "Loja",           color: "#ec4899", keywords: ["loja", "pós-venda", "estoque e pós-venda", "produto"] },
