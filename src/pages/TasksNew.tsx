@@ -33,7 +33,7 @@ const PRIO_LABELS: Record<number, string> = { 1: "Baixa", 2: "Média", 3: "Alta"
 const URG_LABELS:  Record<number, string> = { 1: "Pode esperar 🟢", 2: "Logo 🟡", 3: "Urgente 🔴" };
 
 const FRENTE_ICONS: Record<FronteKey, string> = {
-  instagram: "📸", desenvolvimento: "💻", anuncios: "🎯", operacao: "⚙️",
+  instagram: "📸", desenvolvimento: "💻", anuncios: "🎯", operacao: "💬",
   automation: "🤖", site: "🌐", marketing: "📣", loja: "🛍️",
 };
 const IMPACTO_LABELS: Record<number, string> = { 1: "Baixo", 2: "Médio", 3: "Alto" };

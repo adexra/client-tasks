@@ -50,7 +50,7 @@ const FRENTE_ICONS: Record<FronteKey, LucideIcon> = {
   instagram:       Camera,
   desenvolvimento: Code2,
   anuncios:        Megaphone,
-  operacao:        BarChart3,
+  operacao:        MessageCircle,
   automation:      Zap,
   site:            Globe,
   marketing:       Rocket,
@@ -161,7 +161,7 @@ const IMPACTO_LABELS: Record<number, string> = { 1: "Baixo", 2: "Médio", 3: "Al
 // Maps any categoria value (new frente key or legacy string) to an emoji icon.
 const CATEGORIA_ICONS: Record<string, string> = {
   // frente keys (new canonical values)
-  instagram: "📸", desenvolvimento: "💻", anuncios: "🎯", operacao: "⚙️",
+  instagram: "📸", desenvolvimento: "💻", anuncios: "🎯", operacao: "💬",
   automation: "🤖", site: "🌐", marketing: "📣", loja: "🛍️",
   // legacy free-text values kept for display of old tasks
   "Admin/Banco": "🗄️", "Bot/Chatwoot": "🤖", "Ads/Tracking": "🎯", "Site/SEO": "🌐",
