@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { FinancialProvider } from './context/FinancialContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -64,7 +64,8 @@ export default function App() {
                     <Route path="weekly" element={<Weekly />} />
                     <Route path="today" element={<Today />} />
                     <Route path="moveon" element={<MoveOn />} />
-                    <Route path="tasks" element={<Tasks />} />
+                    <Route path="tasks" element={<Navigate to="/tasks/hoje" replace />} />
+                    <Route path="tasks/:tab" element={<Tasks />} />
                     <Route path="tasks/new" element={<TasksNew />} />
                   </Route>
                 </Routes>

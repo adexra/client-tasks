@@ -21,7 +21,14 @@ import {
   CalendarDays,
   ListChecks,
   Flag,
-  Kanban
+  Kanban,
+  Calendar,
+  MapPin,
+  Trophy,
+  Columns3,
+  LayoutGrid,
+  ExternalLink,
+  Plus,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
@@ -104,34 +111,48 @@ export default function Layout() {
           </Link>
         </div>
 
-        <nav className="flex-1 px-3 mt-4 space-y-8 overflow-y-auto">
+        <nav className="flex-1 px-3 mt-2 space-y-5 overflow-y-auto pb-4">
+
+          {/* ── TASKS — command center, top priority ── */}
           <section>
-            <p className="px-4 mb-3 text-[9px] font-bold uppercase tracking-[0.3em]" style={{ color: '#6B7080' }}>
-              {language === 'pt' ? 'Gestão' : 'Management'}
-            </p>
-            <div className="space-y-0.5">
-              {NAV_ITEMS.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === '/'}
-                  onClick={() => setIsMobileMenuOpen(false)}
+            <div className="mb-1 px-2">
+              <div className="flex items-center justify-between px-2 py-2 rounded-xl"
+                style={{ background: 'linear-gradient(135deg, rgba(51,98,255,0.18) 0%, rgba(9,161,229,0.10) 100%)', border: '1px solid rgba(51,98,255,0.25)' }}>
+                <div className="flex items-center gap-2">
+                  <Kanban className="h-3.5 w-3.5" style={{ color: '#3362FF' }} />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.25em]" style={{ color: '#A0AECF' }}>Tasks</span>
+                </div>
+                <Link to="/tasks/new" onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider transition-colors hover:opacity-80"
+                  style={{ backgroundColor: 'rgba(51,98,255,0.3)', color: '#93AAFF', border: '1px solid rgba(51,98,255,0.4)' }}>
+                  <Plus className="h-2.5 w-2.5" /> New
+                </Link>
+              </div>
+            </div>
+            <div className="space-y-0.5 pl-2">
+              {[
+                { to: '/tasks/hoje',     icon: Calendar,    label: 'Hoje' },
+                { to: '/tasks/sprint',   icon: Flag,        label: 'Sprint' },
+                { to: '/tasks/backlog',  icon: LayoutGrid,  label: 'Backlog' },
+                { to: '/tasks/mapa',     icon: MapPin,      label: 'Mapa do mês' },
+                { to: '/tasks/historico',icon: Trophy,      label: 'Histórico' },
+                { to: '/tasks/avancado', icon: Columns3,    label: 'Avançado' },
+              ].map(({ to, icon: Icon, label }) => (
+                <NavLink key={to} to={to} onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) => cn(
-                    "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200",
-                    isActive
-                      ? "border"
-                      : "hover:bg-[rgba(244,244,246,0.04)]"
+                    "flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-150",
+                    isActive ? "border" : "hover:bg-[rgba(244,244,246,0.04)]"
                   )}
                   style={({ isActive }) => isActive
-                    ? { backgroundColor: 'rgba(51,98,255,0.15)', color: '#F4F4F6', borderColor: 'rgba(51,98,255,0.3)' }
+                    ? { backgroundColor: 'rgba(51,98,255,0.12)', color: '#F4F4F6', borderColor: 'rgba(51,98,255,0.25)' }
                     : { color: '#6B7080' }
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      <div className="flex items-center gap-3">
-                        <item.icon className="h-4 w-4" style={isActive ? { color: '#3362FF' } : {}} />
-                        <span className="text-xs font-medium tracking-tight">{item.key ? t(item.key) : item.label}</span>
+                      <div className="flex items-center gap-2.5">
+                        <Icon className="h-3.5 w-3.5" style={isActive ? { color: '#3362FF' } : {}} />
+                        <span className="text-xs font-medium tracking-tight">{label}</span>
                       </div>
                       {isActive && <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#3362FF' }} />}
                     </>
@@ -141,91 +162,84 @@ export default function Layout() {
             </div>
           </section>
 
+          {/* ── CLIENTS & FINANCIALS ── */}
           <section>
-            <div className="px-4 mb-3 flex items-center gap-2">
-              <CalendarClock className="h-3 w-3" style={{ color: '#6B7080' }} />
-              <span className="text-[9px] font-bold uppercase tracking-[0.3em]" style={{ color: '#6B7080' }}>
-                {language === 'pt' ? 'Planejamento' : 'Planning'}
-              </span>
-            </div>
+            <p className="px-4 mb-2 text-[9px] font-bold uppercase tracking-[0.3em]" style={{ color: '#3D4257' }}>
+              {language === 'pt' ? 'Clientes & Finanças' : 'Clients & Finance'}
+            </p>
             <div className="space-y-0.5">
-              {/* Today — live */}
-              <NavLink
-                to="/today"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) => cn(
-                  "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200",
-                  isActive ? "border" : "hover:bg-[rgba(244,244,246,0.04)]"
-                )}
-                style={({ isActive }) => isActive
-                  ? { backgroundColor: 'rgba(51,98,255,0.15)', color: '#F4F4F6', borderColor: 'rgba(51,98,255,0.3)' }
-                  : { color: '#6B7080' }
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <ListChecks className="h-4 w-4" style={isActive ? { color: '#3362FF' } : {}} />
-                      <span className="text-xs font-medium tracking-tight">
-                        {language === 'pt' ? 'Hoje' : 'Today'}
-                      </span>
-                    </div>
-                    {isActive && <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#3362FF' }} />}
-                  </>
-                )}
-              </NavLink>
-              {/* Weekly — live */}
-              <NavLink
-                to="/weekly"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) => cn(
-                  "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200",
-                  isActive ? "border" : "hover:bg-[rgba(244,244,246,0.04)]"
-                )}
-                style={({ isActive }) => isActive
-                  ? { backgroundColor: 'rgba(51,98,255,0.15)', color: '#F4F4F6', borderColor: 'rgba(51,98,255,0.3)' }
-                  : { color: '#6B7080' }
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <CalendarDays className="h-4 w-4" style={isActive ? { color: '#3362FF' } : {}} />
-                      <span className="text-xs font-medium tracking-tight">
-                        {language === 'pt' ? 'Semana' : 'Weekly'}
-                      </span>
-                    </div>
-                    {isActive && <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#3362FF' }} />}
-                  </>
-                )}
-              </NavLink>
-              {/* Tasks / Command Center */}
-              <NavLink
-                to="/tasks"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) => cn(
-                  "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200",
-                  isActive ? "border" : "hover:bg-[rgba(244,244,246,0.04)]"
-                )}
-                style={({ isActive }) => isActive
-                  ? { backgroundColor: 'rgba(51,98,255,0.15)', color: '#F4F4F6', borderColor: 'rgba(51,98,255,0.3)' }
-                  : { color: '#6B7080' }
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <Kanban className="h-4 w-4" style={isActive ? { color: '#3362FF' } : {}} />
-                      <span className="text-xs font-medium tracking-tight">Tasks</span>
-                    </div>
-                    {isActive && <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#3362FF' }} />}
-                  </>
-                )}
-              </NavLink>
-              {/* MoveOn — live */}
-              <NavLink
-                to="/moveon"
-                onClick={() => setIsMobileMenuOpen(false)}
+              {[
+                { to: '/',           icon: BarChart3,  label: t('nav.dashboard'), end: true },
+                { to: '/clients',    icon: Users,      label: t('nav.portfolio') },
+                { to: '/financials', icon: Wallet,     label: t('nav.financials') },
+              ].map(({ to, icon: Icon, label, end }) => (
+                <NavLink key={to} to={to} end={end} onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => cn(
+                    "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200",
+                    isActive ? "border" : "hover:bg-[rgba(244,244,246,0.04)]"
+                  )}
+                  style={({ isActive }) => isActive
+                    ? { backgroundColor: 'rgba(51,98,255,0.15)', color: '#F4F4F6', borderColor: 'rgba(51,98,255,0.3)' }
+                    : { color: '#6B7080' }
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-4 w-4" style={isActive ? { color: '#3362FF' } : {}} />
+                        <span className="text-xs font-medium tracking-tight">{label}</span>
+                      </div>
+                      {isActive && <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#3362FF' }} />}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          </section>
+
+          {/* ── ADS / AGENTS / MEMORY / RAG ── */}
+          <section>
+            <p className="px-4 mb-2 text-[9px] font-bold uppercase tracking-[0.3em]" style={{ color: '#3D4257' }}>
+              {language === 'pt' ? 'Crescimento & IA' : 'Growth & AI'}
+            </p>
+            <div className="space-y-0.5">
+              {[
+                { to: '/ads',    icon: Megaphone, label: 'Ads Planning' },
+                { to: '/agents', icon: Bot,       label: 'Agents' },
+                { to: '/memory', icon: BookOpen,  label: 'Memory' },
+                { to: '/rag',    icon: Database,  label: 'RAG Docs' },
+              ].map(({ to, icon: Icon, label }) => (
+                <NavLink key={to} to={to} onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => cn(
+                    "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200",
+                    isActive ? "border" : "hover:bg-[rgba(244,244,246,0.04)]"
+                  )}
+                  style={({ isActive }) => isActive
+                    ? { backgroundColor: 'rgba(51,98,255,0.15)', color: '#F4F4F6', borderColor: 'rgba(51,98,255,0.3)' }
+                    : { color: '#6B7080' }
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-4 w-4" style={isActive ? { color: '#3362FF' } : {}} />
+                        <span className="text-xs font-medium tracking-tight">{label}</span>
+                      </div>
+                      {isActive && <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#3362FF' }} />}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          </section>
+
+          {/* ── MOVEON + SETTINGS ── */}
+          <section>
+            <p className="px-4 mb-2 text-[9px] font-bold uppercase tracking-[0.3em]" style={{ color: '#3D4257' }}>
+              MoveOn
+            </p>
+            <div className="space-y-0.5">
+              <NavLink to="/moveon" onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) => cn(
                   "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200",
                   isActive ? "border" : "hover:bg-[rgba(244,244,246,0.04)]"
@@ -239,39 +253,27 @@ export default function Layout() {
                   <>
                     <div className="flex items-center gap-3">
                       <Flag className="h-4 w-4" style={isActive ? { color: '#3362FF' } : {}} />
-                      <span className="text-xs font-medium tracking-tight">MoveOn</span>
+                      <span className="text-xs font-medium tracking-tight">Milestones</span>
                     </div>
                     {isActive && <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#3362FF' }} />}
                   </>
                 )}
               </NavLink>
-              <NavLink
-                to="/settings/availability"
+              <a
+                href="https://admin.moveonmobilidade.com.br/admin/tarefas"
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) => cn(
-                  "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200",
-                  isActive ? "border" : "hover:bg-[rgba(244,244,246,0.04)]"
-                )}
-                style={({ isActive }) => isActive
-                  ? { backgroundColor: 'rgba(51,98,255,0.15)', color: '#F4F4F6', borderColor: 'rgba(51,98,255,0.3)' }
-                  : { color: '#6B7080' }
-                }
+                className="flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 hover:bg-[rgba(244,244,246,0.04)]"
+                style={{ color: '#6B7080' }}
               >
-                {({ isActive }) => (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <CalendarClock className="h-4 w-4" style={isActive ? { color: '#3362FF' } : {}} />
-                      <span className="text-xs font-medium tracking-tight">
-                        {language === 'pt' ? 'Disponibilidade' : 'Availability'}
-                      </span>
-                    </div>
-                    {isActive && <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#3362FF' }} />}
-                  </>
-                )}
-              </NavLink>
-              <NavLink
-                to="/account"
-                onClick={() => setIsMobileMenuOpen(false)}
+                <div className="flex items-center gap-3">
+                  <Kanban className="h-4 w-4" />
+                  <span className="text-xs font-medium tracking-tight">Admin Tarefas</span>
+                </div>
+                <ExternalLink className="h-3 w-3 opacity-50" />
+              </a>
+              <NavLink to="/account" onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) => cn(
                   "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200",
                   isActive ? "border" : "hover:bg-[rgba(244,244,246,0.04)]"
@@ -293,6 +295,7 @@ export default function Layout() {
               </NavLink>
             </div>
           </section>
+
         </nav>
 
         <div className="p-8 mt-auto" style={{ borderTop: '1px solid rgba(244,244,246,0.04)' }}>

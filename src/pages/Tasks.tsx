@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Plus, RefreshCw, Search, CheckCircle2,
   Calendar, X, Save, ExternalLink, AlertTriangle,
@@ -2468,7 +2468,8 @@ export default function TarefasPage() {
     setEditTask(t);
   }
   const [pendingCompleteId, setPendingCompleteId] = useState<string | null>(null);
-  const [view, setView] = useState<"hoje" | "mapa" | "sprint" | "backlog" | "historico" | "avancado">("hoje");
+  const { tab } = useParams<{ tab: string }>();
+  const view = (tab as "hoje" | "mapa" | "sprint" | "backlog" | "historico" | "avancado") ?? "hoje";
   const [selectedFronte, setSelectedFronte] = useState<FronteKey | null>(null);
   const [carouselMonthIdx, setCarouselMonthIdx] = useState(0);
   const [avancadoView, setAvancadoView] = useState<"kanban" | "tabela">("kanban");
@@ -3147,7 +3148,7 @@ export default function TarefasPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => { setFoco(f => !f); setView("hoje"); }}
+            <button onClick={() => { setFoco(f => !f); navigate("/tasks/hoje"); }}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all border ${foco ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5]" : "bg-[#111A2E] border-slate-800/70 text-slate-300 hover:text-white"}`}>
               <Target size={13} /> Foco
             </button>
@@ -3231,7 +3232,7 @@ export default function TarefasPage() {
           </button>
           <div className="flex bg-slate-900/60 border border-slate-800 rounded-xl p-1 gap-1 overflow-x-auto">
             {([["hoje", <Calendar key="i1" size={13} />, "Hoje"], ["mapa", <MapIcon key="i6" size={13} />, "Mapa do mês"], ["sprint", <Flag key="i2" size={13} />, "Sprint"], ["backlog", <LayoutGrid key="i3" size={13} />, "Backlog"], ["historico", <Trophy key="i7" size={13} />, "Histórico"], ["avancado", <Columns3 key="i4" size={13} />, "Avançado"]] as const).map(([v, icon, label]) => (
-              <button key={v} onClick={() => setView(v)}
+              <button key={v} onClick={() => navigate(`/tasks/${v}`)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${view === v ? "bg-slate-800 text-white shadow-sm border border-slate-700" : "text-slate-400 hover:text-slate-100"}`}>
                 {icon}{label}
               </button>
@@ -3476,7 +3477,7 @@ export default function TarefasPage() {
                       </div>
                     </div>
                   )}
-                  <button onClick={() => setView("backlog")}
+                  <button onClick={() => navigate("/tasks/backlog")}
                     className="w-full text-center text-xs text-slate-400 hover:text-[#09a1e5] transition-colors pt-2">
                     Mudar foco no Backlog →
                   </button>
@@ -3498,7 +3499,7 @@ export default function TarefasPage() {
                   <div className="flex flex-col items-center justify-center flex-1 py-10 gap-3">
                     <Rocket size={28} className="text-slate-600" />
                     <p className="text-xs text-slate-500">Nenhum sprint definido ainda</p>
-                    <button onClick={() => setView("mapa")} className="text-xs text-[#09a1e5] hover:underline">Ver mapa completo →</button>
+                    <button onClick={() => navigate("/tasks/mapa")} className="text-xs text-[#09a1e5] hover:underline">Ver mapa completo →</button>
                   </div>
                 ) : (() => {
                   const idx = Math.min(carouselMonthIdx, mapaMeses.length - 1);
@@ -3559,7 +3560,7 @@ export default function TarefasPage() {
                       </div>
                       <div className="flex items-center justify-between px-4 py-2 border-t border-white/[0.06]">
                         <span className={`${mono.className} text-[10px] text-slate-500`}>{idx + 1} / {mapaMeses.length}</span>
-                        <button onClick={() => setView("mapa")} className="text-xs text-slate-400 hover:text-[#09a1e5] transition-colors">
+                        <button onClick={() => navigate("/tasks/mapa")} className="text-xs text-slate-400 hover:text-[#09a1e5] transition-colors">
                           Ver mapa completo →
                         </button>
                       </div>
@@ -3629,7 +3630,7 @@ export default function TarefasPage() {
                               subtitle={subtitle}
                               objectiveValue={objectives[`sprint:${s.n}`] ?? ""}
                               onSaveObjective={text => saveObjective("sprint", String(s.n), text)}
-                              onOpen={() => setView("backlog")}
+                              onOpen={() => navigate("/tasks/backlog")}
                             />
                           </DraggableSprintCard>
                         );
@@ -3670,7 +3671,7 @@ export default function TarefasPage() {
                                 const isDone = s.pct === 100;
                                 return (
                                   <DraggableSprintCard key={s.n} id={`sprintcard:${s.n}`}>
-                                    <button onClick={() => setView("backlog")}
+                                    <button onClick={() => navigate("/tasks/backlog")}
                                       className={`w-full text-left rounded-xl p-3 transition-colors border ${isActive ? "bg-[#09a1e5]/10 border-[#09a1e5]/40 ring-1 ring-[#09a1e5]/30" : "bg-slate-900/60 border-slate-800 hover:border-[#09a1e5]/30"}`}>
                                       <div className="flex items-center justify-between gap-1">
                                         <p className="text-xs font-bold text-violet-300 truncate">🚀 {s.label}</p>
