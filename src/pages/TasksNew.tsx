@@ -5,7 +5,7 @@ import {
   MessageCircle, Sparkles, CheckCircle2, Loader2, ExternalLink,
 } from "lucide-react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { createTask, FRONTES } from "../lib/tasks";
+import { createTask, FRONTES, getSprintLabel, getRollingMonths } from "../lib/tasks";
 import type { PlanningBucket, TaskInsert, FronteKey } from "../lib/tasks";
 import { supabase } from "../lib/supabase";
 
@@ -225,11 +225,15 @@ function DumpMode({ leads, onDone }: { leads: LeadOption[]; onDone: () => void }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+interface SprintOption { label: string; active: boolean; }
+
 export default function NovaTarefaPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("formulario");
   const [saving, setSaving] = useState(false);
   const [leads, setLeads] = useState<LeadOption[]>([]);
+  const [sprints, setSprints] = useState<SprintOption[]>([]);
+  const [newSprintInput, setNewSprintInput] = useState(false);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -252,6 +256,7 @@ export default function NovaTarefaPage() {
   });
 
   useEffect(() => {
+    // Load clients
     supabase.from("clients")
       .select("id, name, phone")
       .order("created_at", { ascending: false })
@@ -261,6 +266,38 @@ export default function NovaTarefaPage() {
           id: l.id,
           label: l.name ?? l.phone ?? l.id.slice(0, 8),
         })));
+      });
+
+    // Load distinct sprints from tasks
+    supabase.from("tasks")
+      .select("projeto, planning_bucket, execution_status")
+      .not("projeto", "is", null)
+      .then(({ data }) => {
+        if (!data) return;
+        const seen = new Map<string, boolean>();
+        for (const t of data) {
+          const label = getSprintLabel({ projeto: t.projeto });
+          if (!label) continue;
+          const isActive = t.planning_bucket === "sprint" && t.execution_status !== "done" && t.execution_status !== "archived";
+          if (!seen.has(label)) seen.set(label, false);
+          if (isActive) seen.set(label, true);
+        }
+        // Also add upcoming sprints from the calendar even if no tasks yet
+        const months = getRollingMonths(new Date(), 3);
+        for (const m of months) {
+          for (const n of m.sprints) {
+            const label = `Sprint ${n}`;
+            if (!seen.has(label)) seen.set(label, false);
+          }
+        }
+        const sorted = Array.from(seen.entries())
+          .map(([label, active]) => ({ label, active }))
+          .sort((a, b) => {
+            const na = Number(/sprint\s*(\d+)/i.exec(a.label)?.[1] ?? 999);
+            const nb = Number(/sprint\s*(\d+)/i.exec(b.label)?.[1] ?? 999);
+            return na - nb;
+          });
+        setSprints(sorted);
       });
   }, []);
 
@@ -380,11 +417,38 @@ export default function NovaTarefaPage() {
           )}
 
           {form.destino === "sprint" && (
-            <div>
-              <label className={label}><Flag size={10} className="inline mr-1" />Sprint / Projeto <span className="text-slate-600 normal-case font-normal">(ex: Sprint 3 — Desenvolvimento)</span></label>
-              <input value={form.projeto} onChange={e => setForm(f => ({ ...f, projeto: e.target.value }))}
-                placeholder="Sprint 3 — Desenvolvimento" className={input} />
-              <p className="text-[10px] text-slate-600 mt-1">Use o formato "Sprint N — Frente" para aparecer no Mapa do mês.</p>
+            <div className="space-y-2">
+              <label className={label}><Flag size={10} className="inline mr-1" />Sprint</label>
+              <div className="flex flex-wrap gap-1.5">
+                {sprints.map(s => {
+                  const selected = form.projeto.startsWith(s.label);
+                  return (
+                    <button type="button" key={s.label}
+                      onClick={() => setForm(f => ({ ...f, projeto: selected ? "" : s.label }))}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                        selected
+                          ? "bg-[#09a1e5]/15 border-[#09a1e5]/40 text-[#09a1e5]"
+                          : s.active
+                            ? "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:border-amber-400/50"
+                            : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200"
+                      }`}>
+                      {s.active && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />}
+                      {s.label}
+                    </button>
+                  );
+                })}
+                <button type="button"
+                  onClick={() => { setNewSprintInput(v => !v); if (!newSprintInput) setForm(f => ({ ...f, projeto: "" })); }}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold border border-dashed border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500 transition-all">
+                  + Novo sprint
+                </button>
+              </div>
+              {(newSprintInput || (!sprints.some(s => form.projeto.startsWith(s.label)) && form.projeto)) && (
+                <input value={form.projeto} onChange={e => setForm(f => ({ ...f, projeto: e.target.value }))}
+                  placeholder="Sprint 5 — Desenvolvimento"
+                  className={input} autoFocus />
+              )}
+              {form.projeto && <p className={`${mono.className} text-[10px] text-slate-500`}>→ {form.projeto}</p>}
             </div>
           )}
 
