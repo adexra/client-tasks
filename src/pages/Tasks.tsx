@@ -7,7 +7,7 @@ import {
   Flag, LayoutGrid, Columns3, ChevronDown, ChevronUp,
   MoreHorizontal, RotateCcw, GripVertical, Clock, Ban, Table2, Map as MapIcon, Trophy, Sparkles, Target,
   FileText, Paperclip, ShieldAlert, Trash2,
-  Camera, MessageCircle, Bike, CircleDollarSign, GitBranch, BarChart3, Zap, Rocket,
+  Camera, MessageCircle, GitBranch, BarChart3, Zap, Rocket,
   Bold, Italic, List, Link as LinkIcon, Code, Pencil, Maximize2, Minimize2, ChevronRight, ChevronLeft,
   Code2, Globe, Megaphone, ShoppingBag,
 } from "lucide-react";
@@ -171,56 +171,6 @@ const CATEGORIA_ICONS: Record<string, string> = {
   "Ads": "🎯", "Site": "🌐", "Admin": "🛠️", "Instagram": "📸", "Automação": "🤖",
   "Marketing": "📣", "Loja": "🏍️",
 };
-
-// ─── Objetivos do Mês (MVP — dados manuais/mockados) ───────────────────────────
-type GoalStatus = "on_track" | "attention" | "late" | "completed" | "no_data";
-
-interface MonthlyGoal {
-  id: string;
-  title: string;
-  icon: React.ElementType;
-  current: number | null;
-  target: number | null;
-  unit: "number" | "percent" | "currency";
-  source: string;
-}
-
-const MONTHLY_GOALS: MonthlyGoal[] = [
-  { id: "instagram",  title: "Seguidores Instagram",        icon: Camera,          current: null, target: 2500, unit: "number",   source: "Meta Graph API" },
-  { id: "conversas",  title: "Conversas iniciadas (Click-to-WhatsApp)", icon: MessageCircle, current: null, target: 300,  unit: "number",   source: "Meta Ads Insights" },
-  { id: "cliques",    title: "Cliques no link (Ads)",        icon: Zap,             current: null, target: 1500, unit: "number",   source: "Meta Ads Insights" },
-  { id: "visitas",    title: "Visitas ao site",              icon: BarChart3,       current: null, target: 5000, unit: "number",   source: "Google Analytics 4" },
-  { id: "testdrive",  title: "Test drives realizados",       icon: Bike,            current: 6,    target: 20,   unit: "number",   source: "Test Drives/Admin" },
-  { id: "vendas",     title: "Vendas digitais",              icon: CircleDollarSign, current: 4,    target: 10,   unit: "number",   source: "CRM/Vendas" },
-  { id: "origem",     title: "Leads com origem preenchida",  icon: GitBranch,       current: 62,   target: 90,   unit: "percent",  source: "CRM/Admin" },
-  { id: "receita",    title: "Receita digital atribuída",    icon: BarChart3,       current: null, target: null, unit: "currency", source: "Dashboard financeiro (futuro)" },
-];
-
-const GOAL_STATUS_META: Record<GoalStatus, { label: string; color: string; bar: string; bg: string }> = {
-  on_track:  { label: "No caminho", color: "text-blue-300",    bar: "bg-blue-500",    bg: "bg-blue-500/10 border-blue-500/30" },
-  attention: { label: "Atenção",    color: "text-amber-300",   bar: "bg-amber-500",   bg: "bg-amber-500/10 border-amber-500/30" },
-  late:      { label: "Atrasado",   color: "text-red-300",     bar: "bg-red-500",     bg: "bg-red-500/10 border-red-500/30" },
-  completed: { label: "Batida",     color: "text-emerald-300", bar: "bg-emerald-500", bg: "bg-emerald-500/10 border-emerald-500/30" },
-  no_data:   { label: "Sem dados",  color: "text-slate-400",   bar: "bg-slate-600",   bg: "bg-slate-800/60 border-slate-700" },
-};
-
-function getGoalProgress(goal: MonthlyGoal): { pct: number | null; status: GoalStatus } {
-  if (goal.current == null || goal.target == null || goal.target === 0) {
-    return { pct: null, status: "no_data" };
-  }
-  const pct = Math.min(Math.round((goal.current / goal.target) * 100), 100);
-  if (pct >= 100) return { pct, status: "completed" };
-  if (pct >= 60) return { pct, status: "on_track" };
-  if (pct >= 30) return { pct, status: "attention" };
-  return { pct, status: "late" };
-}
-
-function formatGoalValue(value: number | null, unit: MonthlyGoal["unit"]): string {
-  if (value == null) return "—";
-  if (unit === "percent") return `${value}%`;
-  if (unit === "currency") return `R$ ${value.toLocaleString("pt-BR")}`;
-  return value.toLocaleString("pt-BR");
-}
 
 // ─── Column model ─────────────────────────────────────────────────────────────
 
@@ -690,7 +640,6 @@ function ArtifactsPanel({ taskId, type, types }: { taskId: string; type: Artifac
                         className="bg-slate-950/60 border border-slate-800 rounded-lg px-2 py-1.5 text-[11px] text-white outline-none focus:border-[#09a1e5]">
                         <option value="">Modelo (opcional)</option>
                         <option value={MODELO_GERAL}>{MODELO_GERAL}</option>
-                        {BIKE_MODELS.map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
                       <select value={editUtilidade} onChange={e => setEditUtilidade(e.target.value as UtilidadeKey | "")}
                         className="bg-slate-950/60 border border-slate-800 rounded-lg px-2 py-1.5 text-[11px] text-white outline-none focus:border-[#09a1e5]">
@@ -847,7 +796,6 @@ function ArtifactsPanel({ taskId, type, types }: { taskId: string; type: Artifac
               className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1.5 text-[11px] text-white outline-none focus:border-[#09a1e5]">
               <option value="">Modelo (opcional)</option>
               <option value={MODELO_GERAL}>{MODELO_GERAL}</option>
-              {BIKE_MODELS.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
             <select value={utilidade} onChange={e => setUtilidade(e.target.value as UtilidadeKey | "")}
               className="bg-slate-900/60 border border-slate-800 rounded-lg px-2 py-1.5 text-[11px] text-white outline-none focus:border-[#09a1e5]">
@@ -2362,84 +2310,6 @@ export default function TarefasPage() {
     }
   }, [loading, tasks]);
 
-  const [goalLiveData, setGoalLiveData] = useState<Record<string, { current: number | null; target?: number | null }>>({});
-
-  useEffect(() => {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
-
-    (async () => {
-      // 1. Test drives realizados (attended) this month, by completed_at
-      try {
-        const { count, error } = await supabase
-          .from("test_drives")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "attended")
-          .gte("completed_at", monthStart)
-          .lt("completed_at", monthEnd);
-        if (!error && count != null) {
-          setGoalLiveData(prev => ({ ...prev, testdrive: { current: count } }));
-        }
-      } catch {}
-
-      // 2. Vendas digitais this month (sales.origem = 'digital')
-      try {
-        const { count, error } = await supabase
-          .from("sales")
-          .select("id", { count: "exact", head: true })
-          .eq("origem", "digital")
-          .gte("sold_at", monthStart)
-          .lt("sold_at", monthEnd);
-        if (!error && count != null) {
-          setGoalLiveData(prev => ({ ...prev, vendas: { current: count } }));
-        }
-      } catch {}
-
-      // 3. Leads com origem preenchida this month (% with utm_source or channel set)
-      try {
-        const { data: leads, error } = await supabase
-          .from("leads")
-          .select("utm_source, channel")
-          .gte("created_at", monthStart)
-          .lt("created_at", monthEnd);
-        if (!error && leads) {
-          const total = leads.length;
-          const withOrigem = leads.filter(l => (l.utm_source && l.utm_source.trim() !== "") || (l.channel && l.channel.trim() !== "")).length;
-          if (total > 0) {
-            setGoalLiveData(prev => ({ ...prev, origem: { current: Math.round((100 * withOrigem) / total) } }));
-          }
-        }
-      } catch {}
-
-      // 4. Receita digital atribuída this month (sum of price_brl where origem = 'digital')
-      try {
-        const { data: sales, error } = await supabase
-          .from("sales")
-          .select("price_brl")
-          .eq("origem", "digital")
-          .gte("sold_at", monthStart)
-          .lt("sold_at", monthEnd);
-        if (!error && sales) {
-          const total = sales.reduce((sum, s) => sum + (s.price_brl ?? 0), 0);
-          setGoalLiveData(prev => ({ ...prev, receita: { current: total } }));
-        }
-      } catch {}
-
-      // 5 & 6. Meta/GA4 marketing goals — not wired (no server API in this project)
-    })();
-  }, []);
-
-  function withLiveGoal(goal: MonthlyGoal): MonthlyGoal {
-    const live = goalLiveData[goal.id];
-    if (!live) return goal;
-    return {
-      ...goal,
-      current: live.current ?? goal.current,
-      target: live.target !== undefined ? (live.target ?? goal.target) : goal.target,
-    };
-  }
-
   async function handleSave(id: string, patch: Partial<Task>) {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
     await updateTask(id, patch as Parameters<typeof updateTask>[1]);
@@ -3068,32 +2938,6 @@ export default function TarefasPage() {
           <KpiResourceCard label="Entregas Próximas" value={proximos7dias.length} sub="nos próximos 7 dias" icon={Calendar} accent="#fbbf24" />
           <KpiResourceCard label="Impact XP" value={equity.xpEarned.toLocaleString("pt-BR")} sub={xpWeek > 0 ? `+${xpWeek.toLocaleString("pt-BR")} XP esta semana` : "acumulado"} icon={Trophy} accent="#34d399" />
         </div>
-
-        {/* Objetivos do Mês — tira compacta */}
-        {!foco && view === "hoje" && (
-          <div className={`${cc.panel} p-4`}>
-            <p className="text-[11px] font-bold text-slate-400 mb-3">Objetivos do Mês</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {MONTHLY_GOALS.map(withLiveGoal).map(goal => {
-                const { pct, status } = getGoalProgress(goal);
-                const meta = GOAL_STATUS_META[status];
-                const Icon = goal.icon;
-                return (
-                  <div key={goal.id} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                    <Icon size={16} className={`${meta.color} shrink-0`} />
-                    <span className="text-[13px] font-semibold text-slate-200 truncate flex-1">{goal.title}</span>
-                    {goal.current != null && goal.target != null && (
-                      <span className={`${mono.className} text-xs text-slate-400 shrink-0`}>
-                        {formatGoalValue(goal.current, goal.unit)}/{formatGoalValue(goal.target, goal.unit)}
-                      </span>
-                    )}
-                    <span className={`${mono.className} text-sm font-bold ${meta.color} shrink-0`}>{pct !== null ? `${pct}%` : "—"}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Rewards teaser — replaces Equity Readiness */}
         {!foco && view === "hoje" && (

@@ -1,4 +1,5 @@
 ﻿import { supabase } from "./supabase";
+import { pushTaskToMoveOn, deleteTaskOnMoveOn, isMoveOnTask } from "./moveon-sync";
 
 export type TaskStatus =
   | "backlog"
@@ -102,6 +103,9 @@ export async function moveTask(id: string, planningBucket: PlanningBucket, execu
     p_order_index: orderIndex,
   });
   if (error) throw error;
+  // Push updated task state to MoveOn (fetch after RPC since RPC returns void)
+  const { data } = await supabase.from("tasks").select("*").eq("id", id).single();
+  if (data) pushTaskToMoveOn(data as Task); // fire-and-forget
 }
 
 /** Soft-delete: archive instead of removing the row. */
@@ -122,7 +126,9 @@ export async function createTask(task: Omit<TaskInsert, "concluido_em">): Promis
     .select("*, client:clients(name, phone)")
     .single();
   if (error) throw error;
-  return data as Task;
+  const created = data as Task;
+  pushTaskToMoveOn(created); // fire-and-forget
+  return created;
 }
 
 export async function updateTask(id: string, patch: Partial<TaskInsert>): Promise<void> {
@@ -130,8 +136,21 @@ export async function updateTask(id: string, patch: Partial<TaskInsert>): Promis
   const update: Record<string, unknown> = { ...patch };
   if (patch.status === "concluido") update.concluido_em = new Date().toISOString();
   if (patch.status && patch.status !== "concluido") update.concluido_em = null;
-  const { error } = await supabase.from("tasks").update(update).eq("id", id);
+  const { data, error } = await supabase
+    .from("tasks")
+    .update(update)
+    .eq("id", id)
+    .select("*")
+    .single();
   if (error) throw error;
+  if (data) pushTaskToMoveOn(data as Task); // fire-and-forget
+}
+
+export async function deleteTask(id: string): Promise<void> {
+  const { data: task } = await supabase.from("tasks").select("projeto").eq("id", id).single();
+  const { error } = await supabase.from("tasks").delete().eq("id", id);
+  if (error) throw error;
+  if (task && isMoveOnTask(task)) deleteTaskOnMoveOn(id); // fire-and-forget
 }
 
 // ─── Growth Game helpers (derived, no new columns) ─────────────────────────
@@ -461,12 +480,6 @@ export async function upsertObjectiveMeta(scope: ObjectiveScope, key: string, me
       .insert({ scope, key, ...meta, updated_at: new Date().toISOString() });
     if (error) throw error;
   }
-}
-
-export async function deleteTask(id: string): Promise<void> {
-  // supabase singleton from ./supabase
-  const { error } = await supabase.from("tasks").delete().eq("id", id);
-  if (error) throw error;
 }
 
 // ─── Task Artifacts (Resultado / Artifacts / Evidências) ───────────────────

@@ -10,6 +10,13 @@ Last updated: 2026-06-23 — Tasks + rewards system complete
 **Severity:** Low — Tasks load fine; only image uploads in RichTextEditor will fail
 **Status:** ⏳ Pending — create public bucket named `task-media` in Supabase Storage
 
+### ISSUE-021 — `VITE_MOVEON_INTERNAL_KEY` visible in browser bundle
+**Severity:** Medium (acceptable for single-user use)
+**Status:** Known/Accepted (same pattern as ISSUE-007 / ADR-002)
+**File:** `.env` → `src/lib/moveon-sync.ts`
+**Impact:** The shared secret is baked into the Vite client bundle at build time and visible to anyone who can open DevTools on `tasks.adexra.com`. Since this is a single-user internal tool with no public URL, the risk surface is the same as the Azure key (ISSUE-007). If the app ever becomes accessible to untrusted users, rotate the key and move the sync call server-side.
+**If you want to rotate the key:** `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` → update `INTERNAL_API_KEY` on moveon-admin Vercel → update `VITE_MOVEON_INTERNAL_KEY` on client-tasks Vercel → update local `.env` → redeploy moveon-admin.
+
 ### ISSUE-019 — Reward Budget not auto-funded from Financials
 **Severity:** Low — Rewards page shows R$0 budget until manually funded
 **Status:** ⏳ Pending — wire `fundRewardBudget()` call when payment marked as paid in Financials page

@@ -2,6 +2,61 @@
 
 ---
 
+## 2026-06-28 — MoveOn Sync API: Debugging complete, integration live
+
+### Summary
+Multi-agent debugging session (Claude T / CLT + Move Dev / MVD) confirmed the sync API is fully operational.
+
+**Root causes found and fixed:**
+1. `INTERNAL_API_KEY` was only set on MoveOn's Preview environment, not Production — added to Production via Vercel CLI
+2. MoveOn's Next.js middleware (`src/middleware.ts`) was blocking all `/api/*` requests without a Supabase session cookie — server-to-server Bearer token requests never reached the route. MVD added a bypass for `Authorization: Bearer` requests on `/api/admin/sync-tasks`
+3. Build cache was serving old Lambda code — fixed by forcing a clean redeploy with cache cleared
+
+**End-to-end status:** ✅ HTTP 200 + `tasks_upserted:1` confirmed by Move Dev with a real task payload.
+
+**Security note:** Added ISSUE-021 — `VITE_MOVEON_INTERNAL_KEY` is visible in the browser bundle (same accepted trade-off as Azure key, ADR-002). Key rotation instructions documented in ISSUE-021.
+
+**Documentation produced:**
+- `docs/MOVEON_SYNC_HANDOFF.md` — one-page developer handoff for MoveOn team
+- `f:\multi-agent\task-api-conector-moveon.md` — full multi-agent collaboration log (CLT-1 through CLT-5 + MVD-1 through MVD-5)
+
+---
+
+## 2026-06-23 — MoveOn Sync API
+
+### Summary
+Built a cross-platform task sync bridge between Operator OS and the MoveOn admin dashboard.
+
+**MoveOn API (adexra/moveon repo):**
+- New route: `apps/admin/src/app/api/admin/sync-tasks/route.ts`
+- `POST /api/admin/sync-tasks` — upserts tasks + roadmap_objectives (auth: `Bearer INTERNAL_API_KEY`)
+- `DELETE /api/admin/sync-tasks?id=<uuid>` — removes a task (same auth)
+- Uses existing `requireAdmin` + `adminClient` from MoveOn's `api-auth.ts`
+- Tasks upserted on `id` conflict; objectives on `scope,key` conflict
+
+**Operator OS sync client:**
+- New file: `src/lib/moveon-sync.ts`
+- `pushTaskToMoveOn(task)` — fire-and-forget upsert for a single task
+- `deleteTaskOnMoveOn(id)` — fire-and-forget delete
+- `fullSyncToMoveOn()` — batch re-sync of all MoveOn-tagged tasks + their sprint objectives
+- Filter: tasks where `projeto ILIKE '%moveon%'`
+
+**Wired into `src/lib/tasks.ts`:**
+- `createTask` → pushes new task after DB insert
+- `updateTask` → pushes updated task after DB update (now also returns the row)
+- `moveTask` → pushes updated state after RPC (drag-and-drop syncs)
+- `deleteTask` → sends DELETE to MoveOn (old duplicate removed, new version owns this)
+
+**Env vars added to `.env`:**
+- `VITE_MOVEON_API_URL` — MoveOn deployed URL (e.g. `https://admin.moveon.com.br`)
+- `VITE_MOVEON_INTERNAL_KEY` — shared secret matching `INTERNAL_API_KEY` in MoveOn's `.env`
+
+**Setup required:**
+1. Add `INTERNAL_API_KEY=<shared-secret>` to MoveOn's `.env.local`
+2. Fill `VITE_MOVEON_API_URL` and `VITE_MOVEON_INTERNAL_KEY` in Operator OS `.env`
+
+---
+
 ## 2026-06-23 — Tasks System Full Build + Rewards System
 
 ### Summary
